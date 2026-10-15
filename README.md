@@ -15,7 +15,7 @@ Control de cobros para psicólogas: pacientes, sesiones, pagos y reporte mensual
 
 ### 3. Configurar el login
 En **Authentication → URL Configuration**:
-- **Site URL**: la dirección de Vercel (ej. `https://control-de-facturacion.vercel.app`).
+- **Site URL**: la dirección de Vercel (la actual es `https://control-de-facturacion-eight.vercel.app`).
 - **Redirect URLs**: agregá esa misma dirección y `http://localhost:5173` (para desarrollo).
 
 Esto hace que funcionen los links de "confirmar mail" y "recuperar contraseña".

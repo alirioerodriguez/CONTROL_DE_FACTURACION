@@ -50,6 +50,9 @@ begin
 end;
 $$;
 
+-- Solo la usa el trigger: no debe poder llamarse desde la API.
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
@@ -116,6 +119,7 @@ create table if not exists public.sessions (
 
 create index if not exists sessions_user_fecha_idx on public.sessions (user_id, fecha);
 create index if not exists sessions_patient_idx on public.sessions (patient_id, fecha);
+create index if not exists sessions_patient_user_idx on public.sessions (patient_id, user_id);
 
 -- ---------------------------------------------------------------------
 -- payments
@@ -145,6 +149,8 @@ create table if not exists public.payments (
 create index if not exists payments_user_fecha_idx on public.payments (user_id, fecha);
 create index if not exists payments_user_periodo_idx on public.payments (user_id, periodo);
 create index if not exists payments_patient_idx on public.payments (patient_id, periodo);
+create index if not exists payments_patient_user_idx on public.payments (patient_id, user_id);
+create index if not exists payments_session_idx on public.payments (session_id);
 
 -- ---------------------------------------------------------------------
 -- updated_at automático
