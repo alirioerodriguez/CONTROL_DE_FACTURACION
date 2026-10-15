@@ -1,0 +1,68 @@
+import { describe, expect, it } from 'vitest'
+import {
+  formatFecha, formatMonto, formatPeriodo, hoyAR, parseFechaAR, parseMontoAR, periodoDe, sumarMeses,
+} from './formato'
+
+describe('formatMonto', () => {
+  it('formatea pesos y dólares a la argentina', () => {
+    expect(formatMonto(25000, 'ARS')).toBe('$ 25.000,00')
+    expect(formatMonto(50, 'USD')).toBe('US$ 50,00')
+    expect(formatMonto(1250000.5, 'ARS')).toBe('$ 1.250.000,50')
+    expect(formatMonto(-3000, 'ARS')).toBe('-$ 3.000,00')
+  })
+})
+
+describe('parseMontoAR', () => {
+  it.each([
+    ['25.000,50', 25000.5],
+    ['25.000', 25000],
+    ['1.250.000', 1250000],
+    ['25000', 25000],
+    ['25000,5', 25000.5],
+    ['$ 25.000,00', 25000],
+    ['US$ 50', 50],
+    ['50.5', 50.5],
+    [' 200000 ', 200000],
+    [25000, 25000],
+  ])('%s → %s', (entrada, esperado) => {
+    expect(parseMontoAR(entrada)).toBe(esperado)
+  })
+
+  it.each(['', 'abc', '25,000.50', '1.2.3', '25.00.0', null, undefined])('rechaza %s', (entrada) => {
+    expect(parseMontoAR(entrada)).toBeNull()
+  })
+})
+
+describe('fechas', () => {
+  it('parsea dd/mm/aaaa y variantes', () => {
+    expect(parseFechaAR('04/03/2026')).toBe('2026-03-04')
+    expect(parseFechaAR('4/3/26')).toBe('2026-03-04')
+    expect(parseFechaAR('4-3-2026')).toBe('2026-03-04')
+    expect(parseFechaAR('2026-03-04')).toBe('2026-03-04')
+  })
+
+  it('acepta fechas de Excel (Date y número de serie)', () => {
+    expect(parseFechaAR(new Date('2026-03-04T00:00:00.000Z'))).toBe('2026-03-04')
+    expect(parseFechaAR(46085)).toBe('2026-03-04')
+  })
+
+  it('rechaza fechas que no existen', () => {
+    expect(parseFechaAR('31/02/2026')).toBeNull()
+    expect(parseFechaAR('13/13/2026')).toBeNull()
+    expect(parseFechaAR('03/04')).toBeNull()
+    expect(parseFechaAR('hola')).toBeNull()
+  })
+
+  it('formatea y agrupa por mes', () => {
+    expect(formatFecha('2026-03-04')).toBe('04/03/2026')
+    expect(periodoDe('2026-03-17')).toBe('2026-03-01')
+    expect(formatPeriodo('2026-03-01')).toBe('marzo 2026')
+    expect(sumarMeses('2026-11-01', 3)).toBe('2027-02-01')
+    expect(sumarMeses('2026-01-01', -1)).toBe('2025-12-01')
+  })
+
+  it('calcula hoy en hora argentina', () => {
+    // 02:00 UTC del 1/4 todavía es 31/3 en Argentina (UTC-3).
+    expect(hoyAR(new Date('2026-04-01T02:00:00Z'))).toBe('2026-03-31')
+  })
+})
