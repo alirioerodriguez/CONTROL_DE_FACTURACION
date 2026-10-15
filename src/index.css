@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+
+/* Modo oscuro por clase en <html> (se activa desde Ajustes). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+/* iOS hace zoom si un campo tiene menos de 16px. */
+input,
+select,
+textarea {
+  font-size: max(16px, 1rem);
+}
