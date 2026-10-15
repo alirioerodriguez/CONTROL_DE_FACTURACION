@@ -123,6 +123,53 @@ function estadoMes(cargo: number, pagado: number): EstadoMes {
 }
 
 // ---------------------------------------------------------------------
+// Estado de cada sesión
+// ---------------------------------------------------------------------
+
+export type EstadoSesion = 'pagada' | 'parcial' | 'pendiente'
+
+/**
+ * Cuánto quedó cubierto de cada sesión. Lo pagado de un mes se reparte
+ * entre las sesiones de ese mes en orden de fecha.
+ */
+export function pagadoPorSesion<T extends SesionSaldo & { id: string }>(
+  sesiones: T[],
+  pagos: PagoSaldo[],
+): Map<string, number> {
+  const resultado = new Map<string, number>()
+  for (const saldo of calcularSaldos(sesiones, pagos)) {
+    const pagadoMes = new Map(saldo.meses.map((m) => [m.periodo, aCentavos(m.pagado)]))
+    const delaMoneda = sesiones
+      .filter((s) => s.moneda === saldo.moneda)
+      .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.id.localeCompare(b.id))
+    for (const s of delaMoneda) {
+      const periodo = periodoDe(s.fecha)
+      const disponible = pagadoMes.get(periodo) ?? 0
+      const cubre = Math.min(disponible, aCentavos(s.monto))
+      pagadoMes.set(periodo, disponible - cubre)
+      resultado.set(s.id, aPesos(cubre))
+    }
+  }
+  return resultado
+}
+
+export function estadoSesion(monto: number, pagado: number): EstadoSesion {
+  if (aCentavos(pagado) >= aCentavos(monto)) return 'pagada'
+  if (pagado > 0) return 'parcial'
+  return 'pendiente'
+}
+
+/**
+ * Mes que conviene proponer al registrar un pago: el mes impago más viejo
+ * en esa moneda; si no debe nada, el mes de la fecha del pago.
+ */
+export function periodoSugerido(saldos: SaldoMoneda[], moneda: Moneda, fechaPago: string): string {
+  const saldo = saldos.find((s) => s.moneda === moneda)
+  const impago = saldo?.meses.find((m) => m.pendiente > 0)
+  return impago ? impago.periodo : periodoDe(fechaPago)
+}
+
+// ---------------------------------------------------------------------
 // Tarifas
 // ---------------------------------------------------------------------
 

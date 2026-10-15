@@ -1,15 +1,133 @@
 @import 'tailwindcss';
 
-/* Modo oscuro por clase en <html> (se activa desde Ajustes). */
-@custom-variant dark (&:where(.dark, .dark *));
+/* Paleta del diseño (docs/diseno/Consultorio.dc.html): verde salvia. */
+:root {
+  --page: #e6e5df;
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #eeede7;
+  --ink: #1e2420;
+  --ink2: #5d6660;
+  --line: #e3e2db;
+  --acc: #557f69;
+  --acc-strong: #3c6450;
+  --acc-soft: #e2ece5;
+  --on-acc: #ffffff;
+  --warn: #8f6418;
+  --warn-soft: #f5ead3;
+  --bad: #a3452c;
+  --bad-soft: #f7e4dc;
+  --wa: #1e8a53;
+  --wa-soft: #dcf0e3;
+}
 
-html {
+html[data-theme='dark'] {
+  --page: #0b0e0c;
+  --bg: #131715;
+  --surface: #1b201d;
+  --surface2: #252b27;
+  --ink: #eceeea;
+  --ink2: #a0aaa4;
+  --line: #2d3430;
+  --acc: #8bb89f;
+  --acc-strong: #a8ccb8;
+  --acc-soft: #223129;
+  --on-acc: #0e1a13;
+  --warn: #e3b66c;
+  --warn-soft: #382e1b;
+  --bad: #e8977b;
+  --bad-soft: #3a2520;
+  --wa: #6fd39c;
+  --wa-soft: #1b3326;
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface2);
+  --color-ink: var(--ink);
+  --color-ink2: var(--ink2);
+  --color-line: var(--line);
+  --color-acc: var(--acc);
+  --color-acc-strong: var(--acc-strong);
+  --color-acc-soft: var(--acc-soft);
+  --color-on-acc: var(--on-acc);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-wa: var(--wa);
+  --color-wa-soft: var(--wa-soft);
+  --breakpoint-md: 45rem; /* 720px: el diseño pasa a desktop acá */
+  --font-sans: 'Figtree', system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, serif;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
 }
 
 /* iOS hace zoom si un campo tiene menos de 16px. */
 input,
 select,
 textarea {
-  font-size: max(16px, 1rem);
+  font-size: max(16px, 1em);
+}
+
+input::placeholder {
+  color: var(--ink2);
+  opacity: 0.8;
+}
+
+:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+/* Números grandes del diseño: Figtree 600, tabulares. */
+.num {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes pulso {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.esqueleto {
+  background: var(--surface2);
+  animation: pulso 1.4s ease-in-out infinite;
 }

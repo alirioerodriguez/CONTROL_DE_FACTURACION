@@ -1,24 +1,25 @@
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { Check } from 'lucide-react'
 import { toast } from 'sonner'
-import { Boton, Campo } from '../../components/ui'
+import { Alerta, Boton, IC } from '../../components/ui'
 import { mensajeError, supabase } from '../../lib/supabase'
-import { AuthLayout } from './AuthLayout'
+import { AuthLayout, CampoAuth, claseBotonAuth, claseLinkAuth } from './AuthLayout'
 
 export function RegistroPage() {
   const [nombre, setNombre] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [cargando, setCargando] = useState(false)
+  const [error, setError] = useState('')
   const [enviado, setEnviado] = useState(false)
 
   async function registrar(e: FormEvent) {
     e.preventDefault()
-    if (password.length < 8) {
-      toast.error('La contraseña tiene que tener al menos 8 caracteres.')
-      return
-    }
+    if (!/\S+@\S+\.\S+/.test(email)) return setError('Ingresá un mail válido.')
+    if (password.length < 8) return setError('La contraseña tiene que tener al menos 8 caracteres.')
     setCargando(true)
+    setError('')
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
@@ -28,35 +29,42 @@ export function RegistroPage() {
       await supabase.from('profiles').update({ nombre: nombre.trim() }).eq('id', data.session.user.id)
     }
     setCargando(false)
-    if (error) {
-      toast.error(mensajeError(error))
-    } else if (!data.session) {
-      setEnviado(true) // hace falta confirmar el mail
-    } else {
-      toast.success('¡Cuenta creada!')
-    }
+    if (error) setError(mensajeError(error))
+    else if (!data.session) setEnviado(true) // hace falta confirmar el mail
+    else toast.success('¡Cuenta creada!')
   }
 
   if (enviado) {
     return (
       <AuthLayout titulo="Revisá tu mail">
-        <p className="text-stone-700 dark:text-stone-300">
-          Te mandamos un link a <strong>{email}</strong> para confirmar la cuenta. Después podés ingresar.
-        </p>
-        <Link to="/" className="mt-4 block text-center text-sm text-teal-700 hover:underline dark:text-teal-400">Volver a ingresar</Link>
+        <div className="-order-1 grid size-14 place-items-center rounded-[18px] bg-acc-soft text-[26px] text-acc-strong">
+          <Check {...IC} />
+        </div>
+        <div className="text-[17px] leading-normal text-ink2">
+          Te mandamos un link a <strong className="text-ink">{email}</strong> para confirmar la cuenta. Después podés
+          ingresar. Tu nombre lo cargás en Ajustes.
+        </div>
+        <Link to="/" className="flex h-14 items-center justify-center rounded-full bg-surface2 text-[17px] font-semibold hover:bg-line">
+          Volver a ingresar
+        </Link>
       </AuthLayout>
     )
   }
 
   return (
-    <AuthLayout titulo="Crear cuenta">
-      <form onSubmit={registrar} className="space-y-4">
-        <Campo etiqueta="Tu nombre" autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)} />
-        <Campo etiqueta="Mail" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Campo etiqueta="Contraseña (mínimo 8 caracteres)" type="password" autoComplete="new-password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-        <Boton type="submit" cargando={cargando} className="w-full">Crear cuenta</Boton>
+    <AuthLayout titulo="Creá tu cuenta" sub="Gratis. Solo vos ves tus datos.">
+      <form onSubmit={registrar} noValidate className="flex flex-col gap-5">
+        <CampoAuth etiqueta="Tu nombre" autoComplete="name" placeholder="Ej. Lic. Ana Martínez" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+        <CampoAuth etiqueta="Mail" type="email" autoComplete="email" placeholder="vos@mail.com" value={email} onChange={(e) => { setEmail(e.target.value); setError('') }} />
+        <CampoAuth etiqueta="Contraseña" type="password" autoComplete="new-password" placeholder="Mínimo 8 caracteres" value={password} onChange={(e) => { setPassword(e.target.value); setError('') }} />
+        {error && <Alerta>{error}</Alerta>}
+        <Boton type="submit" cargando={cargando} className={claseBotonAuth}>
+          {cargando ? 'Creando…' : 'Crear cuenta'}
+        </Boton>
       </form>
-      <Link to="/" className="mt-5 block text-center text-sm text-stone-600 hover:underline dark:text-stone-400">Ya tengo cuenta</Link>
+      <Link to="/" className={`${claseLinkAuth} text-ink2`}>
+        Ya tengo cuenta
+      </Link>
     </AuthLayout>
   )
 }

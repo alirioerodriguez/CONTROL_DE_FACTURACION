@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { calcularSaldos, fechasDelMes, tarifaVigente, type PagoSaldo, type SesionSaldo } from './saldos'
+import {
+  calcularSaldos, estadoSesion, fechasDelMes, pagadoPorSesion, periodoSugerido, tarifaVigente,
+  type PagoSaldo, type SesionSaldo,
+} from './saldos'
 
 const ses = (fecha: string, monto = 50000, moneda: 'ARS' | 'USD' = 'ARS'): SesionSaldo => ({ fecha, monto, moneda })
 const pago = (periodo: string, monto: number, moneda: 'ARS' | 'USD' = 'ARS'): PagoSaldo => ({ periodo, monto, moneda })
@@ -67,6 +70,37 @@ describe('calcularSaldos', () => {
     )
     expect(ars.saldo).toBe(0)
     expect(ars.meses[0].estado).toBe('pagado')
+  })
+})
+
+describe('pagadoPorSesion', () => {
+  const s = (id: string, fecha: string, monto = 50000) => ({ id, fecha, monto, moneda: 'ARS' as const })
+
+  it('reparte lo pagado del mes en orden de fecha', () => {
+    const m = pagadoPorSesion(
+      [s('c', '2026-03-16'), s('a', '2026-03-02'), s('b', '2026-03-09')],
+      [pago('2026-03-01', 75000)],
+    )
+    expect(m.get('a')).toBe(50000)
+    expect(m.get('b')).toBe(25000)
+    expect(m.get('c')).toBe(0)
+    expect(estadoSesion(50000, m.get('a')!)).toBe('pagada')
+    expect(estadoSesion(50000, m.get('b')!)).toBe('parcial')
+    expect(estadoSesion(50000, m.get('c')!)).toBe('pendiente')
+  })
+
+  it('respeta el sobrante que va a meses viejos', () => {
+    const m = pagadoPorSesion([s('ene', '2026-01-05'), s('mar', '2026-03-02')], [pago('2026-03-01', 100000)])
+    expect(m.get('ene')).toBe(50000)
+    expect(m.get('mar')).toBe(50000)
+  })
+})
+
+describe('periodoSugerido', () => {
+  it('propone el mes impago más viejo, o el mes del pago', () => {
+    const saldos = calcularSaldos([ses('2026-01-05'), ses('2026-02-02')], [pago('2026-01-01', 50000)])
+    expect(periodoSugerido(saldos, 'ARS', '2026-03-10')).toBe('2026-02-01')
+    expect(periodoSugerido(saldos, 'USD', '2026-03-10')).toBe('2026-03-01')
   })
 })
 

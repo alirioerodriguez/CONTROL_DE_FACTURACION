@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  formatFecha, formatMonto, formatPeriodo, hoyAR, parseFechaAR, parseMontoAR, periodoDe, sumarMeses,
+  etiquetaDia, fechaLarga, formatFecha, formatMonto, formatPeriodo, hoyAR, iniciales, normalizar,
+  numeroWhatsApp, parseFechaAR, parseMontoAR, partesMonto, periodoDe, plural, sumarDias, sumarMeses,
 } from './formato'
 
 describe('formatMonto', () => {
@@ -30,6 +31,49 @@ describe('parseMontoAR', () => {
 
   it.each(['', 'abc', '25,000.50', '1.2.3', '25.00.0', null, undefined])('rechaza %s', (entrada) => {
     expect(parseMontoAR(entrada)).toBeNull()
+  })
+})
+
+describe('partesMonto', () => {
+  it('separa los centavos', () => {
+    expect(partesMonto(248000, 'ARS')).toEqual({ entero: '$ 248.000', decimales: ',00' })
+    expect(partesMonto(90, 'USD')).toEqual({ entero: 'US$ 90', decimales: '' })
+    expect(partesMonto(90.5, 'USD')).toEqual({ entero: 'US$ 90', decimales: ',50' })
+  })
+})
+
+describe('textos', () => {
+  it('etiquetas de fecha', () => {
+    expect(etiquetaDia('2026-10-15')).toBe('Jue 15 oct')
+    expect(fechaLarga('2026-10-15')).toBe('Jueves 15 de octubre')
+    expect(sumarDias('2026-03-01', -1)).toBe('2026-02-28')
+  })
+
+  it('iniciales, búsqueda y plural', () => {
+    expect(iniciales('Lucía Fernández')).toBe('LF')
+    expect(normalizar('Lucía')).toBe('lucia')
+    expect(plural(1, 'sesión', 'sesiones')).toBe('1 sesión')
+    expect(plural(3, 'sesión', 'sesiones')).toBe('3 sesiones')
+  })
+})
+
+describe('numeroWhatsApp', () => {
+  it.each([
+    ['11 5423-8812', '5491154238812'],
+    ['011 5423-8812', '5491154238812'],
+    ['11 15 5423-8812', '5491154238812'],
+    ['341 558-2201', '5493415582201'],
+    ['5491154238812', '5491154238812'],
+    ['54 11 5423 8812', '5491154238812'],
+    ['+34 612 44 81 90', '34612448190'],
+  ])('%s → %s', (entrada, esperado) => {
+    expect(numeroWhatsApp(entrada)).toBe(esperado)
+  })
+
+  it('sin teléfono no hay link', () => {
+    expect(numeroWhatsApp('')).toBeNull()
+    expect(numeroWhatsApp('123')).toBeNull()
+    expect(numeroWhatsApp(null)).toBeNull()
   })
 })
 
