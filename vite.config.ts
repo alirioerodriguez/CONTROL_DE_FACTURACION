@@ -13,11 +13,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false, // se registra en main.tsx
-      includeAssets: ['favicon-32.png', 'apple-touch-icon.png'],
+      includeAssets: ['honorapp-favicon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Consultorio',
-        short_name: 'Consultorio',
-        description: 'Control de cobros para tu consultorio: pacientes, sesiones, pagos y reportes.',
+        name: 'honorapp',
+        short_name: 'honorapp',
+        description: 'Control de cobros para profesionales con pacientes: sesiones, pagos, saldos y reportes.',
         lang: 'es-AR',
         start_url: '/',
         scope: '/',

@@ -25,7 +25,7 @@ const PASOS: Paso[] = [
     icono: Sparkles,
     titulo: '¡Te damos la bienvenida!',
     texto:
-      'Consultorio te ayuda a llevar los cobros de tus pacientes sin planillas. En un minuto te mostramos todo lo que podés hacer. Podés saltear el recorrido cuando quieras y volver a verlo desde Ajustes.',
+      'honorapp te ayuda a llevar los cobros de tus pacientes sin planillas. En un minuto te mostramos todo lo que podés hacer. Podés saltear el recorrido cuando quieras y volver a verlo desde Ajustes.',
   },
   {
     ruta: '/ajustes',

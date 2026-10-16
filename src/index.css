@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 
-/* Paleta del diseño (docs/diseno/Consultorio.dc.html): verde salvia. */
+/* Paleta del diseño (docs/diseno/): verde salvia. */
 :root {
   --page: #e6e5df;
   --bg: #f5f4f0;

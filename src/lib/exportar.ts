@@ -36,7 +36,7 @@ function descargar(blob: Blob, nombre: string) {
 async function libroNuevo() {
   const { default: ExcelJS } = await import('exceljs')
   const libro = new ExcelJS.Workbook()
-  libro.creator = 'Consultorio'
+  libro.creator = 'honorapp'
   libro.created = new Date()
   return libro
 }
@@ -97,7 +97,7 @@ export async function exportarReporteMes(periodo: string, pacientes: Paciente[],
     ]),
     r.totales.map((t) => [`Total ${t.moneda}`, t.moneda, t.sesiones, '', t.facturado, t.cobrado, t.pendiente]),
   )
-  await guardarLibro(libro, `consultorio-${mesArchivo(periodo)}.xlsx`)
+  await guardarLibro(libro, `honorapp-${mesArchivo(periodo)}.xlsx`)
 }
 
 // ---------------------------------------------------------------------
@@ -397,5 +397,5 @@ export async function libroBackup(perfil: Perfil | undefined, pacientes: Pacient
 }
 
 export async function exportarBackup(perfil: Perfil | undefined, pacientes: Paciente[], sesiones: Sesion[], pagos: Pago[]) {
-  await guardarLibro(await libroBackup(perfil, pacientes, sesiones, pagos), `consultorio-backup-${hoyAR()}.xlsx`)
+  await guardarLibro(await libroBackup(perfil, pacientes, sesiones, pagos), `honorapp-backup-${hoyAR()}.xlsx`)
 }

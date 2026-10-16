@@ -1,6 +1,6 @@
-# Consultorio
+# honorapp
 
-Control de cobros para psicólogas y psicólogos en Argentina: pacientes, sesiones, pagos y reportes para la contadora. Pesos y dólares siempre por separado. **No es software clínico**: no guarda historia clínica ni notas de sesión.
+Control de cobros para profesionales que atienden pacientes en Argentina (psicología, nutrición, kinesiología y más): pacientes, sesiones, pagos y reportes para la contadora. Pesos y dólares siempre por separado. **No es software clínico**: no guarda historia clínica ni notas de sesión.
 
 App publicada: **https://control-de-facturacion-eight.vercel.app**
 
@@ -37,7 +37,7 @@ App publicada: **https://control-de-facturacion-eight.vercel.app**
 3. **Deployments → Redeploy**. Cada push a `main` publica solo.
 
 ### 3. Ingreso con Google
-- Google Cloud, proyecto **Consultorio** → Google Auth Platform: app **en producción**, cliente web «Consultorio web».
+- Google Cloud, proyecto **Consultorio** (nombre interno) → Google Auth Platform: app «honorapp» **en producción**, cliente web «Consultorio web».
   - Orígenes autorizados: la dirección de Vercel y `http://localhost:5173`.
   - Redirección autorizada: `https://uxcpfnupwetwtpqhoqvd.supabase.co/auth/v1/callback`.
 - Supabase → Authentication → Sign In / Providers → Google: activado, con el Client ID y el Client Secret de ese cliente.
@@ -74,7 +74,8 @@ supabase/schema.sql      esquema completo: tablas, RLS, índices, importación (
 src/lib/                 lógica pura: formato argentino, saldos, reportes, importar, exportar
 src/features/            una carpeta por pantalla (auth, inicio, pacientes, registro, reportes, importar, ajustes, tutorial, legal)
 src/components/          piezas de UI compartidas (botones, hojas, navegación, Descargar Excel)
-docs/diseno/             prototipo de Claude Design (referencia visual)
+docs/diseno/             prototipo de Claude Design y logo (docs/diseno/logo)
+docs/mails/              textos de los mails de la app en castellano
 public/                  plantilla de Excel e íconos de la app
 ```
 

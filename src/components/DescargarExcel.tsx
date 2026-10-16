@@ -34,7 +34,7 @@ export function DescargarExcel({
     if (vacia || pacientes.length === 0) {
       const a = document.createElement('a')
       a.href = '/plantilla-cobros.xlsx'
-      a.download = 'plantilla-consultorio.xlsx'
+      a.download = 'plantilla-honorapp.xlsx'
       a.click()
       toast.success('Planilla descargada: completala y subila en Importar')
       return

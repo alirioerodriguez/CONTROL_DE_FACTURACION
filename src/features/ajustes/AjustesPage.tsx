@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ChevronRight, FileSpreadsheet, LogOut, Moon, Sparkles, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { DescargarExcel } from '../../components/DescargarExcel'
+import { FotoUsuario } from '../../components/FotoUsuario'
 import { Boton, Campo, EstadoError, Esqueleto, IC, Segmentado, Tarjeta } from '../../components/ui'
 import { useGuardar, usePacientes, usePerfil } from '../../lib/datos'
 import {
@@ -199,7 +200,10 @@ export function AjustesPage() {
       <Tarjeta className="px-[22px] py-2">
         <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 text-base">
           <span className="text-ink2">Cuenta</span>
-          <span className="font-semibold break-all">{session?.user.email}</span>
+          <span className="flex min-w-0 items-center gap-2.5 font-semibold break-all">
+            <FotoUsuario className="size-8 text-xs" />
+            {session?.user.email}
+          </span>
         </div>
         <button type="button" onClick={salir} className={`${fila} justify-start border-t border-line text-bad`}>
           <LogOut {...IC} />

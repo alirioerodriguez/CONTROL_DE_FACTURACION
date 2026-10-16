@@ -2,9 +2,7 @@ import { useEffect } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { ChartColumn, FileSpreadsheet, House, Plus, SlidersHorizontal, Upload, Users, type LucideIcon } from 'lucide-react'
 import { useRegistro } from '../features/registro/RegistroContext'
-import { iniciales } from '../lib/formato'
-import { useAuth } from '../features/auth/AuthProvider'
-import { usePerfil } from '../lib/datos'
+import { FotoUsuario, useUsuario } from './FotoUsuario'
 import { IC } from './ui'
 
 interface Seccion {
@@ -24,14 +22,35 @@ const SECCIONES: Seccion[] = [
   { to: '/ajustes', etiqueta: 'Ajustes', icono: SlidersHorizontal, enMovil: true },
 ]
 
-export function Logo() {
+/** Logo de honorapp: "h con tilde de cobro" (grilla 48×48, radio 12). Sigue los colores del tema. */
+export function Logo({ tam = 34, conNombre = true }: { tam?: number; conNombre?: boolean }) {
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="grid size-[34px] place-items-center rounded-[11px] bg-acc">
-        <div className="size-3 rounded-full bg-on-acc" />
-      </div>
-      <div className="font-serif text-[26px]">Consultorio</div>
-    </div>
+    <span className="inline-flex items-center" style={{ gap: tam * 0.3 }}>
+      <svg
+        width={tam}
+        height={tam}
+        viewBox="0 0 48 48"
+        className="shrink-0"
+        role={conNombre ? undefined : 'img'}
+        aria-hidden={conNombre || undefined}
+        aria-label={conNombre ? undefined : 'honorapp'}
+      >
+        <rect width="48" height="48" rx="12" fill="var(--acc)" />
+        <path
+          d="M16 10v28M16 27c0-5 3.5-8 7.5-8s7.5 3 7.5 8v6l5-5"
+          fill="none"
+          stroke="var(--on-acc)"
+          strokeWidth={tam < 24 ? 5.5 : 4.4}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      {conNombre && (
+        <span className="font-sans leading-none font-bold tracking-[-0.04em] text-ink" style={{ fontSize: tam * 0.7 }}>
+          honorapp
+        </span>
+      )}
+    </span>
   )
 }
 
@@ -47,10 +66,7 @@ function activa(ruta: string, movil: boolean): string {
 export function Layout() {
   const { pathname } = useLocation()
   const { abrir, abierto } = useRegistro()
-  const { session } = useAuth()
-  const { data: perfil } = usePerfil()
-  const email = session?.user.email ?? ''
-  const nombre = perfil?.nombre?.trim() || email
+  const { nombre, email } = useUsuario()
   // Cada pantalla arranca desde arriba.
   // Con llaves: en Chrome nuevo scrollTo devuelve una promesa y React la tomaría como limpieza.
   useEffect(() => {
@@ -93,11 +109,9 @@ export function Layout() {
         </nav>
         <div className="flex-1" />
         <div className="flex shrink-0 items-center gap-3 rounded-2xl bg-surface2 p-3">
-          <div className="grid size-10 shrink-0 place-items-center rounded-full bg-acc-soft text-[15px] font-bold text-acc-strong">
-            {iniciales(nombre.split('@')[0])}
-          </div>
+          <FotoUsuario />
           <div className="min-w-0">
-            <div className="truncate text-[15px] font-semibold">{perfil?.nombre?.trim() || 'Mi consultorio'}</div>
+            <div className="truncate text-[15px] font-semibold">{nombre ?? 'Mi cuenta'}</div>
             <div className="truncate text-[13px] text-ink2">{email}</div>
           </div>
         </div>

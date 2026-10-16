@@ -27,8 +27,8 @@ export function PrivacidadPage() {
   return (
     <Marco titulo="Política de privacidad">
       <p>
-        Consultorio es una aplicación web para que profesionales de la salud mental lleven el control administrativo de
-        sus cobros: pacientes, sesiones, pagos y reportes para su contador o contadora. No es un software clínico.
+        honorapp es una aplicación web para que profesionales que atienden pacientes (psicología, nutrición,
+        kinesiología y otras disciplinas) lleven el control administrativo de sus cobros: pacientes, sesiones, pagos y reportes para su contador o contadora. No es un software clínico.
       </p>
       <h2>Qué datos guardamos</h2>
       <ul>
@@ -69,7 +69,7 @@ export function TerminosPage() {
   return (
     <Marco titulo="Condiciones del servicio">
       <p>
-        Consultorio se ofrece tal como está, para uso administrativo de profesionales. Al crear una cuenta aceptás estas
+        honorapp se ofrece tal como está, para uso administrativo de profesionales. Al crear una cuenta aceptás estas
         condiciones y la <Link to="/privacidad">política de privacidad</Link>.
       </p>
       <h2>Uso</h2>

@@ -1,6 +1,6 @@
-# Consultorio
+# honorapp
 
-Web app de control de cobros para psicólogas en Argentina. Cada profesional registra sesiones y pagos de sus pacientes y le pasa reportes mensuales a su contadora. **No es software clínico**: nunca guardar historia clínica ni notas de sesión.
+Web app de control de cobros para profesionales que atienden pacientes en Argentina (psicología, nutrición, kinesiología, etc.). Cada profesional registra sesiones y pagos de sus pacientes y le pasa reportes mensuales a su contadora. **No es software clínico**: nunca guardar historia clínica ni notas de sesión.
 
 Registro abierto: cualquier colega puede crearse una cuenta y ve solo sus datos.
 
@@ -27,6 +27,7 @@ Registro abierto: cualquier colega puede crearse una cuenta y ve solo sus datos.
 - Inputs con font-size mínimo de 16px; montos con `inputMode="decimal"`.
 - Responsive real a 390px y 1440px. Estados vacío, cargando y error en cada pantalla.
 - Diseño: seguir el prototipo de Claude Design (verde salvia, esquinas redondeadas, títulos en serif). Referencia en `docs/diseno/`.
+- Marca: "honorapp", siempre en minúscula. Logo "h con tilde de cobro" (componente `Logo` en `src/components/Layout.tsx`, especificación en `docs/diseno/logo/README.md`).
 - La importación acepta la estructura de `public/plantilla-cobros.xlsx` (se descarga desde la pantalla Importar) (hojas Pacientes, Sesiones, Pagos; mismos nombres de columna).
 - Antes de cada commit: `npm run build`, `npm run lint` y `npm test` tienen que pasar. Commits chicos, en castellano.
 

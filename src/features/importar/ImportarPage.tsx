@@ -396,7 +396,7 @@ function Confirmacion({
     <div className="flex flex-col gap-4">
       <ArchivoElegido
         nombre={archivo}
-        detalle={plantilla ? 'Reconocimos la plantilla de Consultorio' : 'Planilla de sesiones'}
+        detalle={plantilla ? 'Reconocimos la plantilla de honorapp' : 'Planilla de sesiones'}
         onCambiar={onCambiar}
       />
 

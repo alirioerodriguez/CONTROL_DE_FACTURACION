@@ -27,3 +27,6 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Archivos sueltos (zips de diseño)
+*.zip

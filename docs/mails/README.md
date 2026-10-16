@@ -5,11 +5,11 @@ Para cambiarlos: copiar el asunto y el HTML de cada archivo en la plantilla corr
 
 | Archivo | Asunto |
 |---|---|
-| confirmar-cuenta.html | Confirmá tu cuenta en Consultorio |
-| recuperar-clave.html | Recuperá tu contraseña de Consultorio |
-| link-de-ingreso.html | Tu link para ingresar a Consultorio |
-| cambio-de-mail.html | Confirmá el cambio de mail en Consultorio |
-| invitacion.html | Te invitaron a Consultorio |
-| reautenticacion.html | Tu código de verificación de Consultorio |
+| confirmar-cuenta.html | Confirmá tu cuenta en honorapp |
+| recuperar-clave.html | Recuperá tu contraseña de honorapp |
+| link-de-ingreso.html | Tu link para ingresar a honorapp |
+| cambio-de-mail.html | Confirmá el cambio de mail en honorapp |
+| invitacion.html | Te invitaron a honorapp |
+| reautenticacion.html | Tu código de verificación de honorapp |
 
 Plantilla de Supabase ↔ archivo: Confirm sign up → confirmar-cuenta · Reset password → recuperar-clave · Magic link → link-de-ingreso · Change email address → cambio-de-mail · Invite user → invitacion · Reauthentication → reautenticacion.

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Check, MessageCircle, Plus } from 'lucide-react'
+import { useUsuario } from '../../components/FotoUsuario'
 import { SelectorMes, useMesSeleccionado } from '../../components/SelectorMes'
 import {
   Avatar, Boton, Chip, EstadoError, Esqueleto, IC, MontoGrande, Segmentado, Tarjeta, type Tono,
@@ -24,6 +25,7 @@ export function InicioPage() {
   const { abrir } = useRegistro()
   const navegar = useNavigate()
   const [periodo, setPeriodo] = useMesSeleccionado()
+  const usuario = useUsuario()
   const [monedaGrafico, setMonedaGrafico] = useState<Moneda>('ARS')
 
   const r = useMemo(() => resumenMes(periodo, pacientes, sesiones, pagos), [periodo, pacientes, sesiones, pagos])
@@ -33,7 +35,8 @@ export function InicioPage() {
   if (error) return <EstadoError que="el inicio" reintentar={reintentar} />
 
   const mes = nombreMes(periodo)
-  const primerNombre = perfil?.nombre?.trim().split(' ').find((p) => !/^lic\.?$/i.test(p))
+  // Primer nombre, salteando títulos como "Lic." o "Dra.".
+  const primerNombre = usuario.nombre?.split(' ').find((p) => !/^(lic|dr|dra)\.?$/i.test(p))
   const sinNadaCargado = sesiones.length === 0
 
   /** Link de WhatsApp con el recordatorio completado con la deuda del paciente. */

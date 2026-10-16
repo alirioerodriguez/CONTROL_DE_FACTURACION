@@ -1,5 +1,5 @@
 -- =====================================================================
--- Consultorio — esquema completo de la base de datos.
+-- honorapp — esquema completo de la base de datos.
 --
 -- Este es el ÚNICO archivo de esquema. Es idempotente: se puede correr
 -- entero las veces que haga falta en Supabase > SQL Editor.
