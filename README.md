@@ -19,7 +19,12 @@ App publicada: **https://control-de-facturacion-eight.vercel.app**
 - **Importar** `.xlsx` o `.csv`: reconoce la plantilla de la app (hojas Pacientes, Sesiones, Pagos) o deja elegir las columnas de cualquier planilla. Valida fechas `dd/mm/aaaa` y montos `25.000,50`, muestra las filas con error, no duplica lo ya cargado, pregunta antes de crear pacientes y guarda todo o nada.
 - **Descargar Excel**: sin datos, baja la plantilla vacía para completar; con datos, baja todo en ese mismo formato (sirve de backup y se puede volver a subir).
 - **PWA**: se instala en el celular, se actualiza sola y, sin internet, avisa y no deja cargar nada.
-- **Modo oscuro** y diseño responsive (celular y computadora).
+- **Modo oscuro**, **tamaño de letra** (5 opciones en Ajustes; toda la app escala) y diseño responsive (celular y computadora).
+- **Control del tope del monotributo**: la categoría se elige en Ajustes; Inicio muestra lo cobrado en los últimos 12 meses contra el tope, avisa desde el 80 % y sugiere categoría. Los dólares se suman solo si se carga el tipo de cambio. Es orientativo.
+- **Pruebas con usuarias** (`/pruebas`): 13 tareas guiadas con reloj y tiempo por pantalla, más una encuesta. Las cuentas con `profiles.es_admin` ven el tablero en `/pruebas/resultados` (se activa solo por SQL).
+
+### Mantenimiento: topes del monotributo
+ARCA actualiza los topes en **febrero y agosto**. Cuando cambien, copiar la tabla de [arca.gob.ar/monotributo/categorias.asp](https://www.arca.gob.ar/monotributo/categorias.asp) en `src/lib/monotributo.ts` (`CATEGORIAS`: tope de ingresos y total mensual de servicios) y actualizar `VIGENCIA_MONOTRIBUTO`. Hoy: valores desde el 1/08/2026.
 
 ## Puesta en marcha (ya hecha; sirve para rehacerla)
 
