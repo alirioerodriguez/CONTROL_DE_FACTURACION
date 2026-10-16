@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Search, Trash2 } from 'lucide-react'
+import { CalendarDays, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { Calendario } from '../../components/Calendario'
 import {
   Alerta, Avatar, Boton, Campo, CampoMonto, Confirmar, Hoja, IC, Pastilla, Segmentado, type Opcion,
 } from '../../components/ui'
@@ -8,7 +9,7 @@ import {
   ETIQUETA_MEDIO, nombreCompleto, useDatos, useGuardar, type Medio, type Paciente,
 } from '../../lib/datos'
 import {
-  capitalizar, formatMonto, formatPeriodo, hoyAR, montoParaInput, normalizar, parseMontoAR, periodoDe,
+  capitalizar, etiquetaDia, formatMonto, formatPeriodo, hoyAR, montoParaInput, normalizar, parseMontoAR, periodoDe,
   redondear2, sumarDias, sumarMeses, type Moneda,
 } from '../../lib/formato'
 import { deudaDe, debeAlgo, saldosDe, textoDeuda } from '../../lib/resumen'
@@ -85,6 +86,7 @@ export function RegistroHoja({
     }
   })
   const [fecha, setFecha] = useState(inicial.fecha)
+  const [verCalendario, setVerCalendario] = useState(false)
   const [horas, setHoras] = useState(inicial.horas)
   const [montoTxt, setMontoTxt] = useState(inicial.monto)
   const [montoTocado, setMontoTocado] = useState(false)
@@ -305,14 +307,35 @@ export function RegistroHoja({
           <Pastilla activa={fecha === sumarDias(hoy, -1)} onClick={() => setFecha(sumarDias(hoy, -1))} alto="h-[46px]">
             Ayer
           </Pastilla>
-          <input
-            type="date"
-            aria-label="Fecha"
-            value={fecha}
-            onChange={(e) => setFecha(e.target.value)}
-            className="h-[46px] min-w-[150px] flex-1 rounded-full border border-line bg-fondo px-3.5"
-          />
+          <button
+            type="button"
+            onClick={() => setVerCalendario((v) => !v)}
+            aria-expanded={verCalendario}
+            className={`flex h-[46px] min-w-[150px] flex-1 items-center justify-center gap-2 rounded-full border px-3.5 text-[15px] font-semibold ${
+              verCalendario || (fecha !== hoy && fecha !== sumarDias(hoy, -1))
+                ? 'border-ink bg-ink text-fondo'
+                : 'border-line bg-surface text-ink'
+            }`}
+          >
+            <CalendarDays {...IC} />
+            {fecha ? etiquetaDia(fecha) : 'Elegir fecha'}
+          </button>
         </div>
+        {verCalendario && (
+          <Calendario
+            valor={fecha}
+            onCambio={(f) => {
+              setFecha(f)
+              setVerCalendario(false)
+            }}
+            marcados={
+              pid
+                ? new Set((esSesion ? sesiones : pagos).filter((x) => x.patient_id === pid).map((x) => x.fecha))
+                : undefined
+            }
+            textoMarcados={esSesion ? `Días con ${pal.sesion} cargada` : 'Días con pago cargado'}
+          />
+        )}
       </div>
 
       {esSesion && pal.porHora && (
