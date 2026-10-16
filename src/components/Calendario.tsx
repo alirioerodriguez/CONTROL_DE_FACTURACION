@@ -33,7 +33,7 @@ export function Calendario({
   ]
 
   return (
-    <div className="rounded-[1.125rem] border border-line bg-surface p-3">
+    <div className="rounded-[1.125rem] border border-line bg-surface p-2">
       <div className="mb-2 flex items-center justify-between">
         <button
           type="button"
@@ -55,7 +55,7 @@ export function Calendario({
           <ChevronRight {...IC} />
         </button>
       </div>
-      <div className="grid grid-cols-7 gap-y-1 text-center">
+      <div className="grid grid-cols-7 gap-0.5 text-center">
         {DIAS.map((d) => (
           <div key={d} className="pb-1 text-xs font-semibold text-ink2 uppercase">
             {d}
@@ -72,7 +72,7 @@ export function Calendario({
               onClick={() => onCambio(f)}
               aria-pressed={elegido}
               aria-label={f.split('-').reverse().join('/')}
-              className={`relative mx-auto grid size-11 place-items-center rounded-full text-base tabular ${
+              className={`relative mx-auto grid aspect-square w-full max-w-11 place-items-center rounded-full text-base tabular ${
                 elegido
                   ? 'bg-acc font-semibold text-on-acc'
                   : esHoy
