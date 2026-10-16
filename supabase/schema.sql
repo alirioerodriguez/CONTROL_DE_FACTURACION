@@ -451,7 +451,7 @@ where not exists (select 1 from public.monotributo_categorias);
 
 -- Revisión diaria de ARCA a las 9 (hora argentina = 12 UTC) con pg_cron + pg_net.
 create extension if not exists pg_cron;
-create extension if not exists pg_net;
+create extension if not exists pg_net schema extensions;
 select cron.unschedule('actualizar-monotributo')
 where exists (select 1 from cron.job where jobname = 'actualizar-monotributo');
 select cron.schedule(
