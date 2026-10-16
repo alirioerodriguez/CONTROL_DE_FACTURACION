@@ -9,6 +9,7 @@ import { NuevaClavePage } from './features/auth/NuevaClavePage'
 import { RecuperarPage } from './features/auth/RecuperarPage'
 import { RegistroPage } from './features/auth/RegistroPage'
 import { PrivacidadPage, TerminosPage } from './features/legal/LegalPage'
+import { ImportarPage } from './features/importar/ImportarPage'
 import { InicioPage } from './features/inicio/InicioPage'
 import { FichaPage } from './features/pacientes/FichaPage'
 import { PacientesPage } from './features/pacientes/PacientesPage'
@@ -52,7 +53,7 @@ export default function App() {
           <Route path="pacientes/:id" element={<FichaPage />} />
           <Route path="mes" element={<EnConstruccion titulo="Reporte del mes" fase={5} />} />
           <Route path="contadora" element={<EnConstruccion titulo="Reporte para contadora" fase={5} />} />
-          <Route path="importar" element={<EnConstruccion titulo="Importar planilla" fase={4} />} />
+          <Route path="importar" element={<ImportarPage />} />
           <Route path="ajustes" element={<AjustesPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

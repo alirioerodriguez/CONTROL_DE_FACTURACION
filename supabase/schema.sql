@@ -212,6 +212,78 @@ create policy payments_all on public.payments
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
 
+-- ---------------------------------------------------------------------
+-- Importación "todo o nada": pacientes, sesiones y pagos en una sola
+-- transacción. Corre con los permisos de quien llama (RLS aplica igual).
+-- Los pacientes y sesiones nuevos traen una "ref" para enlazarse entre sí.
+-- ---------------------------------------------------------------------
+create or replace function public.importar_datos(p_pacientes jsonb, p_sesiones jsonb, p_pagos jsonb)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = ''
+as $
+declare
+  r jsonb;
+  nuevo uuid;
+  refs_pac jsonb := '{}'::jsonb;
+  refs_ses jsonb := '{}'::jsonb;
+  n_pac int := 0;
+  n_ses int := 0;
+  n_pag int := 0;
+begin
+  for r in select * from jsonb_array_elements(coalesce(p_pacientes, '[]'::jsonb)) loop
+    insert into public.patients (
+      codigo, nombre, apellido, dni, cuil_cuit, condicion_iva, telefono, email, domicilio, frecuencia,
+      tipo_tarifa, tarifa_personalizada, moneda, fecha_alta, activo, notas_admin
+    ) values (
+      nullif(r->>'codigo', ''), r->>'nombre', nullif(r->>'apellido', ''), nullif(r->>'dni', ''),
+      nullif(r->>'cuil_cuit', ''), nullif(r->>'condicion_iva', ''), nullif(r->>'telefono', ''),
+      nullif(r->>'email', ''), nullif(r->>'domicilio', ''), nullif(r->>'frecuencia', ''),
+      coalesce(r->>'tipo_tarifa', 'estandar'), (r->>'tarifa_personalizada')::numeric,
+      coalesce(r->>'moneda', 'ARS'),
+      coalesce((r->>'fecha_alta')::date, (now() at time zone 'America/Argentina/Buenos_Aires')::date),
+      coalesce((r->>'activo')::boolean, true), nullif(r->>'notas_admin', '')
+    )
+    returning id into nuevo;
+    refs_pac := refs_pac || jsonb_build_object(r->>'ref', nuevo);
+    n_pac := n_pac + 1;
+  end loop;
+
+  for r in select * from jsonb_array_elements(coalesce(p_sesiones, '[]'::jsonb)) loop
+    insert into public.sessions (patient_id, fecha, horas, tarifa_hora, moneda, observaciones)
+    values (
+      coalesce((r->>'patient_id')::uuid, (refs_pac->>(r->>'paciente_ref'))::uuid),
+      (r->>'fecha')::date, coalesce((r->>'horas')::numeric, 1), (r->>'tarifa_hora')::numeric,
+      r->>'moneda', nullif(r->>'observaciones', '')
+    )
+    returning id into nuevo;
+    if r->>'ref' is not null then
+      refs_ses := refs_ses || jsonb_build_object(r->>'ref', nuevo);
+    end if;
+    n_ses := n_ses + 1;
+  end loop;
+
+  for r in select * from jsonb_array_elements(coalesce(p_pagos, '[]'::jsonb)) loop
+    insert into public.payments (
+      patient_id, fecha, periodo, monto, moneda, medio, comprobante, punto_venta, nro_factura, session_id, observaciones
+    ) values (
+      coalesce((r->>'patient_id')::uuid, (refs_pac->>(r->>'paciente_ref'))::uuid),
+      (r->>'fecha')::date, (r->>'periodo')::date, (r->>'monto')::numeric, r->>'moneda',
+      coalesce(r->>'medio', 'transferencia'), coalesce(r->>'comprobante', 'sin_comprobante'),
+      nullif(r->>'punto_venta', ''), nullif(r->>'nro_factura', ''),
+      (refs_ses->>(r->>'sesion_ref'))::uuid, nullif(r->>'observaciones', '')
+    );
+    n_pag := n_pag + 1;
+  end loop;
+
+  return jsonb_build_object('pacientes', n_pac, 'sesiones', n_ses, 'pagos', n_pag);
+end;
+$;
+
+revoke execute on function public.importar_datos(jsonb, jsonb, jsonb) from public, anon;
+grant execute on function public.importar_datos(jsonb, jsonb, jsonb) to authenticated;
+
 -- Perfiles para usuarias que ya existían antes de correr este script.
 insert into public.profiles (id, email)
 select id, email from auth.users

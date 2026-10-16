@@ -58,5 +58,6 @@ supabase/schema.sql   esquema completo (tablas, RLS, índices)
 src/lib/              formato argentino, saldos, cliente de Supabase
 src/features/         una carpeta por pantalla
 src/components/       piezas de UI compartidas
-docs/                 plantilla de Excel y referencias de diseño
+docs/diseno/          prototipo de Claude Design
+public/               plantilla de Excel para importar
 ```

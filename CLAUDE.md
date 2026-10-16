@@ -27,7 +27,7 @@ Registro abierto: cualquier colega puede crearse una cuenta y ve solo sus datos.
 - Inputs con font-size mínimo de 16px; montos con `inputMode="decimal"`.
 - Responsive real a 390px y 1440px. Estados vacío, cargando y error en cada pantalla.
 - Diseño: seguir el prototipo de Claude Design (verde salvia, esquinas redondeadas, títulos en serif). Referencia en `docs/diseno/`.
-- La importación acepta la estructura de `docs/plantilla-cobros.xlsx` (hojas Pacientes, Sesiones, Pagos; mismos nombres de columna).
+- La importación acepta la estructura de `public/plantilla-cobros.xlsx` (se descarga desde la pantalla Importar) (hojas Pacientes, Sesiones, Pagos; mismos nombres de columna).
 - Antes de cada commit: `npm run build`, `npm run lint` y `npm test` tienen que pasar. Commits chicos, en castellano.
 
 ## Fases
