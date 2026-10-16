@@ -10,11 +10,11 @@ import {
   completarPlantilla, formatMonto, montoParaInput, parseMontoAR, PLANTILLA_WHATSAPP_DEFECTO, type Moneda,
 } from '../../lib/formato'
 import { mensajeError, supabase } from '../../lib/supabase'
-import { cambiarTema, temaActual, type Tema } from '../../lib/tema'
+import { cambiarLetra, cambiarTema, letraActual, TAMANOS_LETRA, temaActual, type Tema } from '../../lib/tema'
 import { useAuth } from '../auth/AuthProvider'
 import { CamposProfesion } from '../tutorial/Bienvenida'
 import { useTutorial } from '../tutorial/Tutorial'
-import { palabras, PROFESIONES, type ModoCobro, type Termino } from '../../lib/terminos'
+import { etiquetaProfesion, palabras, PROFESIONES, type ModoCobro, type Termino } from '../../lib/terminos'
 
 export function AjustesPage() {
   const { session } = useAuth()
@@ -33,10 +33,22 @@ export function AjustesPage() {
   const [otra, setOtra] = useState('')
   const [termino, setTermino] = useState<Termino>('sesion')
   const [modo, setModo] = useState<ModoCobro>('hora')
+  const [editandoProfesion, setEditandoProfesion] = useState(false)
+  const [letra, setLetra] = useState(letraActual())
   const [borrar, setBorrar] = useState(false)
   const [textoBorrar, setTextoBorrar] = useState('')
   const [borrando, setBorrando] = useState(false)
   const pal = palabras(termino, modo)
+
+  function cargarProfesion() {
+    if (!perfil.data) return
+    const prof = perfil.data.profesion ?? ''
+    const conocida = PROFESIONES.some((x) => x.v === prof)
+    setProfesion(prof && !conocida ? 'otra' : prof)
+    setOtra(prof && !conocida && prof !== 'otra' ? prof : '')
+    setTermino(perfil.data.termino)
+    setModo(perfil.data.modo_cobro)
+  }
 
   useEffect(() => {
     if (!perfil.data) return
@@ -44,12 +56,8 @@ export function AjustesPage() {
     setTarifaTxt(perfil.data.tarifa_estandar ? montoParaInput(perfil.data.tarifa_estandar) : '')
     setMoneda(perfil.data.moneda_default)
     setPlantilla(perfil.data.plantilla_whatsapp || PLANTILLA_WHATSAPP_DEFECTO)
-    const prof = perfil.data.profesion ?? ''
-    const conocida = PROFESIONES.some((x) => x.v === prof)
-    setProfesion(prof && !conocida ? 'otra' : prof)
-    setOtra(prof && !conocida && prof !== 'otra' ? prof : '')
-    setTermino(perfil.data.termino)
-    setModo(perfil.data.modo_cobro)
+    cargarProfesion()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [perfil.data])
 
   if (perfil.isPending) return <Esqueleto que="los ajustes" />
@@ -99,6 +107,7 @@ export function AjustesPage() {
       await guardar.mutateAsync([
         { tipo: 'actualizar', tabla: 'profiles', id: perfil.data!.id, cambios: { profesion: valor, termino, modo_cobro: modo } },
       ])
+      setEditandoProfesion(false)
       toast.success(`Listo: ${pal.sesiones}, cobro ${pal.porUnidad}`)
     } catch (e) {
       toast.error(`No se pudo guardar: ${mensajeError(e)}`)
@@ -133,38 +142,100 @@ export function AjustesPage() {
   const fila = 'flex h-16 w-full items-center justify-between gap-3 bg-transparent p-0 text-base font-semibold'
 
   return (
-    <section className="flex max-w-[720px] flex-col gap-4">
-      <h1 className="m-0 mb-2 font-serif text-[clamp(38px,5cqi,52px)] leading-none font-normal">Ajustes</h1>
+    <section className="flex max-w-[45rem] flex-col gap-4">
+      <h1 className="m-0 mb-2 font-serif text-[clamp(2.375rem,5cqi,3.25rem)] leading-none font-normal">Ajustes</h1>
 
-      <Tarjeta className="flex flex-col gap-[18px] p-[22px]">
-        <h2 className="m-0 text-lg font-semibold">Tu profesión</h2>
-        <CamposProfesion
-          profesion={profesion}
-          setProfesion={setProfesion}
-          otra={otra}
-          setOtra={setOtra}
-          termino={termino}
-          setTermino={setTermino}
-          modo={modo}
-          setModo={setModo}
-        />
-        <Boton alto="h-[50px]" className="self-start" cargando={guardar.isPending} onClick={guardarProfesion}>
-          Guardar profesión
-        </Boton>
+      <Tarjeta className="flex flex-col gap-[1.125rem] p-[1.375rem]">
+        <h2 className="m-0 text-lg font-semibold">Tamaño de letra</h2>
+        <p className="m-0 text-[0.9375rem] leading-normal text-ink2">
+          Agrandá todo para leer más cómodo. Se guarda en este dispositivo.
+        </p>
+        <div role="radiogroup" aria-label="Tamaño de letra" className="grid grid-cols-5 gap-2">
+          {TAMANOS_LETRA.map((t) => (
+            <button
+              key={t.n}
+              type="button"
+              role="radio"
+              aria-checked={letra === t.n}
+              aria-label={t.nombre}
+              title={t.nombre}
+              onClick={() => {
+                cambiarLetra(t.n)
+                setLetra(t.n)
+              }}
+              className={`flex h-16 items-center justify-center rounded-2xl border font-serif leading-none ${
+                letra === t.n ? 'border-ink bg-ink text-fondo' : 'border-line bg-surface text-ink hover:bg-surface2'
+              }`}
+              style={{ fontSize: `${1 + t.n * 0.25}rem` }}
+            >
+              A
+            </button>
+          ))}
+        </div>
+        <div className="text-base font-semibold">{TAMANOS_LETRA[letra - 1]?.nombre}</div>
       </Tarjeta>
 
-      <Tarjeta className="flex flex-col gap-[18px] p-[22px]">
+      <Tarjeta className="flex flex-col gap-[1.125rem] p-[1.375rem]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="m-0 text-lg font-semibold">Tu profesión</h2>
+          {perfil.data?.profesion && !editandoProfesion && (
+            <Boton variante="suave" alto="h-11" className="px-4" onClick={() => setEditandoProfesion(true)}>
+              Cambiar
+            </Boton>
+          )}
+        </div>
+        {perfil.data?.profesion && !editandoProfesion ? (
+          <div className="flex flex-col gap-1">
+            <div className="text-xl font-semibold first-letter:uppercase">{etiquetaProfesion(perfil.data.profesion)}</div>
+            <div className="text-[0.9375rem] text-ink2">
+              Le decís «{palGuardado.sesion}» a cada encuentro · Cobrás {palGuardado.porUnidad}
+            </div>
+          </div>
+        ) : (
+          <>
+            <CamposProfesion
+              profesion={profesion}
+              setProfesion={setProfesion}
+              otra={otra}
+              setOtra={setOtra}
+              termino={termino}
+              setTermino={setTermino}
+              modo={modo}
+              setModo={setModo}
+            />
+            <div className="flex flex-wrap gap-2">
+              <Boton alto="h-[3.125rem]" cargando={guardar.isPending} onClick={guardarProfesion}>
+                Guardar profesión
+              </Boton>
+              {perfil.data?.profesion && (
+                <Boton
+                  variante="suave"
+                  alto="h-[3.125rem]"
+                  onClick={() => {
+                    cargarProfesion()
+                    setEditandoProfesion(false)
+                  }}
+                >
+                  Cancelar
+                </Boton>
+              )}
+            </div>
+          </>
+        )}
+      </Tarjeta>
+
+      <Tarjeta className="flex flex-col gap-[1.125rem] p-[1.375rem]">
         <h2 className="m-0 text-lg font-semibold">Cobros por defecto</h2>
-        <label data-tour="tarifa" className="flex flex-col gap-2 text-[15px] font-semibold">
+        <label data-tour="tarifa" className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
           Tarifa estándar {palGuardado.porUnidad}
-          <div className="flex h-14 items-center gap-2 rounded-[14px] border border-line bg-fondo px-4 focus-within:border-acc">
+          <div className="flex h-14 items-center gap-2 rounded-[0.875rem] border border-line bg-fondo px-4 focus-within:border-acc">
             <span className="text-xl font-medium text-ink2">{moneda === 'USD' ? 'US$' : '$'}</span>
             <input
               inputMode="decimal"
               value={tarifaTxt}
               placeholder="0"
               onChange={(e) => setTarifaTxt(e.target.value.replace(/[^\d.,]/g, ''))}
-              className="min-w-0 flex-1 border-none bg-transparent text-[22px] font-semibold tabular outline-none"
+              className="min-w-0 flex-1 border-none bg-transparent text-[1.375rem] font-semibold tabular outline-none"
             />
           </div>
           <span className="text-sm font-normal text-ink2">
@@ -173,7 +244,7 @@ export function AjustesPage() {
               : 'Los pacientes con tarifa estándar usan este valor.'}
           </span>
         </label>
-        <div className="flex flex-col gap-2 text-[15px] font-semibold">
+        <div className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
           Moneda
           <Segmentado
             opciones={[
@@ -182,48 +253,48 @@ export function AjustesPage() {
             ]}
             valor={moneda}
             onCambio={setMoneda}
-            className="max-w-[280px]"
+            className="max-w-[17.5rem]"
           />
         </div>
         <Campo etiqueta="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Lic. Ana Martínez" />
-        <label className="flex flex-col gap-2 text-[15px] font-semibold">
+        <label className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
           Mensaje de recordatorio por WhatsApp
           <textarea
             value={plantilla}
             rows={3}
             maxLength={500}
             onChange={(e) => setPlantilla(e.target.value)}
-            className="rounded-[14px] border border-line bg-fondo px-4 py-3 text-base font-normal outline-none focus:border-acc"
+            className="rounded-[0.875rem] border border-line bg-fondo px-4 py-3 text-base font-normal outline-none focus:border-acc"
           />
           <span className="text-sm font-normal text-ink2">
             Usá {'{nombre}'}, {'{mes}'} y {'{monto}'}. Así queda: “
             {completarPlantilla(plantilla, { nombre: 'Lucía', mes: 'octubre', monto: '$ 50.000,00' })}”
           </span>
         </label>
-        <Boton alto="h-[50px]" className="self-start" cargando={guardar.isPending} onClick={guardarCobros}>
+        <Boton alto="h-[3.125rem]" className="self-start" cargando={guardar.isPending} onClick={guardarCobros}>
           Guardar cambios
         </Boton>
       </Tarjeta>
 
-      <Tarjeta className="px-[22px] py-2">
+      <Tarjeta className="px-[1.375rem] py-2">
         <button type="button" role="switch" aria-checked={tema === 'dark'} onClick={alternarTema} className={fila}>
           <span className="flex items-center gap-3">
             <Moon {...IC} />
             Modo oscuro
           </span>
           <span
-            className={`flex h-8 w-[52px] rounded-full p-[3px] transition-colors ${
+            className={`flex h-8 w-[3.25rem] rounded-full p-[0.1875rem] transition-colors ${
               tema === 'dark' ? 'justify-end bg-acc' : 'justify-start bg-line'
             }`}
           >
-            <span className="size-[26px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,.25)]" />
+            <span className="size-[1.625rem] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,.25)]" />
           </span>
         </button>
       </Tarjeta>
 
-      <Tarjeta className="flex flex-col gap-3 p-[22px]">
+      <Tarjeta className="flex flex-col gap-3 p-[1.375rem]">
         <h2 className="m-0 text-lg font-semibold">Tus datos en Excel</h2>
-        <p className="m-0 text-[15px] leading-normal text-ink2">
+        <p className="m-0 text-[0.9375rem] leading-normal text-ink2">
           Descargá todo (pacientes, sesiones y pagos) como copia de seguridad. El archivo tiene el mismo formato que la plantilla:
           podés completarlo o corregirlo en Excel y volver a subirlo desde Importar, sin que se dupliquen datos.
         </p>
@@ -233,7 +304,7 @@ export function AjustesPage() {
         </div>
       </Tarjeta>
 
-      <Tarjeta className="px-[22px] py-2">
+      <Tarjeta className="px-[1.375rem] py-2">
         <button type="button" onClick={iniciarTutorial} className={fila}>
           <span className="flex items-center gap-3">
             <Sparkles {...IC} />
@@ -257,7 +328,7 @@ export function AjustesPage() {
         </button>
       </Tarjeta>
 
-      <Tarjeta className="px-[22px] py-2">
+      <Tarjeta className="px-[1.375rem] py-2">
         <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 text-base">
           <span className="text-ink2">Cuenta</span>
           <span className="flex min-w-0 items-center gap-2.5 font-semibold break-all">
@@ -294,14 +365,14 @@ export function AjustesPage() {
             Se borran tu cuenta, tus pacientes, sesiones y pagos. <strong className="text-ink">No se puede deshacer.</strong>
           </p>
           <p className="mt-3 mb-0">Si querés guardar una copia, descargá antes tus datos en Excel desde «Tus datos en Excel».</p>
-          <label className="mt-4 flex flex-col gap-2 text-[15px] font-semibold text-ink">
+          <label className="mt-4 flex flex-col gap-2 text-[0.9375rem] font-semibold text-ink">
             Para confirmar, escribí ELIMINAR
             <input
               value={textoBorrar}
               onChange={(e) => setTextoBorrar(e.target.value)}
               autoCapitalize="characters"
               autoComplete="off"
-              className="h-[54px] w-full rounded-[14px] border border-line bg-surface px-4 text-[17px] font-normal outline-none focus:border-acc"
+              className="h-[3.375rem] w-full rounded-[0.875rem] border border-line bg-surface px-4 text-[1.0625rem] font-normal outline-none focus:border-acc"
             />
           </label>
         </Confirmar>

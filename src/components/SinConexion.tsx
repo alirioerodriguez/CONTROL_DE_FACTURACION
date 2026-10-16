@@ -23,7 +23,7 @@ export function SinConexion() {
   return (
     <div
       role="alert"
-      className="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-2 bg-warn-soft px-4 pt-[max(10px,env(safe-area-inset-top))] pb-2.5 text-center text-[15px] font-semibold text-warn"
+      className="fixed inset-x-0 top-0 z-50 flex items-center justify-center gap-2 bg-warn-soft px-4 pt-[max(0.625rem,env(safe-area-inset-top))] pb-2.5 text-center text-[0.9375rem] font-semibold text-warn"
     >
       <WifiOff {...IC} className="shrink-0" />
       Sin conexión a internet. Podés mirar, pero no se puede cargar nada hasta que vuelva.

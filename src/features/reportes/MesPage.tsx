@@ -18,7 +18,7 @@ const PUNTO: Record<EstadoSesion, string> = {
   pendiente: 'bg-bad-soft text-bad',
 }
 const TEXTO_ESTADO: Record<EstadoSesion, string> = { pagada: 'Pagada', parcial: 'Parcial', pendiente: 'Pendiente' }
-const COLUMNAS = 'grid-cols-[minmax(190px,1.5fr)_minmax(220px,2fr)_repeat(3,minmax(120px,1fr))]'
+const COLUMNAS = 'grid-cols-[minmax(11.875rem,1.5fr)_minmax(13.75rem,2fr)_repeat(3,minmax(7.5rem,1fr))]'
 
 export function MesPage() {
   const { pacientes, sesiones, pagos, cargando, error, reintentar } = useDatos()
@@ -48,7 +48,7 @@ export function MesPage() {
   return (
     <section className="flex flex-col gap-6">
       <div data-tour="reporte-mes" className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className="m-0 font-serif text-[clamp(38px,5cqi,52px)] leading-none font-normal">Reporte del mes</h1>
+        <h1 className="m-0 font-serif text-[clamp(2.375rem,5cqi,3.25rem)] leading-none font-normal">Reporte del mes</h1>
         <div className="flex flex-wrap gap-2.5">
           <SelectorMes periodo={periodo} onCambio={setPeriodo} />
           <Boton variante="borde" icono={FileSpreadsheet} onClick={() => navegar('/contadora')}>
@@ -65,7 +65,7 @@ export function MesPage() {
           icono={Calendar}
           titulo={`No hubo ${pal.sesiones} en ${nombreMes(periodo)}`}
           acciones={
-            <Boton icono={Plus} alto="h-[50px]" onClick={() => abrir({ modo: 'sesion' })}>
+            <Boton icono={Plus} alto="h-[3.125rem]" onClick={() => abrir({ modo: 'sesion' })}>
               Registrar {pal.sesion}
             </Boton>
           }
@@ -74,18 +74,18 @@ export function MesPage() {
         </EstadoVacio>
       ) : (
         <>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-3">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,20rem),1fr))] gap-3">
             {r.totales.map((t) => {
               const pct = t.facturado ? Math.round((t.cobrado / t.facturado) * 100) : 0
               return (
-                <Tarjeta key={t.moneda} className="flex flex-col gap-3.5 p-[22px]">
-                  <div className="flex justify-between text-[15px] font-medium text-ink2">
+                <Tarjeta key={t.moneda} className="flex flex-col gap-3.5 p-[1.375rem]">
+                  <div className="flex justify-between text-[0.9375rem] font-medium text-ink2">
                     <span>{t.moneda === 'ARS' ? 'Pesos · ARS' : 'Dólares · USD'}</span>
                     <span>{plural(t.sesiones, pal.sesion, pal.sesiones)}</span>
                   </div>
                   <div>
                     <div className="mb-1.5 text-sm text-ink2">Cobrado</div>
-                    <MontoGrande monto={t.cobrado} moneda={t.moneda} className="text-[clamp(32px,4cqi,42px)]" />
+                    <MontoGrande monto={t.cobrado} moneda={t.moneda} className="text-[clamp(2rem,4cqi,2.625rem)]" />
                   </div>
                   <div
                     className="h-2.5 overflow-hidden rounded-full bg-bad-soft"
@@ -96,7 +96,7 @@ export function MesPage() {
                   >
                     <div className="h-full rounded-full bg-acc" style={{ width: `${pct}%` }} />
                   </div>
-                  <div className="flex flex-wrap justify-between gap-3 text-[15px]">
+                  <div className="flex flex-wrap justify-between gap-3 text-[0.9375rem]">
                     <span className="text-ink2">de {formatMonto(t.facturado, t.moneda)} facturado</span>
                     <span className="font-semibold text-bad">Pendiente {formatMonto(t.pendiente, t.moneda)}</span>
                   </div>
@@ -107,8 +107,8 @@ export function MesPage() {
 
           <Tarjeta className="overflow-hidden">
             <div className="overflow-x-auto">
-              <div className="min-w-[720px]">
-                <div className={`grid ${COLUMNAS} gap-3 border-b border-line px-[22px] py-4 text-[13px] font-bold tracking-[.06em] text-ink2 uppercase`}>
+              <div className="min-w-[45rem]">
+                <div className={`grid ${COLUMNAS} gap-3 border-b border-line px-[1.375rem] py-4 text-[0.8125rem] font-bold tracking-[.06em] text-ink2 uppercase`}>
                   <div>Paciente</div>
                   <div>{pal.Sesiones}</div>
                   <div className="text-right">Facturado</div>
@@ -120,10 +120,10 @@ export function MesPage() {
                     key={`${f.paciente.id}-${f.moneda}`}
                     type="button"
                     onClick={() => navegar(`/pacientes/${f.paciente.id}`)}
-                    className={`grid w-full ${COLUMNAS} items-center gap-3 border-b border-line px-[22px] py-3.5 text-left text-base tabular hover:bg-surface2`}
+                    className={`grid w-full ${COLUMNAS} items-center gap-3 border-b border-line px-[1.375rem] py-3.5 text-left text-base tabular hover:bg-surface2`}
                   >
                     <div className="flex min-w-0 items-center gap-2.5">
-                      <Avatar nombre={f.nombre} className="size-9 text-[13px]" />
+                      <Avatar nombre={f.nombre} className="size-9 text-[0.8125rem]" />
                       <span className="truncate font-semibold">{f.nombre}</span>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
@@ -131,7 +131,7 @@ export function MesPage() {
                         <span
                           key={s.fecha}
                           title={`${etiquetaDia(s.fecha)} · ${TEXTO_ESTADO[s.estado]}`}
-                          className={`grid size-[34px] place-items-center rounded-full text-[13px] font-bold ${PUNTO[s.estado]}`}
+                          className={`grid size-[2.125rem] place-items-center rounded-full text-[0.8125rem] font-bold ${PUNTO[s.estado]}`}
                         >
                           {Number(s.fecha.slice(8))}
                         </span>
@@ -145,7 +145,7 @@ export function MesPage() {
                   </button>
                 ))}
                 {r.totales.map((t) => (
-                  <div key={t.moneda} className={`grid ${COLUMNAS} gap-3 bg-surface2 px-[22px] py-4 text-base font-bold tabular`}>
+                  <div key={t.moneda} className={`grid ${COLUMNAS} gap-3 bg-surface2 px-[1.375rem] py-4 text-base font-bold tabular`}>
                     <div>Total {t.moneda}</div>
                     <div className="font-medium text-ink2">{plural(t.sesiones, pal.sesion, pal.sesiones)}</div>
                     <div className="text-right">{formatMonto(t.facturado, t.moneda)}</div>
@@ -157,7 +157,7 @@ export function MesPage() {
             </div>
           </Tarjeta>
 
-          <div className="flex flex-wrap gap-[18px] text-sm text-ink2">
+          <div className="flex flex-wrap gap-[1.125rem] text-sm text-ink2">
             {(['pagada', 'parcial', 'pendiente'] as const).map((e) => (
               <span key={e} className="flex items-center gap-2">
                 <span

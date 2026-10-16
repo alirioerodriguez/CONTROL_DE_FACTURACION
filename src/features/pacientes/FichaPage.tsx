@@ -105,15 +105,15 @@ export function FichaPage() {
         Pacientes
       </button>
 
-      <div className="flex flex-col gap-6 rounded-[26px] border border-line bg-surface p-[clamp(20px,3cqi,32px)]">
+      <div className="flex flex-col gap-6 rounded-[1.625rem] border border-line bg-surface p-[clamp(1.25rem,3cqi,2rem)]">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div className="flex min-w-0 items-center gap-4">
             <Avatar nombre={nombre} className="size-16 text-xl" />
             <div className="min-w-0">
-              <h1 className="m-0 font-serif text-[clamp(32px,4.5cqi,46px)] leading-[1.05] font-normal">{nombre}</h1>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-[15px] text-ink2">
+              <h1 className="m-0 font-serif text-[clamp(2rem,4.5cqi,2.875rem)] leading-[1.05] font-normal">{nombre}</h1>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.9375rem] text-ink2">
                 <span
-                  className={`inline-flex h-[26px] items-center rounded-full px-2.5 text-[13px] font-bold ${
+                  className={`inline-flex h-[1.625rem] items-center rounded-full px-2.5 text-[0.8125rem] font-bold ${
                     paciente.activo ? 'bg-acc-soft text-acc-strong' : 'bg-surface2 text-ink2'
                   }`}
                 >
@@ -124,7 +124,7 @@ export function FichaPage() {
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <div className="text-[15px] font-medium text-ink2">Saldo</div>
+            <div className="text-[0.9375rem] font-medium text-ink2">Saldo</div>
             {debe ? (
               <>
                 {(['ARS', 'USD'] as const)
@@ -134,7 +134,7 @@ export function FichaPage() {
                       key={m}
                       monto={calculos.deuda[m]}
                       moneda={m}
-                      className="text-[clamp(38px,5cqi,54px)] tracking-[-0.03em] text-bad"
+                      className="text-[clamp(2.375rem,5cqi,3.375rem)] tracking-[-0.03em] text-bad"
                       colorDecimales="text-bad"
                     />
                   ))}
@@ -142,7 +142,7 @@ export function FichaPage() {
               </>
             ) : (
               <>
-                <div className="num text-[clamp(38px,5cqi,54px)] tracking-[-0.03em] text-acc-strong">Al día</div>
+                <div className="num text-[clamp(2.375rem,5cqi,3.375rem)] tracking-[-0.03em] text-acc-strong">Al día</div>
                 <div className="text-sm text-ink2">
                   {monedasAFavor.length
                     ? `A favor ${monedasAFavor.map((m) => formatMonto(calculos.aFavor[m], m)).join(' + ')}`
@@ -152,15 +152,15 @@ export function FichaPage() {
             )}
           </div>
         </div>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
-          <Boton alto="h-[54px]" icono={Calendar} onClick={() => abrir({ modo: 'sesion', pacienteId: paciente.id })}>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(12.5rem,1fr))] gap-2.5">
+          <Boton alto="h-[3.375rem]" icono={Calendar} onClick={() => abrir({ modo: 'sesion', pacienteId: paciente.id })}>
             Registrar {pal.sesion}
           </Boton>
-          <Boton variante="suave" alto="h-[54px]" icono={Banknote} onClick={() => abrir({ modo: 'pago', pacienteId: paciente.id })}>
+          <Boton variante="suave" alto="h-[3.375rem]" icono={Banknote} onClick={() => abrir({ modo: 'pago', pacienteId: paciente.id })}>
             Registrar pago
           </Boton>
           {paciente.dias_semana.length > 0 && (
-            <Boton variante="borde" alto="h-[54px]" icono={CalendarPlus} onClick={() => setGenerando(true)}>
+            <Boton variante="borde" alto="h-[3.375rem]" icono={CalendarPlus} onClick={() => setGenerando(true)}>
               Cargar {pal.sesiones} del mes
             </Boton>
           )}
@@ -168,7 +168,7 @@ export function FichaPage() {
       </div>
 
       <div className="flex flex-wrap items-start gap-4">
-        <Tarjeta className="min-w-0 flex-[2_1_440px] p-2">
+        <Tarjeta className="min-w-0 flex-[2_1_27.5rem] p-2">
           <h2 className="m-0 px-3.5 pt-3.5 pb-1 text-xl font-semibold">Historial</h2>
           {calculos.grupos.length === 0 ? (
             <div className="px-5 pt-10 pb-12 text-center text-base leading-normal text-ink2">
@@ -182,7 +182,7 @@ export function FichaPage() {
           )}
         </Tarjeta>
 
-        <Tarjeta className="flex min-w-0 flex-[1_1_260px] flex-col gap-1 p-[22px]">
+        <Tarjeta className="flex min-w-0 flex-[1_1_16.25rem] flex-col gap-1 p-[1.375rem]">
           <div className="mb-2 flex items-center justify-between gap-2">
             <h2 className="m-0 text-xl font-semibold">Datos</h2>
             <Boton variante="texto" alto="h-10" icono={Pencil} className="px-3" onClick={() => abrir({ modo: 'paciente', paciente })}>
@@ -246,7 +246,7 @@ function GrupoMes({ periodo, items, cubierto }: { periodo: string; items: Movimi
               onClick={() => abrir({ modo: 'editar-sesion', sesion: s })}
               className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-left hover:bg-surface2"
             >
-              <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-surface2 text-[15px] text-ink2">
+              <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-surface2 text-[0.9375rem] text-ink2">
                 <Calendar {...IC} />
               </div>
               <div className="min-w-0 flex-1">
@@ -272,7 +272,7 @@ function GrupoMes({ periodo, items, cubierto }: { periodo: string; items: Movimi
             onClick={() => abrir({ modo: 'editar-pago', pago: p })}
             className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-left hover:bg-surface2"
           >
-            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-acc-soft text-[15px] text-acc-strong">
+            <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-acc-soft text-[0.9375rem] text-acc-strong">
               <Banknote {...IC} />
             </div>
             <div className="min-w-0 flex-1">
@@ -352,7 +352,7 @@ function GenerarSesiones({ paciente, tarifa, onCerrar }: { paciente: Paciente; t
               {fechas.map((f) => (
                 <span
                   key={f}
-                  className={`inline-flex h-9 items-center rounded-full px-3 text-[15px] font-semibold ${
+                  className={`inline-flex h-9 items-center rounded-full px-3 text-[0.9375rem] font-semibold ${
                     yaCargadas.has(f) ? 'bg-surface2 text-ink2 line-through' : 'bg-acc-soft text-acc-strong'
                   }`}
                 >

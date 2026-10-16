@@ -248,7 +248,7 @@ export function RegistroHoja({
       )}
 
       <div className="flex flex-col gap-2.5">
-        <div className="text-[15px] font-semibold">Paciente</div>
+        <div className="text-[0.9375rem] font-semibold">Paciente</div>
         {paciente ? (
           <div className="flex items-center gap-3 rounded-2xl bg-acc-soft px-3 py-2.5">
             <Avatar nombre={nombreCompleto(paciente)} className="size-10 bg-surface text-sm" />
@@ -257,14 +257,14 @@ export function RegistroHoja({
               <div className="truncate text-sm text-ink2">{resumenPaciente}</div>
             </div>
             {!editando && (
-              <button type="button" onClick={() => setPid(null)} className="p-2 text-[15px] font-semibold text-acc-strong">
+              <button type="button" onClick={() => setPid(null)} className="p-2 text-[0.9375rem] font-semibold text-acc-strong">
                 Cambiar
               </button>
             )}
           </div>
         ) : (
           <>
-            <label className="flex h-[50px] items-center gap-2.5 rounded-[14px] border border-line bg-fondo px-4 text-[17px] text-ink2 focus-within:border-acc">
+            <label className="flex h-[3.125rem] items-center gap-2.5 rounded-[0.875rem] border border-line bg-fondo px-4 text-[1.0625rem] text-ink2 focus-within:border-acc">
               <Search {...IC} />
               <input
                 value={busqueda}
@@ -281,16 +281,16 @@ export function RegistroHoja({
                     key={p.id}
                     type="button"
                     onClick={() => elegir(p)}
-                    className="flex h-11 items-center gap-2 rounded-full border border-line bg-surface pr-3.5 pl-[5px] text-[15px] font-semibold hover:border-acc hover:bg-acc-soft"
+                    className="flex h-11 items-center gap-2 rounded-full border border-line bg-surface pr-3.5 pl-[0.3125rem] text-[0.9375rem] font-semibold hover:border-acc hover:bg-acc-soft"
                   >
-                    <Avatar nombre={nombreCompleto(p)} className="size-[34px] text-xs" />
+                    <Avatar nombre={nombreCompleto(p)} className="size-[2.125rem] text-xs" />
                     {partes[0]} {partes[1] ? `${partes[1][0]}.` : ''}
                   </button>
                 )
               })}
             </div>
             {candidatos.length === 0 && (
-              <div className="text-[15px] text-ink2">
+              <div className="text-[0.9375rem] text-ink2">
                 {pacientes.length ? 'No hay pacientes con ese nombre.' : 'Todavía no cargaste pacientes.'}
               </div>
             )}
@@ -299,19 +299,19 @@ export function RegistroHoja({
       </div>
 
       <div className="flex flex-col gap-2.5">
-        <div className="text-[15px] font-semibold">Fecha</div>
+        <div className="text-[0.9375rem] font-semibold">Fecha</div>
         <div className="flex flex-wrap gap-2">
-          <Pastilla activa={fecha === hoy} onClick={() => setFecha(hoy)} alto="h-[46px]">
+          <Pastilla activa={fecha === hoy} onClick={() => setFecha(hoy)} alto="h-[2.875rem]">
             Hoy
           </Pastilla>
-          <Pastilla activa={fecha === sumarDias(hoy, -1)} onClick={() => setFecha(sumarDias(hoy, -1))} alto="h-[46px]">
+          <Pastilla activa={fecha === sumarDias(hoy, -1)} onClick={() => setFecha(sumarDias(hoy, -1))} alto="h-[2.875rem]">
             Ayer
           </Pastilla>
           <button
             type="button"
             onClick={() => setVerCalendario((v) => !v)}
             aria-expanded={verCalendario}
-            className={`flex h-[46px] min-w-[150px] flex-1 items-center justify-center gap-2 rounded-full border px-3.5 text-[15px] font-semibold ${
+            className={`flex h-[2.875rem] min-w-[9.375rem] flex-1 items-center justify-center gap-2 rounded-full border px-3.5 text-[0.9375rem] font-semibold ${
               verCalendario || (fecha !== hoy && fecha !== sumarDias(hoy, -1))
                 ? 'border-ink bg-ink text-fondo'
                 : 'border-line bg-surface text-ink'
@@ -340,13 +340,13 @@ export function RegistroHoja({
 
       {esSesion && pal.porHora && (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-[15px] font-semibold">Duración</div>
-          <Segmentado opciones={opcionesHoras(horas)} valor={horas} onCambio={cambiarHoras} className="min-w-[200px]" alto="h-10" />
+          <div className="text-[0.9375rem] font-semibold">Duración</div>
+          <Segmentado opciones={opcionesHoras(horas)} valor={horas} onCambio={cambiarHoras} className="min-w-[12.5rem]" alto="h-10" />
         </div>
       )}
 
       <div className="flex flex-col gap-2.5">
-        <div className="text-[15px] font-semibold">Monto</div>
+        <div className="text-[0.9375rem] font-semibold">Monto</div>
         <div className="flex items-stretch gap-2.5">
           <CampoMonto
             grande
@@ -362,7 +362,7 @@ export function RegistroHoja({
             opciones={MONEDAS}
             valor={moneda}
             onCambio={setMoneda}
-            className="w-[124px] shrink-0"
+            className="w-[7.75rem] shrink-0"
             alto="h-full"
             redondeo="rounded-xl"
           />
@@ -371,7 +371,7 @@ export function RegistroHoja({
 
       {esSesion && !editando && (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-[15px] font-semibold">¿Ya la pagó?</div>
+          <div className="text-[0.9375rem] font-semibold">¿Ya la pagó?</div>
           <Segmentado
             opciones={[
               { v: true, l: 'Sí' },
@@ -379,7 +379,7 @@ export function RegistroHoja({
             ]}
             valor={pagado}
             onCambio={setPagado}
-            className="w-[180px]"
+            className="w-[11.25rem]"
             alto="h-10"
           />
         </div>
@@ -387,19 +387,19 @@ export function RegistroHoja({
 
       {(!esSesion || pagado) && (
         <div className="flex flex-col gap-2.5">
-          <div className="text-[15px] font-semibold">Medio de pago</div>
+          <div className="text-[0.9375rem] font-semibold">Medio de pago</div>
           <Segmentado opciones={MEDIOS} valor={medio} onCambio={setMedio} className="[&>button]:text-sm [&>button]:leading-tight [&>button]:whitespace-normal" />
         </div>
       )}
 
       {!esSesion && (
         <>
-          <label className="flex flex-col gap-2 text-[15px] font-semibold">
+          <label className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
             Mes que paga
             <select
               value={periodo}
               onChange={(e) => setPeriodo(e.target.value)}
-              className="h-[50px] rounded-[14px] border border-line bg-fondo px-3.5 font-normal"
+              className="h-[3.125rem] rounded-[0.875rem] border border-line bg-fondo px-3.5 font-normal"
             >
               {meses.map((m) => (
                 <option key={m} value={m}>
@@ -420,7 +420,7 @@ export function RegistroHoja({
 
       {error && <Alerta>{error}</Alerta>}
 
-      <Boton alto="h-[58px]" className="shrink-0 text-[17px]" cargando={guardar.isPending} onClick={guardarTodo}>
+      <Boton alto="h-[3.625rem]" className="shrink-0 text-[1.0625rem]" cargando={guardar.isPending} onClick={guardarTodo}>
         {guardar.isPending ? 'Guardando…' : textoBoton}
       </Boton>
       {editando && (

@@ -14,6 +14,25 @@ export function cambiarTema(tema: Tema) {
   }
 }
 
+/** Tamaño de letra: 1 (normal) a 5. Todo está en rem, así que la app entera escala. */
+export const TAMANOS_LETRA = [
+  { n: 1, nombre: 'Normal', escala: '100%' },
+  { n: 2, nombre: 'Grande', escala: '112.5%' },
+  { n: 3, nombre: 'Más grande', escala: '125%' },
+  { n: 4, nombre: 'Muy grande', escala: '137.5%' },
+  { n: 5, nombre: 'Enorme', escala: '150%' },
+] as const
+
+export function letraActual(): number {
+  return Number(preferencia('letra', '1')) || 1
+}
+
+export function cambiarLetra(n: number) {
+  const t = TAMANOS_LETRA.find((x) => x.n === n) ?? TAMANOS_LETRA[0]
+  document.documentElement.style.fontSize = t.n === 1 ? '' : t.escala
+  guardarPreferencia('letra', String(t.n))
+}
+
 /** Lee y guarda una preferencia chica del navegador (por ej. el último medio de pago). */
 export function preferencia<T extends string>(clave: string, porDefecto: T): T {
   try {

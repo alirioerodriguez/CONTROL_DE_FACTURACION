@@ -21,6 +21,9 @@
         var t = localStorage.getItem('tema')
         if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
         document.documentElement.dataset.theme = t
+        // Tamaño de letra elegido en Ajustes (todo escala con él).
+        var l = { 1: '100%', 2: '112.5%', 3: '125%', 4: '137.5%', 5: '150%' }[localStorage.getItem('letra')]
+        if (l) document.documentElement.style.fontSize = l
       } catch (e) {}
     </script>
   </head>

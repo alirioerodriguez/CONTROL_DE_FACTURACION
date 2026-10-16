@@ -85,7 +85,7 @@ export function Layout() {
           type="button"
           data-tour="registrar"
           onClick={() => abrir({ modo: 'sesion' })}
-          className="flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-full bg-acc text-base font-semibold text-on-acc hover:bg-acc-strong"
+          className="flex h-[3.25rem] shrink-0 items-center justify-center gap-2 rounded-full bg-acc text-base font-semibold text-on-acc hover:bg-acc-strong"
         >
           <Plus {...IC} />
           Registrar
@@ -97,7 +97,7 @@ export function Layout() {
               <NavLink
                 key={s.to}
                 to={s.to}
-                className={`flex h-12 items-center gap-3 rounded-[14px] px-3.5 text-base font-semibold ${
+                className={`flex h-12 items-center gap-3 rounded-[0.875rem] px-3.5 text-base font-semibold ${
                   on ? 'bg-acc-soft text-acc-strong' : 'text-ink2 hover:bg-surface2'
                 }`}
               >
@@ -111,19 +111,19 @@ export function Layout() {
         <div className="flex shrink-0 items-center gap-3 rounded-2xl bg-surface2 p-3">
           <FotoUsuario />
           <div className="min-w-0">
-            <div className="truncate text-[15px] font-semibold">{nombre ?? 'Mi cuenta'}</div>
-            <div className="truncate text-[13px] text-ink2">{email}</div>
+            <div className="truncate text-[0.9375rem] font-semibold">{nombre ?? 'Mi cuenta'}</div>
+            <div className="truncate text-[0.8125rem] text-ink2">{email}</div>
           </div>
         </div>
       </aside>
 
       <main className="min-w-0 flex-1 [container-type:inline-size]">
-        <div className="mx-auto max-w-[1120px] px-5 pt-6 pb-[180px] md:px-12 md:pt-10 md:pb-16">
+        <div className="mx-auto max-w-[70rem] px-5 pt-6 pb-[11.25rem] md:px-12 md:pt-10 md:pb-16">
           <Outlet />
         </div>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-line bg-surface px-2 pt-2 pb-[max(22px,env(safe-area-inset-bottom))] md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-line bg-surface px-2 pt-2 pb-[max(1.375rem,env(safe-area-inset-bottom))] md:hidden">
         {SECCIONES.filter((s) => s.enMovil).map((s) => {
           const on = activa(pathname, true) === s.to
           return (
@@ -132,7 +132,7 @@ export function Layout() {
               to={s.to}
               className={`flex h-14 flex-col items-center justify-center gap-1 text-xs font-bold ${on ? 'text-acc-strong' : 'text-ink2'}`}
             >
-              <span className={`grid h-[30px] w-[58px] place-items-center rounded-full text-[17px] ${on ? 'bg-acc-soft' : ''}`}>
+              <span className={`grid h-[1.875rem] w-[3.625rem] place-items-center rounded-full text-[1.0625rem] ${on ? 'bg-acc-soft' : ''}`}>
                 <s.icono {...IC} />
               </span>
               {s.corta ?? s.etiqueta}
@@ -146,7 +146,7 @@ export function Layout() {
           type="button"
           data-tour="registrar"
           onClick={() => abrir({ modo: 'sesion' })}
-          className="fixed right-[18px] bottom-[calc(102px+env(safe-area-inset-bottom))] z-[21] flex h-[58px] items-center gap-2 rounded-full bg-acc px-[22px] text-[17px] font-semibold text-on-acc shadow-[0_10px_28px_rgba(25,50,38,.28)] hover:bg-acc-strong md:hidden"
+          className="fixed right-[1.125rem] bottom-[calc(6.375rem+env(safe-area-inset-bottom))] z-[21] flex h-[3.625rem] items-center gap-2 rounded-full bg-acc px-[1.375rem] text-[1.0625rem] font-semibold text-on-acc shadow-[0_10px_28px_rgba(25,50,38,.28)] hover:bg-acc-strong md:hidden"
         >
           <Plus {...IC} />
           Registrar

@@ -9,7 +9,7 @@ import { MEDIOS, mesesEntre, reporteContadora } from '../../lib/reportes'
 import { mensajeError } from '../../lib/supabase'
 
 const MONEDAS: Moneda[] = ['ARS', 'USD']
-const COLUMNAS = 'grid-cols-[minmax(120px,1.2fr)_64px_repeat(5,minmax(116px,1fr))_84px]'
+const COLUMNAS = 'grid-cols-[minmax(7.5rem,1.2fr)_4rem_repeat(5,minmax(7.25rem,1fr))_5.25rem]'
 
 export function ContadoraPage() {
   const navegar = useNavigate()
@@ -100,7 +100,7 @@ export function ContadoraPage() {
               ['Hasta', hasta, setHasta],
             ] as const
           ).map(([l, v, set]) => (
-            <label key={l} className="flex max-w-[240px] flex-[1_1_160px] flex-col gap-1.5 text-sm font-semibold text-ink2">
+            <label key={l} className="flex max-w-[15rem] flex-[1_1_10rem] flex-col gap-1.5 text-sm font-semibold text-ink2">
               {l}
               <select
                 value={v}
@@ -116,7 +116,7 @@ export function ContadoraPage() {
             </label>
           ))}
           {r && (
-            <div className="pb-3 text-[15px] text-ink2">
+            <div className="pb-3 text-[0.9375rem] text-ink2">
               {plural(r.meses.length, 'mes', 'meses')} · {plural(r.cantidadPagos, 'pago', 'pagos')}
             </div>
           )}
@@ -125,12 +125,12 @@ export function ContadoraPage() {
       </Tarjeta>
 
       {r && (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,290px),1fr))] gap-3">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18.125rem),1fr))] gap-3">
           {MONEDAS.filter((m) => r.totales[m].cantidad).map((m) => {
             const a = r.totales[m]
             return (
-              <Tarjeta key={m} className="flex flex-col gap-3.5 p-[22px]">
-                <div className="flex justify-between text-[15px] font-medium text-ink2">
+              <Tarjeta key={m} className="flex flex-col gap-3.5 p-[1.375rem]">
+                <div className="flex justify-between text-[0.9375rem] font-medium text-ink2">
                   <span>{m === 'ARS' ? 'Pesos · ARS' : 'Dólares · USD'}</span>
                   <span>{plural(a.cantidad, 'pago', 'pagos')}</span>
                 </div>
@@ -138,7 +138,7 @@ export function ContadoraPage() {
                 <div className="flex flex-col gap-2.5">
                   {MEDIOS.filter((x) => x !== 'otro' || a.medios.otro > 0).map((x) => (
                     <div key={x} className="flex flex-col gap-1.5">
-                      <div className="flex justify-between gap-2.5 text-[15px]">
+                      <div className="flex justify-between gap-2.5 text-[0.9375rem]">
                         <span className="text-ink2">{ETIQUETA_MEDIO[x]}</span>
                         <span className="font-semibold tabular">{formatMonto(a.medios[x], m)}</span>
                       </div>
@@ -153,13 +153,13 @@ export function ContadoraPage() {
             )
           })}
           {!hayPagos && (
-            <Tarjeta className="flex flex-col justify-center gap-2 px-[22px] py-8">
+            <Tarjeta className="flex flex-col justify-center gap-2 px-[1.375rem] py-8">
               <div className="text-lg font-semibold">Sin cobros en este rango</div>
-              <div className="text-[15px] leading-normal text-ink2">Probá con otro período o registrá los pagos que falten.</div>
+              <div className="text-[0.9375rem] leading-normal text-ink2">Probá con otro período o registrá los pagos que falten.</div>
             </Tarjeta>
           )}
-          <div className="flex flex-col gap-3.5 rounded-[22px] bg-acc-soft p-[22px]">
-            <div className="flex flex-wrap justify-between gap-2.5 text-[15px] font-semibold text-acc-strong">
+          <div className="flex flex-col gap-3.5 rounded-[1.375rem] bg-acc-soft p-[1.375rem]">
+            <div className="flex flex-wrap justify-between gap-2.5 text-[0.9375rem] font-semibold text-acc-strong">
               <span>Últimos 12 meses</span>
               <span className="font-medium">
                 {formatPeriodo(r.rango12.desde)} – {formatPeriodo(r.rango12.hasta)}
@@ -170,7 +170,7 @@ export function ContadoraPage() {
               return (
                 <div key={m} className="flex items-baseline justify-between gap-3">
                   <span className="text-sm font-semibold text-acc-strong">{m}</span>
-                  <AjustarAncho className="num text-right text-[clamp(26px,3cqi,36px)]">
+                  <AjustarAncho className="num text-right text-[clamp(1.625rem,3cqi,2.25rem)]">
                     {p.entero}
                     {p.decimales && <span className="text-[.55em] tracking-normal opacity-70">{p.decimales}</span>}
                   </AjustarAncho>
@@ -187,13 +187,13 @@ export function ContadoraPage() {
 
       {r && hayPagos && (
         <Tarjeta className="overflow-hidden">
-          <div className="flex flex-wrap items-baseline justify-between gap-3 px-[22px] pt-[18px] pb-1.5">
+          <div className="flex flex-wrap items-baseline justify-between gap-3 px-[1.375rem] pt-[1.125rem] pb-1.5">
             <h2 className="m-0 text-xl font-semibold">Por mes</h2>
             <span className="text-sm text-ink2">Tocá un mes para ver cada pago y su factura</span>
           </div>
           <div className="overflow-x-auto">
-            <div className="min-w-[980px]">
-              <div className={`grid ${COLUMNAS} gap-3 border-b border-line px-[22px] py-3.5 text-[13px] font-bold tracking-[.06em] text-ink2 uppercase`}>
+            <div className="min-w-[61.25rem]">
+              <div className={`grid ${COLUMNAS} gap-3 border-b border-line px-[1.375rem] py-3.5 text-[0.8125rem] font-bold tracking-[.06em] text-ink2 uppercase`}>
                 <div>Mes</div>
                 <div>Moneda</div>
                 {MEDIOS.map((x) => (
@@ -216,7 +216,7 @@ export function ContadoraPage() {
                       className="block w-full text-left hover:bg-surface2"
                     >
                       {(monedas.length ? monedas : [null]).map((moneda, i) => (
-                        <div key={moneda ?? 'nada'} className={`grid ${COLUMNAS} items-center gap-3 px-[22px] py-3 text-base tabular`}>
+                        <div key={moneda ?? 'nada'} className={`grid ${COLUMNAS} items-center gap-3 px-[1.375rem] py-3 text-base tabular`}>
                           <div className="flex items-center gap-1.5 font-semibold">
                             {i === 0 && (
                               <>
@@ -245,8 +245,8 @@ export function ContadoraPage() {
                       ))}
                     </button>
                     {estaAbierto && (
-                      <div className="border-t border-line bg-fondo px-[22px] pt-1.5 pb-3">
-                        <div className="grid grid-cols-[80px_minmax(160px,1.4fr)_130px_minmax(160px,1fr)_140px] gap-3 py-2.5 text-xs font-bold tracking-[.06em] text-ink2 uppercase">
+                      <div className="border-t border-line bg-fondo px-[1.375rem] pt-1.5 pb-3">
+                        <div className="grid grid-cols-[5rem_minmax(10rem,1.4fr)_8.125rem_minmax(10rem,1fr)_8.75rem] gap-3 py-2.5 text-xs font-bold tracking-[.06em] text-ink2 uppercase">
                           <div>Fecha</div>
                           <div>Paciente</div>
                           <div>Medio</div>
@@ -256,7 +256,7 @@ export function ContadoraPage() {
                         {[...m.pagos].reverse().map(({ pago: p, paciente }) => (
                           <div
                             key={p.id}
-                            className="grid grid-cols-[80px_minmax(160px,1.4fr)_130px_minmax(160px,1fr)_140px] gap-3 border-t border-line py-2.5 text-[15px] tabular"
+                            className="grid grid-cols-[5rem_minmax(10rem,1.4fr)_8.125rem_minmax(10rem,1fr)_8.75rem] gap-3 border-t border-line py-2.5 text-[0.9375rem] tabular"
                           >
                             <div className="text-ink2">{formatFecha(p.fecha).slice(0, 5)}</div>
                             <div className="truncate font-semibold">{paciente}</div>
@@ -273,7 +273,7 @@ export function ContadoraPage() {
                 )
               })}
               {MONEDAS.filter((m) => r.totales[m].cantidad).map((m) => (
-                <div key={m} className={`grid ${COLUMNAS} gap-3 bg-surface2 px-[22px] py-3.5 text-base font-bold tabular`}>
+                <div key={m} className={`grid ${COLUMNAS} gap-3 bg-surface2 px-[1.375rem] py-3.5 text-base font-bold tabular`}>
                   <div>Total del período</div>
                   <div className="text-sm text-ink2">{m}</div>
                   {MEDIOS.map((x) => (

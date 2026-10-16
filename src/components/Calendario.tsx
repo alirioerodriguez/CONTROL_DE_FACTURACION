@@ -33,7 +33,7 @@ export function Calendario({
   ]
 
   return (
-    <div className="rounded-[18px] border border-line bg-surface p-3">
+    <div className="rounded-[1.125rem] border border-line bg-surface p-3">
       <div className="mb-2 flex items-center justify-between">
         <button
           type="button"

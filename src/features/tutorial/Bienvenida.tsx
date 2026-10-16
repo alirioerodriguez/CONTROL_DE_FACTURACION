@@ -43,7 +43,7 @@ export function CamposProfesion({
                 setTermino(x.termino)
                 setModo(x.modo)
               }}
-              className={`min-h-12 rounded-2xl border px-3 py-2.5 text-left text-[15px] font-semibold ${
+              className={`min-h-12 rounded-2xl border px-3 py-2.5 text-left text-[0.9375rem] font-semibold ${
                 activa ? 'border-acc bg-acc-soft text-acc-strong' : 'border-line bg-surface text-ink hover:bg-surface2'
               }`}
             >
@@ -53,19 +53,19 @@ export function CamposProfesion({
         })}
       </div>
       {profesion === 'otra' && (
-        <label className="flex flex-col gap-2 text-[15px] font-semibold">
+        <label className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
           ¿Cuál?
           <input
             value={otra}
             onChange={(e) => setOtra(e.target.value)}
             placeholder="Ej. Musicoterapia"
             maxLength={60}
-            className="h-[52px] rounded-[14px] border border-line bg-fondo px-4 text-[17px] font-normal outline-none focus:border-acc"
+            className="h-[3.25rem] rounded-[0.875rem] border border-line bg-fondo px-4 text-[1.0625rem] font-normal outline-none focus:border-acc"
           />
         </label>
       )}
       <div className="flex flex-col gap-2.5">
-        <div className="text-[15px] font-semibold">¿Cómo le decís a cada encuentro?</div>
+        <div className="text-[0.9375rem] font-semibold">¿Cómo le decís a cada encuentro?</div>
         <Segmentado
           opciones={[
             { v: 'sesion' as Termino, l: 'Sesión' },
@@ -76,7 +76,7 @@ export function CamposProfesion({
         />
       </div>
       <div className="flex flex-col gap-2.5">
-        <div className="text-[15px] font-semibold">¿Cómo cobrás?</div>
+        <div className="text-[0.9375rem] font-semibold">¿Cómo cobrás?</div>
         <Segmentado
           opciones={[
             { v: 'hora' as ModoCobro, l: 'Por hora' },
@@ -126,11 +126,11 @@ export function Bienvenida({ perfil }: { perfil: Perfil }) {
         role="dialog"
         aria-modal="true"
         aria-label="¿A qué te dedicás?"
-        className="flex max-h-[94dvh] w-full flex-col gap-5 overflow-auto rounded-t-[28px] bg-surface px-[22px] pt-6 pb-[max(24px,env(safe-area-inset-bottom))] shadow-[0_24px_60px_rgba(0,0,0,.3)] md:w-[560px] md:rounded-[28px] md:p-8"
+        className="flex max-h-[94dvh] w-full flex-col gap-5 overflow-auto rounded-t-[1.75rem] bg-surface px-[1.375rem] pt-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-[0_24px_60px_rgba(0,0,0,.3)] md:w-[35rem] md:rounded-[1.75rem] md:p-8"
       >
         <Logo tam={30} />
         <div>
-          <h2 className="m-0 font-serif text-[34px] leading-tight font-normal">¿A qué te dedicás?</h2>
+          <h2 className="m-0 font-serif text-[2.125rem] leading-tight font-normal">¿A qué te dedicás?</h2>
           <p className="mt-2 mb-0 text-base leading-relaxed text-ink2">
             Así adaptamos la app a tu forma de trabajar. Lo podés cambiar cuando quieras en Ajustes.
           </p>
@@ -149,7 +149,7 @@ export function Bienvenida({ perfil }: { perfil: Perfil }) {
           setModo={setModo}
         />
         {error && <Alerta>{error}</Alerta>}
-        <Boton alto="h-14" className="shrink-0 text-[17px]" cargando={guardando} onClick={continuar}>
+        <Boton alto="h-14" className="shrink-0 text-[1.0625rem]" cargando={guardando} onClick={continuar}>
           Continuar
         </Boton>
       </div>

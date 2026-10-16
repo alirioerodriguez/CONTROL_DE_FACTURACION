@@ -29,8 +29,8 @@ export function AuthLayout({
       <div className="hidden flex-1 flex-col justify-between gap-10 bg-acc-soft p-14 md:flex">
         <Logo />
         <div>
-          <div className="max-w-[540px] font-serif text-[76px] leading-none text-balance">Tus cobros, en orden.</div>
-          <ul className="mt-[22px] flex max-w-[440px] flex-col gap-2.5 text-[19px] leading-snug text-ink2">
+          <div className="max-w-[33.75rem] font-serif text-[4.75rem] leading-none text-balance">Tus cobros, en orden.</div>
+          <ul className="mt-[1.375rem] flex max-w-[27.5rem] flex-col gap-2.5 text-[1.1875rem] leading-snug text-ink2">
             {QUE_HACE.map((t) => (
               <li key={t} className="flex items-start gap-2.5">
                 <Check {...IC} className="mt-1 shrink-0 text-acc-strong" />
@@ -42,14 +42,14 @@ export function AuthLayout({
         <div className="text-sm text-ink2">Gratis · No es historia clínica: solo datos de cobro</div>
       </div>
       <div className="flex flex-1 items-center justify-center overflow-auto px-6 py-8">
-        <div className="flex w-full max-w-[380px] flex-col gap-6">
+        <div className="flex w-full max-w-[23.75rem] flex-col gap-6">
           <div className="md:hidden">
             <Logo />
           </div>
           {presentacion && (
-            <div className="rounded-[22px] bg-acc-soft px-5 py-4 md:hidden">
-              <div className="font-serif text-[28px] leading-tight">Tus cobros, en orden.</div>
-              <ul className="mt-2.5 flex flex-col gap-1.5 text-[15px] leading-snug text-ink2">
+            <div className="rounded-[1.375rem] bg-acc-soft px-5 py-4 md:hidden">
+              <div className="font-serif text-[1.75rem] leading-tight">Tus cobros, en orden.</div>
+              <ul className="mt-2.5 flex flex-col gap-1.5 text-[0.9375rem] leading-snug text-ink2">
                 {QUE_HACE.map((t) => (
                   <li key={t} className="flex items-start gap-2">
                     <Check {...IC} className="mt-0.5 shrink-0 text-acc-strong" />
@@ -61,8 +61,8 @@ export function AuthLayout({
           )}
           <div className="flex flex-col gap-5">
             <div>
-              <h1 className="m-0 font-serif text-[44px] leading-none font-normal">{titulo}</h1>
-              {sub && <div className="mt-2 text-[17px] leading-snug text-ink2">{sub}</div>}
+              <h1 className="m-0 font-serif text-[2.75rem] leading-none font-normal">{titulo}</h1>
+              {sub && <div className="mt-2 text-[1.0625rem] leading-snug text-ink2">{sub}</div>}
             </div>
             {children}
           </div>
@@ -87,12 +87,12 @@ export function CampoAuth({
     <input
       {...props}
       type={esClave && visible ? 'text' : type}
-      className={`h-[54px] w-full rounded-[14px] border border-line bg-surface px-4 text-[17px] font-normal outline-none focus:border-acc focus:shadow-[0_0_0_3px_var(--acc-soft)] ${esClave ? 'pr-14' : ''}`}
+      className={`h-[3.375rem] w-full rounded-[0.875rem] border border-line bg-surface px-4 text-[1.0625rem] font-normal outline-none focus:border-acc focus:shadow-[0_0_0_3px_var(--acc-soft)] ${esClave ? 'pr-14' : ''}`}
     />
   )
   return (
     <div className="flex flex-col gap-2">
-      <label className="flex flex-col gap-2 text-[15px] font-semibold">
+      <label className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
         {etiqueta}
         {esClave ? (
           <span className="relative">
@@ -139,7 +139,7 @@ export function IngresoGoogle({ onError }: { onError: (mensaje: string) => void 
         type="button"
         onClick={entrar}
         disabled={cargando}
-        className="flex h-14 w-full items-center justify-center gap-3 rounded-full border border-line bg-surface text-[17px] font-semibold hover:bg-surface2 disabled:opacity-60"
+        className="flex h-14 w-full items-center justify-center gap-3 rounded-full border border-line bg-surface text-[1.0625rem] font-semibold hover:bg-surface2 disabled:opacity-60"
       >
         {cargando ? <Spinner /> : <LogoGoogle />}
         Continuar con Google
@@ -171,5 +171,5 @@ export function errorDeRedireccion(): string {
   return desc ? `No se pudo ingresar con Google: ${desc.replace(/\+/g, ' ')}` : ''
 }
 
-export const claseBotonAuth = 'h-14 w-full text-[17px]'
+export const claseBotonAuth = 'h-14 w-full text-[1.0625rem]'
 export const claseLinkAuth = 'self-center p-2 text-base font-semibold'

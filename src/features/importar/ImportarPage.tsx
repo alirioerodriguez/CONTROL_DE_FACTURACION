@@ -140,7 +140,7 @@ export function ImportarPage() {
   if (mapeo) for (const c of CAMPOS) if (mapeo[c.k] != null) usadas.set(mapeo[c.k]!, c.l)
 
   return (
-    <section className="flex max-w-[900px] flex-col gap-6">
+    <section className="flex max-w-[56.25rem] flex-col gap-6">
       <button
         type="button"
         onClick={() => navegar('/ajustes')}
@@ -165,7 +165,7 @@ export function ImportarPage() {
               >
                 {hecho ? <Check size={15} strokeWidth={2.4} /> : n}
               </span>
-              <span className={`text-[15px] font-semibold ${actual ? 'text-ink' : 'text-ink2'}`}>{l}</span>
+              <span className={`text-[0.9375rem] font-semibold ${actual ? 'text-ink' : 'text-ink2'}`}>{l}</span>
               {i < 2 && <span className="h-0.5 w-7 rounded bg-line" />}
             </div>
           )
@@ -196,20 +196,20 @@ export function ImportarPage() {
               </>
             ) : (
               <>
-                <div className="grid size-16 place-items-center rounded-[20px] bg-acc-soft text-[28px] text-acc-strong">
+                <div className="grid size-16 place-items-center rounded-[1.25rem] bg-acc-soft text-[1.75rem] text-acc-strong">
                   <FileSpreadsheet {...IC} />
                 </div>
                 <div className="text-xl font-semibold">Arrastrá tu archivo o tocá para elegirlo</div>
-                <div className="text-[15px] text-ink2">.xlsx o .csv · hasta 5 MB</div>
+                <div className="text-[0.9375rem] text-ink2">.xlsx o .csv · hasta 5 MB</div>
               </>
             )}
           </label>
           {error && <Alerta>{error}</Alerta>}
-          <div className="text-[15px] text-ink2">Necesitamos al menos: paciente, fecha y monto.</div>
+          <div className="text-[0.9375rem] text-ink2">Necesitamos al menos: paciente, fecha y monto.</div>
           <Tarjeta className="flex flex-wrap items-center justify-between gap-4 p-5">
-            <div className="min-w-0 flex-[1_1_260px]">
+            <div className="min-w-0 flex-[1_1_16.25rem]">
               <div className="text-base font-semibold">¿No tenés planilla?</div>
-              <div className="mt-1 text-[15px] leading-snug text-ink2">
+              <div className="mt-1 text-[0.9375rem] leading-snug text-ink2">
                 Descargá el Excel, completalo con tus pacientes, sesiones y pagos, y subilo acá.
               </div>
             </div>
@@ -223,12 +223,12 @@ export function ImportarPage() {
           <ArchivoElegido nombre={archivo} detalle={`${plural(hoja.filas.length, 'fila', 'filas')} · ${plural(hoja.encabezados.length, 'columna', 'columnas')}`} onCambiar={reiniciar} />
 
           {hojas.length > 1 && (
-            <label className="flex flex-col gap-2 text-[15px] font-semibold">
+            <label className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
               Hoja
               <select
                 value={indiceHoja}
                 onChange={(e) => elegirHoja(Number(e.target.value))}
-                className="h-12 max-w-[320px] rounded-xl border border-line bg-surface px-3.5 font-normal"
+                className="h-12 max-w-[20rem] rounded-xl border border-line bg-surface px-3.5 font-normal"
               >
                 {hojas.map((h, i) => (
                   <option key={h.nombre} value={i}>
@@ -244,7 +244,7 @@ export function ImportarPage() {
               Vista previa <span className="font-normal text-ink2">· primeras 5 filas</span>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] border-collapse text-left">
+              <table className="w-full min-w-[40rem] border-collapse text-left">
                 <thead className="bg-surface2 text-sm">
                   <tr>
                     {hoja.encabezados.map((e, i) => (
@@ -254,11 +254,11 @@ export function ImportarPage() {
                             {LETRAS[i] ?? i + 1} · {e || '(sin título)'}
                           </span>
                           {usadas.has(i) ? (
-                            <span className="inline-flex h-[22px] items-center rounded-full bg-acc-soft px-2 text-xs font-bold text-acc-strong">
+                            <span className="inline-flex h-[1.375rem] items-center rounded-full bg-acc-soft px-2 text-xs font-bold text-acc-strong">
                               → {usadas.get(i)}
                             </span>
                           ) : (
-                            <span className="inline-flex h-[22px] items-center rounded-full border border-dashed border-line px-2 text-xs text-ink2">
+                            <span className="inline-flex h-[1.375rem] items-center rounded-full border border-dashed border-line px-2 text-xs text-ink2">
                               No se importa
                             </span>
                           )}
@@ -269,9 +269,9 @@ export function ImportarPage() {
                 </thead>
                 <tbody>
                   {hoja.filas.slice(0, 5).map((f) => (
-                    <tr key={f.numero} className="border-t border-line text-[15px]">
+                    <tr key={f.numero} className="border-t border-line text-[0.9375rem]">
                       {f.celdas.map((c, i) => (
-                        <td key={i} className={`max-w-[200px] truncate px-4 py-3 ${usadas.has(i) ? 'text-ink' : 'text-ink2'}`}>
+                        <td key={i} className={`max-w-[12.5rem] truncate px-4 py-3 ${usadas.has(i) ? 'text-ink' : 'text-ink2'}`}>
                           {textoCelda(c) || '—'}
                         </td>
                       ))}
@@ -282,7 +282,7 @@ export function ImportarPage() {
             </div>
           </Tarjeta>
 
-          <Tarjeta className="px-[22px] pt-2 pb-3.5">
+          <Tarjeta className="px-[1.375rem] pt-2 pb-3.5">
             <div className="pt-3.5 pb-2.5 text-lg font-semibold">Mapeá las columnas</div>
             {CAMPOS.map((c) => (
               <div key={c.k} className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-3">
@@ -299,7 +299,7 @@ export function ImportarPage() {
                   onChange={(e) =>
                     setMapeo({ ...mapeo, [c.k as CampoGenerico]: e.target.value === '' ? null : Number(e.target.value) })
                   }
-                  className={`h-12 min-w-[200px] flex-[0_1_240px] rounded-xl border bg-surface px-3.5 ${
+                  className={`h-12 min-w-[12.5rem] flex-[0_1_15rem] rounded-xl border bg-surface px-3.5 ${
                     c.req && mapeo[c.k] == null ? 'border-bad' : 'border-line'
                   }`}
                 >
@@ -346,7 +346,7 @@ export function ImportarPage() {
 
 function ArchivoElegido({ nombre, detalle, onCambiar }: { nombre: string; detalle: string; onCambiar: () => void }) {
   return (
-    <div className="flex items-center gap-3 rounded-[18px] border border-line bg-surface px-4 py-3.5">
+    <div className="flex items-center gap-3 rounded-[1.125rem] border border-line bg-surface px-4 py-3.5">
       <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-acc-soft text-base text-acc-strong">
         <FileSpreadsheet {...IC} />
       </span>
@@ -354,7 +354,7 @@ function ArchivoElegido({ nombre, detalle, onCambiar }: { nombre: string; detall
         <div className="truncate text-base font-semibold">{nombre}</div>
         <div className="text-sm text-ink2">{detalle}</div>
       </div>
-      <button type="button" onClick={onCambiar} className="text-[15px] font-semibold text-acc-strong">
+      <button type="button" onClick={onCambiar} className="text-[0.9375rem] font-semibold text-acc-strong">
         Cambiar
       </button>
     </div>
@@ -392,8 +392,8 @@ function Confirmacion({
       .map(([m, v]) => formatMonto(v, m))
       .join(' + ')
 
-  const tarjeta = 'rounded-[22px] border border-line bg-surface p-[22px]'
-  const numero = 'num text-[52px] leading-[1.1] tracking-[-0.03em]'
+  const tarjeta = 'rounded-[1.375rem] border border-line bg-surface p-[1.375rem]'
+  const numero = 'num text-[3.25rem] leading-[1.1] tracking-[-0.03em]'
 
   return (
     <div className="flex flex-col gap-4">
@@ -403,9 +403,9 @@ function Confirmacion({
         onCambiar={onCambiar}
       />
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(9.375rem,1fr))] gap-3">
         <div className={tarjeta}>
-          <div className="text-[15px] text-ink2">Para importar</div>
+          <div className="text-[0.9375rem] text-ink2">Para importar</div>
           <div className={`${numero} text-acc-strong`}>{p.sesiones.length + p.pagos.length}</div>
           <div className="text-sm text-ink2">
             {[
@@ -415,43 +415,43 @@ function Confirmacion({
           </div>
         </div>
         <div className={tarjeta}>
-          <div className="text-[15px] text-ink2">Con errores</div>
+          <div className="text-[0.9375rem] text-ink2">Con errores</div>
           <div className={`${numero} ${p.errores.length ? 'text-bad' : ''}`}>{p.errores.length}</div>
           <div className="text-sm text-ink2">se van a omitir</div>
         </div>
         <div className={tarjeta}>
-          <div className="text-[15px] text-ink2">Ya estaban</div>
+          <div className="text-[0.9375rem] text-ink2">Ya estaban</div>
           <div className={numero}>{p.duplicadas}</div>
           <div className="text-sm text-ink2">no se repiten</div>
         </div>
       </div>
 
       {(p.sesiones.length > 0 || p.pagos.length > 0) && (
-        <div className="text-[15px] text-ink2">
+        <div className="text-[0.9375rem] text-ink2">
           {p.sesiones.length > 0 && <>{pal.Sesiones} por {sumas(p.sesiones)}. </>}
           {p.pagos.length > 0 && <>Pagos por {sumas(p.pagos)}.</>}
         </div>
       )}
 
       {p.errores.length > 0 && (
-        <Tarjeta className="px-[22px] pt-2 pb-3">
+        <Tarjeta className="px-[1.375rem] pt-2 pb-3">
           <div className="pt-3.5 pb-2 text-lg font-semibold">Filas con errores</div>
           {p.errores.slice(0, 50).map((e, i) => (
             <div key={i} className="flex gap-3.5 border-t border-line py-3 text-base">
-              <span className="min-w-[64px] text-ink2">
+              <span className="min-w-[4rem] text-ink2">
                 {plantilla ? `${e.hoja} ` : ''}Fila {e.fila}
               </span>
               <span>{e.mensaje}</span>
             </div>
           ))}
           {p.errores.length > 50 && (
-            <div className="border-t border-line py-3 text-[15px] text-ink2">Y {p.errores.length - 50} más.</div>
+            <div className="border-t border-line py-3 text-[0.9375rem] text-ink2">Y {p.errores.length - 50} más.</div>
           )}
         </Tarjeta>
       )}
 
       {p.pacientes.length > 0 && (
-        <label className="flex cursor-pointer items-start gap-3 rounded-[18px] bg-acc-soft px-[18px] py-4 text-base leading-normal text-acc-strong">
+        <label className="flex cursor-pointer items-start gap-3 rounded-[1.125rem] bg-acc-soft px-[1.125rem] py-4 text-base leading-normal text-acc-strong">
           <input
             type="checkbox"
             checked={crearPacientes}

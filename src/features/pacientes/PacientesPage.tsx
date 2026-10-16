@@ -69,7 +69,7 @@ export function PacientesPage() {
           >
             <span className="hidden md:inline">Importar</span>
           </Boton>
-          <Boton alto="h-12" icono={Plus} className="px-[18px]" data-tour="nuevo-paciente" onClick={() => abrir({ modo: 'paciente' })}>
+          <Boton alto="h-12" icono={Plus} className="px-[1.125rem]" data-tour="nuevo-paciente" onClick={() => abrir({ modo: 'paciente' })}>
             Nuevo paciente
           </Boton>
         </div>
@@ -81,13 +81,13 @@ export function PacientesPage() {
           titulo="Todavía no hay pacientes"
           acciones={
             <>
-              <Boton icono={Plus} alto="h-[50px]" onClick={() => abrir({ modo: 'paciente' })}>
+              <Boton icono={Plus} alto="h-[3.125rem]" onClick={() => abrir({ modo: 'paciente' })}>
                 Nuevo paciente
               </Boton>
-              <Boton variante="suave" icono={Upload} alto="h-[50px]" onClick={() => navegar('/importar')}>
+              <Boton variante="suave" icono={Upload} alto="h-[3.125rem]" onClick={() => navegar('/importar')}>
                 Importar planilla
               </Boton>
-              <DescargarExcel vacia alto="h-[50px]" />
+              <DescargarExcel vacia alto="h-[3.125rem]" />
             </>
           }
         >
@@ -96,13 +96,13 @@ export function PacientesPage() {
       ) : (
         <>
           <div className="flex flex-col gap-3">
-            <label className="flex h-[54px] items-center gap-2.5 rounded-2xl border border-line bg-surface px-[18px] text-lg text-ink2 focus-within:border-acc">
+            <label className="flex h-[3.375rem] items-center gap-2.5 rounded-2xl border border-line bg-surface px-[1.125rem] text-lg text-ink2 focus-within:border-acc">
               <Search {...IC} />
               <input
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 placeholder="Buscar por nombre"
-                className="min-w-0 flex-1 border-none bg-transparent text-[17px] text-ink outline-none"
+                className="min-w-0 flex-1 border-none bg-transparent text-[1.0625rem] text-ink outline-none"
               />
             </label>
             <div className="flex gap-2 overflow-x-auto pb-0.5">
@@ -127,8 +127,8 @@ export function PacientesPage() {
                   >
                     <Avatar nombre={nombre} />
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-[17px] font-semibold">{nombre}</div>
-                      <div className="mt-[3px] truncate text-sm text-ink2">
+                      <div className="truncate text-[1.0625rem] font-semibold">{nombre}</div>
+                      <div className="mt-[0.1875rem] truncate text-sm text-ink2">
                         {tarifa > 0 ? `${formatMonto(tarifa, p.moneda)}${pal.sufijo}` : 'Sin tarifa'}
                         {p.tipo_tarifa === 'personalizada' ? ' · personalizada' : ''}
                         {p.frecuencia ? ` · ${p.frecuencia}` : ''}

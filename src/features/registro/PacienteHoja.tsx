@@ -134,7 +134,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
       />
 
       <div className="flex flex-col gap-2.5">
-        <div className="text-[15px] font-semibold">Honorario {pal.porUnidad}</div>
+        <div className="text-[0.9375rem] font-semibold">Honorario {pal.porUnidad}</div>
         <Segmentado
           opciones={[
             { v: 'estandar', l: 'Tarifa estándar' },
@@ -144,7 +144,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
           onCambio={setTipo}
         />
         {tipo === 'estandar' ? (
-          <div className="text-[15px] text-ink2">
+          <div className="text-[0.9375rem] text-ink2">
             {tarifaEstandar > 0
               ? `${formatMonto(tarifaEstandar, monedaEstandar)} ${pal.porUnidad}. Si cambiás la tarifa estándar en Ajustes, cambia para este paciente.`
               : 'Todavía no cargaste tu tarifa estándar. Hacelo en Ajustes.'}
@@ -167,7 +167,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
               ]}
               valor={moneda}
               onCambio={setMoneda}
-              className="w-[124px] shrink-0"
+              className="w-[7.75rem] shrink-0"
               alto="h-full"
               redondeo="rounded-xl"
             />
@@ -177,14 +177,14 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
 
       {pal.porHora && (
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-[15px] font-semibold">Duración de la {pal.sesion}</div>
-        <Segmentado opciones={opcionesHoras(horas)} valor={horas} onCambio={setHoras} className="min-w-[200px]" alto="h-10" />
+        <div className="text-[0.9375rem] font-semibold">Duración de la {pal.sesion}</div>
+        <Segmentado opciones={opcionesHoras(horas)} valor={horas} onCambio={setHoras} className="min-w-[12.5rem]" alto="h-10" />
       </div>
       )}
 
       <div className="flex flex-col gap-2.5">
         <div>
-          <div className="text-[15px] font-semibold">Días fijos</div>
+          <div className="text-[0.9375rem] font-semibold">Días fijos</div>
           <div className="text-sm text-ink2">Para cargar las {pal.sesiones} del mes de un toque.</div>
         </div>
         <div className="grid grid-cols-6 gap-1.5">
@@ -196,7 +196,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
                 type="button"
                 aria-pressed={on}
                 onClick={() => alternarDia(d.v)}
-                className={`h-11 rounded-full border text-[15px] font-semibold ${
+                className={`h-11 rounded-full border text-[0.9375rem] font-semibold ${
                   on ? 'border-acc bg-acc text-on-acc' : 'border-line bg-surface text-ink'
                 }`}
               >
@@ -208,14 +208,14 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
       </div>
 
       <div className="flex flex-col gap-2.5">
-        <div className="text-[15px] font-semibold">Frecuencia</div>
+        <div className="text-[0.9375rem] font-semibold">Frecuencia</div>
         <Segmentado opciones={FRECUENCIAS} valor={frecuencia} onCambio={setFrecuencia} />
       </div>
 
       {paciente && (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="text-[15px] font-semibold">Estado</div>
+            <div className="text-[0.9375rem] font-semibold">Estado</div>
             <Segmentado
               opciones={[
                 { v: true, l: 'Activo' },
@@ -223,11 +223,11 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
               ]}
               valor={activo}
               onCambio={setActivo}
-              className="w-[220px]"
+              className="w-[13.75rem]"
               alto="h-10"
             />
           </div>
-          <label className="flex flex-col gap-2 text-[15px] font-semibold">
+          <label className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
             <span>
               Notas administrativas<span className="ml-2 text-sm font-normal text-ink2">Nada clínico</span>
             </span>
@@ -237,7 +237,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
               rows={2}
               onChange={(e) => setNotas(e.target.value)}
               placeholder="Ej. paga a fin de mes, factura a nombre de la madre"
-              className="rounded-[14px] border border-line bg-fondo px-4 py-3 text-base font-normal outline-none focus:border-acc"
+              className="rounded-[0.875rem] border border-line bg-fondo px-4 py-3 text-base font-normal outline-none focus:border-acc"
             />
           </label>
         </>
@@ -245,7 +245,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
 
       {error && <Alerta>{error}</Alerta>}
 
-      <Boton alto="h-[58px]" className="shrink-0 text-[17px]" cargando={guardar.isPending} onClick={guardarPaciente}>
+      <Boton alto="h-[3.625rem]" className="shrink-0 text-[1.0625rem]" cargando={guardar.isPending} onClick={guardarPaciente}>
         {guardar.isPending ? 'Guardando…' : paciente ? 'Guardar cambios' : 'Crear paciente'}
       </Boton>
       {paciente && (

@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
 
 // Avisos con el estilo del diseño: pastilla oscura con ícono a la izquierda.
 const icono = (ok: boolean) => (
-  <span className={`grid size-[26px] place-items-center rounded-full ${ok ? 'bg-acc text-on-acc' : 'bg-bad text-surface'}`}>
+  <span className={`grid size-[1.625rem] place-items-center rounded-full ${ok ? 'bg-acc text-on-acc' : 'bg-bad text-surface'}`}>
     {ok ? <Check size={15} strokeWidth={2.4} /> : <CircleAlert size={15} strokeWidth={2.2} />}
   </span>
 )
@@ -44,7 +44,7 @@ createRoot(document.getElementById('root')!).render(
               unstyled: true,
               classNames: {
                 toast:
-                  'flex w-full items-center gap-2.5 rounded-full bg-ink py-3 pr-5 pl-3 text-[15px] font-medium text-fondo shadow-[0_12px_32px_rgba(0,0,0,.22)]',
+                  'flex w-full items-center gap-2.5 rounded-full bg-ink py-3 pr-5 pl-3 text-[0.9375rem] font-medium text-fondo shadow-[0_12px_32px_rgba(0,0,0,.22)]',
                 icon: 'shrink-0',
                 title: 'leading-snug',
               },

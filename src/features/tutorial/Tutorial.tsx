@@ -246,7 +246,7 @@ function Recorrido({
       {rect ? (
         <div
           aria-hidden
-          className="pointer-events-none fixed rounded-[18px] ring-2 ring-acc transition-all duration-200"
+          className="pointer-events-none fixed rounded-[1.125rem] ring-2 ring-acc transition-all duration-200"
           style={{
             top: rect.top - margen,
             left: rect.left - margen,
@@ -260,25 +260,25 @@ function Recorrido({
       )}
 
       <div
-        className={`fixed left-1/2 flex w-[min(440px,calc(100%-32px))] -translate-x-1/2 flex-col gap-4 rounded-[26px] bg-surface p-6 shadow-[0_24px_60px_rgba(0,0,0,.3)] ${
-          rect ? (arriba ? 'top-[max(16px,env(safe-area-inset-top))]' : 'bottom-[max(16px,env(safe-area-inset-bottom))]') : 'top-1/2 -translate-y-1/2'
+        className={`fixed left-1/2 flex w-[min(27.5rem,calc(100%-2rem))] -translate-x-1/2 flex-col gap-4 rounded-[1.625rem] bg-surface p-6 shadow-[0_24px_60px_rgba(0,0,0,.3)] ${
+          rect ? (arriba ? 'top-[max(1rem,env(safe-area-inset-top))]' : 'bottom-[max(1rem,env(safe-area-inset-bottom))]') : 'top-1/2 -translate-y-1/2'
         }`}
       >
         <div className="flex items-center gap-3">
-          <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-acc-soft text-[22px] text-acc-strong">
+          <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-acc-soft text-[1.375rem] text-acc-strong">
             <paso.icono {...IC} />
           </div>
           <div className="text-sm font-semibold text-ink2">
             Paso {indice + 1} de {PASOS.length}
           </div>
           {!ultimo && (
-            <button type="button" onClick={onTerminar} className="ml-auto p-2 text-[15px] font-semibold text-ink2 hover:text-ink">
+            <button type="button" onClick={onTerminar} className="ml-auto p-2 text-[0.9375rem] font-semibold text-ink2 hover:text-ink">
               Saltar
             </button>
           )}
         </div>
         <div>
-          <h2 className="m-0 font-serif text-[30px] leading-tight font-normal">{paso.titulo}</h2>
+          <h2 className="m-0 font-serif text-[1.875rem] leading-tight font-normal">{paso.titulo}</h2>
           <p className="mt-2 mb-0 text-base leading-relaxed text-ink2">{paso.texto}</p>
         </div>
         <div className="flex gap-1.5" aria-hidden>

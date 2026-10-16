@@ -19,7 +19,7 @@ export function useUsuario() {
 }
 
 /** Foto de perfil (la de Google) o, si no hay, las iniciales. */
-export function FotoUsuario({ className = 'size-10 text-[15px]' }: { className?: string }) {
+export function FotoUsuario({ className = 'size-10 text-[0.9375rem]' }: { className?: string }) {
   const { nombre, email, foto } = useUsuario()
   const [fallo, setFallo] = useState(false)
   if (foto && !fallo) {

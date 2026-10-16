@@ -57,22 +57,22 @@ export function InicioPage() {
   const max = Math.max(...r.barras.map((b) => b.cobrado[monedaGrafico]), 1)
   const graficoVacio = r.barras.every((b) => !b.cobrado[monedaGrafico])
 
-  const tarjeta = 'flex min-w-0 flex-col gap-3 rounded-[22px] border border-line bg-surface px-[18px] pt-[18px] pb-5'
-  const etiqueta = 'text-[15px] font-medium text-ink2'
+  const tarjeta = 'flex min-w-0 flex-col gap-3 rounded-[1.375rem] border border-line bg-surface px-[1.125rem] pt-[1.125rem] pb-5'
+  const etiqueta = 'text-[0.9375rem] font-medium text-ink2'
 
   return (
     <section className="flex flex-col gap-7">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="mb-1.5 text-[15px] text-ink2">{fechaLarga(hoyAR())}</div>
-          <h1 className="m-0 font-serif text-[clamp(38px,5cqi,52px)] leading-none font-normal">
+          <div className="mb-1.5 text-[0.9375rem] text-ink2">{fechaLarga(hoyAR())}</div>
+          <h1 className="m-0 font-serif text-[clamp(2.375rem,5cqi,3.25rem)] leading-none font-normal">
             Hola{primerNombre ? `, ${primerNombre}` : ''}
           </h1>
         </div>
         <SelectorMes periodo={periodo} onCambio={setPeriodo} />
       </div>
 
-      <div data-tour="resumen" className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+      <div data-tour="resumen" className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fit,minmax(13.75rem,1fr))]">
         <div className={`${tarjeta} col-span-2 md:col-span-1`}>
           <div className={etiqueta}>Cobrado ARS</div>
           <MontoGrande monto={r.cobrado.ARS} moneda="ARS" />
@@ -82,7 +82,7 @@ export function InicioPage() {
         </div>
         <div className={tarjeta}>
           <div className={etiqueta}>Cobrado USD</div>
-          <MontoGrande monto={r.cobrado.USD} moneda="USD" className="text-[clamp(26px,3.6cqi,42px)]" />
+          <MontoGrande monto={r.cobrado.USD} moneda="USD" className="text-[clamp(1.625rem,3.6cqi,2.625rem)]" />
           <div className="text-sm text-ink2">
             {plural(r.cantPagos.USD, 'pago', 'pagos')} en {mes}
           </div>
@@ -92,23 +92,23 @@ export function InicioPage() {
             <span className="size-2 rounded-full bg-bad" />
             Pendiente de cobro
           </div>
-          <MontoGrande monto={r.pendiente.ARS} moneda="ARS" className="text-[clamp(28px,3.2cqi,42px)]" />
+          <MontoGrande monto={r.pendiente.ARS} moneda="ARS" className="text-[clamp(1.75rem,3.2cqi,2.625rem)]" />
           <div className="text-sm text-ink2">
             {r.pendiente.USD > 0 ? `+ ${formatMonto(r.pendiente.USD, 'USD')} · ` : ''}{pal.sesiones} de {mes}
           </div>
         </div>
         <div className={tarjeta}>
           <div className={etiqueta}>Pacientes activos</div>
-          <div className="num text-[clamp(26px,3.6cqi,42px)]">{r.pacientesConSesiones}</div>
+          <div className="num text-[clamp(1.625rem,3.6cqi,2.625rem)]">{r.pacientesConSesiones}</div>
           <div className="text-sm text-ink2">de {r.pacientesActivos} en total</div>
         </div>
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:grid-cols-[repeat(auto-fit,minmax(min(100%,26.25rem),1fr))]">
         <Tarjeta className="@container p-2" data-tour="sin-abonar">
           <div className="flex items-baseline justify-between gap-3 px-3.5 pt-3.5 pb-2">
             <h2 className="m-0 text-xl font-semibold">{pal.Sesiones} sin abonar</h2>
-            <div className="text-[15px] text-ink2">{r.impagas.length ? plural(r.impagas.length, pal.sesion, pal.sesiones) : ''}</div>
+            <div className="text-[0.9375rem] text-ink2">{r.impagas.length ? plural(r.impagas.length, pal.sesion, pal.sesiones) : ''}</div>
           </div>
           {r.impagas.length > 0 ? (
             r.impagas.map((i) => {
@@ -124,10 +124,10 @@ export function InicioPage() {
                   onKeyDown={(e) => e.key === 'Enter' && navegar(`/pacientes/${p.id}`)}
                   className="flex cursor-pointer items-center gap-3 rounded-2xl px-3.5 py-3 hover:bg-surface2"
                 >
-                  <Avatar nombre={nombreCompleto(p)} className="size-11 text-[15px]" />
+                  <Avatar nombre={nombreCompleto(p)} className="size-11 text-[0.9375rem]" />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-[17px] font-semibold">{nombreCompleto(p)}</div>
-                    <div className="mt-[3px] flex flex-wrap items-center gap-2 text-sm text-ink2">
+                    <div className="truncate text-[1.0625rem] font-semibold">{nombreCompleto(p)}</div>
+                    <div className="mt-[0.1875rem] flex flex-wrap items-center gap-2 text-sm text-ink2">
                       {etiquetaDia(i.sesion.fecha)}
                       <Chip tono={CHIP[i.estado].tono}>{CHIP[i.estado].texto}</Chip>
                     </div>
@@ -136,7 +136,7 @@ export function InicioPage() {
                       {formatMonto(i.debe, i.sesion.moneda)}
                     </div>
                   </div>
-                  <div className="hidden text-[17px] font-semibold whitespace-nowrap tabular @[30rem]:block">
+                  <div className="hidden text-[1.0625rem] font-semibold whitespace-nowrap tabular @[30rem]:block">
                     {formatMonto(i.debe, i.sesion.moneda)}
                   </div>
                   {wa ? (
@@ -147,14 +147,14 @@ export function InicioPage() {
                       onClick={(e) => e.stopPropagation()}
                       aria-label="Recordar por WhatsApp"
                       title="Recordar por WhatsApp"
-                      className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-wa-soft text-wa hover:brightness-95"
+                      className="grid size-11 shrink-0 place-items-center rounded-[0.875rem] bg-wa-soft text-wa hover:brightness-95"
                     >
                       <MessageCircle {...IC} />
                     </a>
                   ) : (
                     <span
                       title="Cargá el teléfono del paciente para mandarle un recordatorio"
-                      className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-surface2 text-ink2 opacity-50"
+                      className="grid size-11 shrink-0 place-items-center rounded-[0.875rem] bg-surface2 text-ink2 opacity-50"
                     >
                       <MessageCircle {...IC} />
                     </span>
@@ -164,11 +164,11 @@ export function InicioPage() {
             })
           ) : (
             <div className="flex flex-col items-center gap-2.5 px-5 pt-9 pb-10 text-center">
-              <div className="grid size-[52px] place-items-center rounded-2xl bg-acc-soft text-[22px] text-acc-strong">
+              <div className="grid size-[3.25rem] place-items-center rounded-2xl bg-acc-soft text-[1.375rem] text-acc-strong">
                 <Check {...IC} />
               </div>
               <div className="text-lg font-semibold">{sinNadaCargado ? `${capitalizar(mes)} sin ${pal.sesiones} todavía` : 'Todo al día'}</div>
-              <div className="max-w-[300px] text-[15px] leading-snug text-ink2">
+              <div className="max-w-[18.75rem] text-[0.9375rem] leading-snug text-ink2">
                 {sinNadaCargado ? `Cuando registres una ${pal.sesion}, la vas a ver acá.` : `Ninguna ${pal.sesion} quedó sin abonar.`}
               </div>
               {r.sesionesDelMes === 0 && (
@@ -180,11 +180,11 @@ export function InicioPage() {
           )}
         </Tarjeta>
 
-        <Tarjeta className="p-[22px]">
+        <Tarjeta className="p-[1.375rem]">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="m-0 text-xl font-semibold">Cobrado por mes</h2>
-              <div className="mt-1 text-[15px] text-ink2">
+              <div className="mt-1 text-[0.9375rem] text-ink2">
                 En {mes}: {formatMonto(r.barras[5].cobrado[monedaGrafico], monedaGrafico)}
               </div>
             </div>
@@ -195,11 +195,11 @@ export function InicioPage() {
               ]}
               valor={monedaGrafico}
               onCambio={setMonedaGrafico}
-              alto="h-[34px]"
+              alto="h-[2.125rem]"
               className="[&>button]:px-3.5 [&>button]:text-sm"
             />
           </div>
-          <div className="relative mt-5 flex h-[210px] items-end gap-2.5">
+          <div className="relative mt-5 flex h-[13.125rem] items-end gap-2.5">
             {r.barras.map((b, i) => {
               const elegido = i === 5
               const valor = b.cobrado[monedaGrafico]
@@ -209,7 +209,7 @@ export function InicioPage() {
                     {formatCompacto(valor, monedaGrafico)}
                   </div>
                   <div
-                    className={`min-h-1 w-full max-w-12 rounded-[10px] ${elegido ? 'bg-acc' : 'bg-acc-soft'}`}
+                    className={`min-h-1 w-full max-w-12 rounded-[0.625rem] ${elegido ? 'bg-acc' : 'bg-acc-soft'}`}
                     style={{ height: `${Math.round((valor / max) * 82)}%` }}
                     title={`${capitalizar(nombreMes(b.periodo))}: ${formatMonto(valor, monedaGrafico)}`}
                   />
@@ -217,7 +217,7 @@ export function InicioPage() {
               )
             })}
             {graficoVacio && (
-              <div className="absolute inset-x-0 top-0 bottom-[30px] grid place-items-center text-[15px] text-ink2">
+              <div className="absolute inset-x-0 top-0 bottom-[1.875rem] grid place-items-center text-[0.9375rem] text-ink2">
                 Sin cobros en estos 6 meses
               </div>
             )}

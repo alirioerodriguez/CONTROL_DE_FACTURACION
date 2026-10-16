@@ -27,14 +27,14 @@ export function RecuperarPage() {
   if (enviado) {
     return (
       <AuthLayout titulo="Revisá tu mail">
-        <div className="-order-1 grid size-14 place-items-center rounded-[18px] bg-acc-soft text-[26px] text-acc-strong">
+        <div className="-order-1 grid size-14 place-items-center rounded-[1.125rem] bg-acc-soft text-[1.625rem] text-acc-strong">
           <Check {...IC} />
         </div>
-        <div className="text-[17px] leading-normal text-ink2">
+        <div className="text-[1.0625rem] leading-normal text-ink2">
           Si <strong className="text-ink">{email}</strong> tiene una cuenta, te llega un link para crear una contraseña
           nueva.
         </div>
-        <Link to="/" className="flex h-14 items-center justify-center rounded-full bg-surface2 text-[17px] font-semibold hover:bg-line">
+        <Link to="/" className="flex h-14 items-center justify-center rounded-full bg-surface2 text-[1.0625rem] font-semibold hover:bg-line">
           Volver a ingresar
         </Link>
       </AuthLayout>

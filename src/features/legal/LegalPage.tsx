@@ -8,11 +8,11 @@ const ACTUALIZADO = '16 de octubre de 2026'
 function Marco({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
     <main className="min-h-dvh bg-fondo px-5 py-10 text-ink">
-      <article className="mx-auto flex max-w-[720px] flex-col gap-5 text-[17px] leading-relaxed [&_h2]:mt-4 [&_h2]:text-xl [&_h2]:font-semibold [&_li]:ml-5 [&_li]:list-disc">
+      <article className="mx-auto flex max-w-[45rem] flex-col gap-5 text-[1.0625rem] leading-relaxed [&_h2]:mt-4 [&_h2]:text-xl [&_h2]:font-semibold [&_li]:ml-5 [&_li]:list-disc">
         <Link to="/" className="no-underline">
           <Logo />
         </Link>
-        <h1 className="m-0 font-serif text-[44px] leading-none font-normal">{titulo}</h1>
+        <h1 className="m-0 font-serif text-[2.75rem] leading-none font-normal">{titulo}</h1>
         <p className="text-sm text-ink2">Última actualización: {ACTUALIZADO}</p>
         {children}
         <p className="mt-6 text-sm text-ink2">
@@ -29,7 +29,7 @@ const Mail = () => <a href={`mailto:${CONTACTO}`}>{CONTACTO}</a>
 export function PrivacidadPage() {
   return (
     <Marco titulo="Política de privacidad">
-      <div className="rounded-[18px] bg-acc-soft px-5 py-4 text-base">
+      <div className="rounded-[1.125rem] bg-acc-soft px-5 py-4 text-base">
         <strong>En resumen:</strong> guardamos solo lo necesario para llevar tus cobros, no guardamos nada clínico, no
         vendemos ni usamos tus datos para otra cosa, y podés descargarlos o borrar tu cuenta cuando quieras.
       </div>
@@ -102,7 +102,7 @@ export function PrivacidadPage() {
         de los 10 días corridos y los de corrección o borrado dentro de los 5 días hábiles, como indica la Ley 25.326
         de Protección de Datos Personales.
       </p>
-      <p className="rounded-[14px] border border-line bg-surface px-4 py-3 text-base">
+      <p className="rounded-[0.875rem] border border-line bg-surface px-4 py-3 text-base">
         LA AGENCIA DE ACCESO A LA INFORMACIÓN PÚBLICA, en su carácter de Órgano de Control de la Ley N° 25.326, tiene
         la atribución de atender las denuncias y reclamos que interpongan quienes resulten afectados en sus derechos
         por incumplimiento de las normas vigentes en materia de protección de datos personales.

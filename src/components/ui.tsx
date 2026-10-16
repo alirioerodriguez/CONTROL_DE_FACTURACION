@@ -8,7 +8,7 @@ import { iniciales, partesMonto, type Moneda } from '../lib/formato'
 /** Tamaño y trazo de íconos del diseño. */
 export const IC = { size: '1.25em', strokeWidth: 1.8 } as const
 
-export function Spinner({ className = 'size-[18px]' }: { className?: string }) {
+export function Spinner({ className = 'size-[1.125rem]' }: { className?: string }) {
   return (
     <span
       aria-hidden
@@ -29,7 +29,7 @@ const VARIANTES: Record<Variante, string> = {
 
 export function Boton({
   variante = 'primario',
-  alto = 'h-[52px]',
+  alto = 'h-[3.25rem]',
   icono: Icono,
   cargando,
   children,
@@ -55,7 +55,7 @@ export function Boton({
 }
 
 const claseInput =
-  'h-[52px] w-full rounded-[14px] border border-line bg-fondo px-4 text-[17px] outline-none transition focus:border-acc focus:shadow-[0_0_0_3px_var(--acc-soft)]'
+  'h-[3.25rem] w-full rounded-[0.875rem] border border-line bg-fondo px-4 text-[1.0625rem] outline-none transition focus:border-acc focus:shadow-[0_0_0_3px_var(--acc-soft)]'
 
 export function Campo({
   etiqueta,
@@ -64,7 +64,7 @@ export function Campo({
   ...props
 }: InputHTMLAttributes<HTMLInputElement> & { etiqueta: string; opcional?: boolean }) {
   return (
-    <label className={`flex flex-col gap-2 text-[15px] font-semibold ${className}`}>
+    <label className={`flex flex-col gap-2 text-[0.9375rem] font-semibold ${className}`}>
       <span>
         {etiqueta}
         {opcional && <span className="ml-2 text-sm font-normal text-ink2">Opcional</span>}
@@ -92,9 +92,9 @@ export function CampoMonto({
 }) {
   return (
     <div
-      className={`flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-line bg-fondo px-[18px] focus-within:border-acc ${grande ? 'h-[62px]' : 'h-14'}`}
+      className={`flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-line bg-fondo px-[1.125rem] focus-within:border-acc ${grande ? 'h-[3.875rem]' : 'h-14'}`}
     >
-      <span className={`font-medium text-ink2 ${grande ? 'text-[22px]' : 'text-xl'}`}>{simbolo}</span>
+      <span className={`font-medium text-ink2 ${grande ? 'text-[1.375rem]' : 'text-xl'}`}>{simbolo}</span>
       <input
         aria-label={etiqueta}
         inputMode="decimal"
@@ -103,7 +103,7 @@ export function CampoMonto({
         placeholder="0"
         size={1}
         onChange={(e) => onCambio(e.target.value.replace(/[^\d.,]/g, ''))}
-        className={`num w-full min-w-0 flex-1 border-none bg-transparent outline-none ${grande ? 'text-[30px]' : 'text-[22px]'}`}
+        className={`num w-full min-w-0 flex-1 border-none bg-transparent outline-none ${grande ? 'text-[1.875rem]' : 'text-[1.375rem]'}`}
       />
     </div>
   )
@@ -120,7 +120,7 @@ export function Segmentado<T extends string | number | boolean>({
   valor,
   onCambio,
   className = '',
-  alto = 'h-[42px]',
+  alto = 'h-[2.625rem]',
   redondeo = 'rounded-full',
 }: {
   opciones: Opcion<T>[]
@@ -141,7 +141,7 @@ export function Segmentado<T extends string | number | boolean>({
             role="radio"
             aria-checked={activo}
             onClick={() => onCambio(o.v)}
-            className={`flex-1 px-1.5 text-[15px] font-semibold whitespace-nowrap ${alto} ${redondeo} ${
+            className={`flex-1 px-1.5 text-[0.9375rem] font-semibold whitespace-nowrap ${alto} ${redondeo} ${
               activo ? 'bg-surface text-ink shadow-[0_1px_3px_rgba(0,0,0,.14)]' : 'text-ink2'
             }`}
           >
@@ -170,7 +170,7 @@ export function Pastilla({
       type="button"
       aria-pressed={activa}
       onClick={onClick}
-      className={`shrink-0 rounded-full border px-4 text-[15px] font-semibold whitespace-nowrap ${alto} ${
+      className={`shrink-0 rounded-full border px-4 text-[0.9375rem] font-semibold whitespace-nowrap ${alto} ${
         activa ? 'border-ink bg-ink text-fondo' : 'border-line bg-surface text-ink'
       }`}
     >
@@ -179,7 +179,7 @@ export function Pastilla({
   )
 }
 
-export function Avatar({ nombre, className = 'size-[46px] text-[15px]' }: { nombre: string; className?: string }) {
+export function Avatar({ nombre, className = 'size-[2.875rem] text-[0.9375rem]' }: { nombre: string; className?: string }) {
   return (
     <div className={`grid shrink-0 place-items-center rounded-full bg-acc-soft font-bold text-acc-strong ${className}`}>
       {iniciales(nombre)}
@@ -208,11 +208,11 @@ export function Chip({
   /** Puede bajar de renglón si el texto es largo (montos grandes en el celular). */
   ajustable?: boolean
 }) {
-  const alto = ajustable ? 'min-h-[30px] py-1 leading-snug' : grande ? 'h-[30px]' : 'h-[22px]'
+  const alto = ajustable ? 'min-h-[1.875rem] py-1 leading-snug' : grande ? 'h-[1.875rem]' : 'h-[1.375rem]'
   return (
     <span
       className={`inline-flex items-center rounded-full tabular ${ajustable ? 'break-words' : 'whitespace-nowrap'} ${TONOS[tono]} ${alto} ${
-        grande ? 'px-3 text-sm font-semibold' : 'px-[9px] text-xs font-bold'
+        grande ? 'px-3 text-sm font-semibold' : 'px-[0.5625rem] text-xs font-bold'
       }`}
     >
       {children}
@@ -222,7 +222,7 @@ export function Chip({
 
 export function Tarjeta({ children, className = '', ...props }: HTMLAttributes<HTMLDivElement> & { children: ReactNode }) {
   return (
-    <div {...props} className={`rounded-[22px] border border-line bg-surface ${className}`}>
+    <div {...props} className={`rounded-[1.375rem] border border-line bg-surface ${className}`}>
       {children}
     </div>
   )
@@ -231,8 +231,8 @@ export function Tarjeta({ children, className = '', ...props }: HTMLAttributes<H
 export function Titulo({ children, sub }: { children: ReactNode; sub?: ReactNode }) {
   return (
     <div>
-      <h1 className="m-0 font-serif text-[clamp(38px,5cqi,52px)] leading-none font-normal">{children}</h1>
-      {sub && <div className="mt-2 text-[15px] text-ink2">{sub}</div>}
+      <h1 className="m-0 font-serif text-[clamp(2.375rem,5cqi,3.25rem)] leading-none font-normal">{children}</h1>
+      {sub && <div className="mt-2 text-[0.9375rem] text-ink2">{sub}</div>}
     </div>
   )
 }
@@ -241,7 +241,7 @@ export function Titulo({ children, sub }: { children: ReactNode; sub?: ReactNode
 export function MontoGrande({
   monto,
   moneda,
-  className = 'text-[clamp(30px,3.4cqi,42px)]',
+  className = 'text-[clamp(1.875rem,3.4cqi,2.625rem)]',
   colorDecimales = 'text-ink2',
 }: {
   monto: number
@@ -296,7 +296,7 @@ export function AjustarAncho({ children, className = '' }: { children: ReactNode
 
 export function Alerta({ children }: { children: ReactNode }) {
   return (
-    <div role="alert" className="flex items-start gap-2.5 rounded-[14px] bg-bad-soft px-3.5 py-3 text-[15px] leading-snug text-bad">
+    <div role="alert" className="flex items-start gap-2.5 rounded-[0.875rem] bg-bad-soft px-3.5 py-3 text-[0.9375rem] leading-snug text-bad">
       <CircleAlert {...IC} className="mt-px" />
       <span>{children}</span>
     </div>
@@ -316,11 +316,11 @@ export function EstadoVacio({
 }) {
   return (
     <Tarjeta className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-      <div className="grid size-16 place-items-center rounded-[20px] bg-acc-soft text-[28px] text-acc-strong">
+      <div className="grid size-16 place-items-center rounded-[1.25rem] bg-acc-soft text-[1.75rem] text-acc-strong">
         <Icono {...IC} />
       </div>
-      <div className="font-serif text-[34px] leading-tight">{titulo}</div>
-      {children && <div className="max-w-[380px] text-[17px] leading-normal text-ink2">{children}</div>}
+      <div className="font-serif text-[2.125rem] leading-tight">{titulo}</div>
+      {children && <div className="max-w-[23.75rem] text-[1.0625rem] leading-normal text-ink2">{children}</div>}
       {acciones && <div className="mt-2 flex flex-wrap justify-center gap-2">{acciones}</div>}
     </Tarjeta>
   )
@@ -329,12 +329,12 @@ export function EstadoVacio({
 export function EstadoError({ que, reintentar }: { que: string; reintentar: () => void }) {
   return (
     <div className="grid min-h-[60vh] place-items-center">
-      <div className="flex max-w-[440px] flex-col items-center gap-3.5 px-2 py-10 text-center">
-        <div className="grid size-16 place-items-center rounded-[20px] bg-bad-soft text-[28px] text-bad">
+      <div className="flex max-w-[27.5rem] flex-col items-center gap-3.5 px-2 py-10 text-center">
+        <div className="grid size-16 place-items-center rounded-[1.25rem] bg-bad-soft text-[1.75rem] text-bad">
           <CircleAlert {...IC} />
         </div>
-        <div className="font-serif text-[34px] leading-tight text-balance">No pudimos cargar {que}</div>
-        <div className="text-[17px] leading-normal text-ink2">Revisá tu conexión a internet. Tus datos están a salvo.</div>
+        <div className="font-serif text-[2.125rem] leading-tight text-balance">No pudimos cargar {que}</div>
+        <div className="text-[1.0625rem] leading-normal text-ink2">Revisá tu conexión a internet. Tus datos están a salvo.</div>
         <Boton icono={RefreshCw} onClick={reintentar} className="mt-2">
           Reintentar
         </Boton>
@@ -347,13 +347,13 @@ export function EstadoError({ que, reintentar }: { que: string; reintentar: () =
 export function Esqueleto({ que, tarjetas }: { que: string; tarjetas?: boolean }) {
   return (
     <div aria-busy="true" className="flex flex-col gap-5">
-      <div className="esqueleto h-11 w-[220px] rounded-xl" />
+      <div className="esqueleto h-11 w-[13.75rem] rounded-xl" />
       {tarjetas && (
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(9.375rem,1fr))] gap-3">
           {[1, 2, 3, 4].map((k) => (
-            <div key={k} className="flex h-[122px] flex-col gap-3.5 rounded-[22px] border border-line bg-surface p-[18px]">
+            <div key={k} className="flex h-[7.625rem] flex-col gap-3.5 rounded-[1.375rem] border border-line bg-surface p-[1.125rem]">
               <div className="esqueleto h-3.5 w-3/5 rounded-lg" />
-              <div className="esqueleto h-[30px] w-[85%] rounded-[10px]" />
+              <div className="esqueleto h-[1.875rem] w-[85%] rounded-[0.625rem]" />
             </div>
           ))}
         </div>
@@ -366,11 +366,11 @@ export function Esqueleto({ que, tarjetas }: { que: string; tarjetas?: boolean }
               <div className="esqueleto h-3.5 w-[45%] rounded-lg" />
               <div className="esqueleto h-3 w-[28%] rounded-lg" />
             </div>
-            <div className="esqueleto h-7 w-[90px] rounded-full" />
+            <div className="esqueleto h-7 w-[5.625rem] rounded-full" />
           </div>
         ))}
       </Tarjeta>
-      <div className="flex items-center gap-2.5 text-[15px] text-ink2">
+      <div className="flex items-center gap-2.5 text-[0.9375rem] text-ink2">
         <Spinner className="size-4" />
         Cargando {que}…
       </div>
@@ -385,7 +385,7 @@ export function Hoja({
   titulo,
   onCerrar,
   children,
-  ancho = 'md:w-[540px]',
+  ancho = 'md:w-[33.75rem]',
 }: {
   titulo: string
   onCerrar: () => void
@@ -413,11 +413,11 @@ export function Hoja({
         aria-modal="true"
         aria-label={titulo}
         onClick={(e) => e.stopPropagation()}
-        className={`flex max-h-[92dvh] w-full flex-col gap-[18px] overflow-auto rounded-t-[28px] bg-surface px-[22px] pt-3 pb-[max(28px,env(safe-area-inset-bottom))] shadow-[0_24px_60px_rgba(0,0,0,.25)] md:rounded-[28px] md:px-8 md:pt-7 md:pb-8 ${ancho}`}
+        className={`flex max-h-[92dvh] w-full flex-col gap-[1.125rem] overflow-auto rounded-t-[1.75rem] bg-surface px-[1.375rem] pt-3 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-[0_24px_60px_rgba(0,0,0,.25)] md:rounded-[1.75rem] md:px-8 md:pt-7 md:pb-8 ${ancho}`}
       >
-        <div className="h-[5px] w-11 self-center rounded-full bg-line md:hidden" />
+        <div className="h-[0.3125rem] w-11 self-center rounded-full bg-line md:hidden" />
         <div className="flex items-center justify-between gap-3">
-          <h2 className="m-0 font-serif text-[34px] leading-none font-normal">{titulo}</h2>
+          <h2 className="m-0 font-serif text-[2.125rem] leading-none font-normal">{titulo}</h2>
           <button
             type="button"
             onClick={onCerrar}
@@ -452,8 +452,8 @@ export function Confirmar({
   peligroso?: boolean
 }) {
   return (
-    <Hoja titulo={titulo} onCerrar={onCancelar} ancho="md:w-[440px]">
-      <div className="text-[17px] leading-normal text-ink2">{children}</div>
+    <Hoja titulo={titulo} onCerrar={onCancelar} ancho="md:w-[27.5rem]">
+      <div className="text-[1.0625rem] leading-normal text-ink2">{children}</div>
       <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
         <Boton variante="suave" onClick={onCancelar}>
           Cancelar
