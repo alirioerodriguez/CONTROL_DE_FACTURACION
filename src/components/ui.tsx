@@ -1,5 +1,7 @@
 // Piezas de UI compartidas, con las medidas del diseño (docs/diseno).
-import { useEffect, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react'
+import {
+  useEffect, useLayoutEffect, useRef, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode,
+} from 'react'
 import { CircleAlert, RefreshCw, X, type LucideIcon } from 'lucide-react'
 import { iniciales, partesMonto, type Moneda } from '../lib/formato'
 
@@ -194,11 +196,23 @@ const TONOS: Record<Tono, string> = {
   neutro: 'bg-surface2 text-ink2',
 }
 
-export function Chip({ tono, children, grande }: { tono: Tono; children: ReactNode; grande?: boolean }) {
+export function Chip({
+  tono,
+  children,
+  grande,
+  ajustable,
+}: {
+  tono: Tono
+  children: ReactNode
+  grande?: boolean
+  /** Puede bajar de renglón si el texto es largo (montos grandes en el celular). */
+  ajustable?: boolean
+}) {
+  const alto = ajustable ? 'min-h-[30px] py-1 leading-snug' : grande ? 'h-[30px]' : 'h-[22px]'
   return (
     <span
-      className={`inline-flex items-center rounded-full whitespace-nowrap tabular ${TONOS[tono]} ${
-        grande ? 'h-[30px] px-3 text-sm font-semibold' : 'h-[22px] px-[9px] text-xs font-bold'
+      className={`inline-flex items-center rounded-full tabular ${ajustable ? 'break-words' : 'whitespace-nowrap'} ${TONOS[tono]} ${alto} ${
+        grande ? 'px-3 text-sm font-semibold' : 'px-[9px] text-xs font-bold'
       }`}
     >
       {children}
@@ -237,9 +251,45 @@ export function MontoGrande({
 }) {
   const p = partesMonto(monto, moneda)
   return (
-    <div className={`num ${className}`}>
+    <AjustarAncho className={`num ${className}`}>
       {p.entero}
       {p.decimales && <span className={`text-[.55em] tracking-normal ${colorDecimales}`}>{p.decimales}</span>}
+    </AjustarAncho>
+  )
+}
+
+/**
+ * Texto en una sola línea que achica su tamaño si no entra en el ancho disponible
+ * (por ejemplo, montos de decenas o cientos de millones en el celular).
+ */
+export function AjustarAncho({ children, className = '' }: { children: ReactNode; className?: string }) {
+  const caja = useRef<HTMLDivElement>(null)
+  const texto = useRef<HTMLSpanElement>(null)
+
+  useLayoutEffect(() => {
+    const c = caja.current
+    const t = texto.current
+    if (!c || !t) return
+    const ajustar = () => {
+      t.style.fontSize = '' // vuelve al tamaño del diseño para medir
+      const natural = t.offsetWidth
+      const disponible = c.clientWidth
+      if (natural > disponible && disponible > 0) {
+        const base = parseFloat(getComputedStyle(t).fontSize)
+        t.style.fontSize = `${Math.max(base * 0.45, (base * disponible) / natural) - 0.5}px`
+      }
+    }
+    ajustar()
+    const observador = new ResizeObserver(ajustar)
+    observador.observe(c)
+    return () => observador.disconnect()
+  }, [children])
+
+  return (
+    <div ref={caja} className={`w-full min-w-0 overflow-hidden ${className}`}>
+      <span ref={texto} className="inline-block whitespace-nowrap">
+        {children}
+      </span>
     </div>
   )
 }

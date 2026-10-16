@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Download, FileText } from 'lucide-react'
 import { toast } from 'sonner'
-import { Alerta, Boton, EstadoError, Esqueleto, IC, MontoGrande, Pastilla, Tarjeta, Titulo } from '../../components/ui'
+import { AjustarAncho, Alerta, Boton, EstadoError, Esqueleto, IC, MontoGrande, Pastilla, Tarjeta, Titulo } from '../../components/ui'
 import { ETIQUETA_MEDIO, useDatos } from '../../lib/datos'
 import { capitalizar, formatFecha, formatMonto, formatPeriodo, hoyAR, partesMonto, periodoDe, plural, sumarMeses, type Moneda } from '../../lib/formato'
 import { MEDIOS, mesesEntre, reporteContadora } from '../../lib/reportes'
@@ -170,10 +170,10 @@ export function ContadoraPage() {
               return (
                 <div key={m} className="flex items-baseline justify-between gap-3">
                   <span className="text-sm font-semibold text-acc-strong">{m}</span>
-                  <span className="num text-[clamp(26px,3cqi,36px)]">
+                  <AjustarAncho className="num text-right text-[clamp(26px,3cqi,36px)]">
                     {p.entero}
                     {p.decimales && <span className="text-[.55em] tracking-normal opacity-70">{p.decimales}</span>}
-                  </span>
+                  </AjustarAncho>
                 </div>
               )
             })}

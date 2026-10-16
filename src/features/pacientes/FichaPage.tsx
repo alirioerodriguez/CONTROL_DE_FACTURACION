@@ -251,7 +251,7 @@ function GrupoMes({ periodo, items, cubierto }: { periodo: string; items: Movimi
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-base font-semibold">{pal.Sesion}{s.horas !== 1 ? ` · ${montoParaInput(s.horas)} h` : ''}</div>
-                <div className="mt-0.5 truncate text-sm text-ink2">
+                <div className="mt-0.5 text-sm break-words text-ink2">
                   {etiquetaDia(s.fecha)}
                   {pagado > 0 && pagado < s.monto ? ` · abonó ${formatMonto(pagado, s.moneda)}` : ''}
                 </div>
@@ -277,7 +277,7 @@ function GrupoMes({ periodo, items, cubierto }: { periodo: string; items: Movimi
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-base font-semibold">Pago · {ETIQUETA_MEDIO[p.medio]}</div>
-              <div className="mt-0.5 truncate text-sm text-ink2">
+              <div className="mt-0.5 text-sm break-words text-ink2">
                 {etiquetaDia(p.fecha)}
                 {otroMes ? ` · de ${nombreMes(p.periodo)}` : ''}
                 {p.nro_factura ? ` · Fact. ${p.nro_factura}` : ''}

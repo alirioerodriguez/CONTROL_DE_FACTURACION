@@ -105,7 +105,7 @@ export function InicioPage() {
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))]">
-        <Tarjeta className="p-2" data-tour="sin-abonar">
+        <Tarjeta className="@container p-2" data-tour="sin-abonar">
           <div className="flex items-baseline justify-between gap-3 px-3.5 pt-3.5 pb-2">
             <h2 className="m-0 text-xl font-semibold">{pal.Sesiones} sin abonar</h2>
             <div className="text-[15px] text-ink2">{r.impagas.length ? plural(r.impagas.length, pal.sesion, pal.sesiones) : ''}</div>
@@ -131,8 +131,14 @@ export function InicioPage() {
                       {etiquetaDia(i.sesion.fecha)}
                       <Chip tono={CHIP[i.estado].tono}>{CHIP[i.estado].texto}</Chip>
                     </div>
+                    {/* Si la tarjeta es angosta, el monto va debajo para no tapar el nombre. */}
+                    <div className="mt-1 text-base font-semibold break-words tabular @[30rem]:hidden">
+                      {formatMonto(i.debe, i.sesion.moneda)}
+                    </div>
                   </div>
-                  <div className="text-[17px] font-semibold whitespace-nowrap tabular">{formatMonto(i.debe, i.sesion.moneda)}</div>
+                  <div className="hidden text-[17px] font-semibold whitespace-nowrap tabular @[30rem]:block">
+                    {formatMonto(i.debe, i.sesion.moneda)}
+                  </div>
                   {wa ? (
                     <a
                       href={wa}

@@ -134,10 +134,18 @@ export function PacientesPage() {
                         {p.frecuencia ? ` · ${p.frecuencia}` : ''}
                         {p.activo ? '' : ' · Inactivo'}
                       </div>
+                      {/* En el celular el saldo va debajo del nombre, para que los dos se lean completos. */}
+                      <div className="mt-2 md:hidden">
+                        <Chip tono={debe ? 'mal' : 'ok'} grande ajustable>
+                          {debe ? `Debe ${textoDeuda(deuda)}` : 'Al día'}
+                        </Chip>
+                      </div>
                     </div>
-                    <Chip tono={debe ? 'mal' : 'ok'} grande>
-                      {debe ? `Debe ${textoDeuda(deuda)}` : 'Al día'}
-                    </Chip>
+                    <span className="hidden md:inline-flex">
+                      <Chip tono={debe ? 'mal' : 'ok'} grande>
+                        {debe ? `Debe ${textoDeuda(deuda)}` : 'Al día'}
+                      </Chip>
+                    </span>
                     <ChevronRight {...IC} className="hidden text-ink2 md:block" />
                   </button>
                 )
