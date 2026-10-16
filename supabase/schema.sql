@@ -35,7 +35,8 @@ create table if not exists public.profiles (
   updated_at            timestamptz not null default now()
 );
 
--- Crea el perfil automáticamente cuando alguien se registra.
+-- Crea el perfil automáticamente cuando alguien se registra
+-- (con Google también guarda el nombre).
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -43,8 +44,12 @@ security definer
 set search_path = ''
 as $$
 begin
-  insert into public.profiles (id, email)
-  values (new.id, new.email)
+  insert into public.profiles (id, email, nombre)
+  values (
+    new.id,
+    new.email,
+    nullif(trim(coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name', '')), '')
+  )
   on conflict (id) do nothing;
   return new;
 end;

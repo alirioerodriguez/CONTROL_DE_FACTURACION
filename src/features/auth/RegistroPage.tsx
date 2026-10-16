@@ -4,7 +4,7 @@ import { Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { Alerta, Boton, IC } from '../../components/ui'
 import { mensajeError, supabase } from '../../lib/supabase'
-import { AuthLayout, CampoAuth, claseBotonAuth, claseLinkAuth } from './AuthLayout'
+import { AuthLayout, CampoAuth, claseBotonAuth, claseLinkAuth, IngresoGoogle } from './AuthLayout'
 
 export function RegistroPage() {
   const [nombre, setNombre] = useState('')
@@ -23,11 +23,9 @@ export function RegistroPage() {
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
-      options: { emailRedirectTo: window.location.origin },
+      // El nombre viaja en los metadatos y el trigger lo guarda en el perfil.
+      options: { emailRedirectTo: window.location.origin, data: { full_name: nombre.trim() } },
     })
-    if (!error && data.session && nombre.trim()) {
-      await supabase.from('profiles').update({ nombre: nombre.trim() }).eq('id', data.session.user.id)
-    }
     setCargando(false)
     if (error) setError(mensajeError(error))
     else if (!data.session) setEnviado(true) // hace falta confirmar el mail
@@ -42,7 +40,7 @@ export function RegistroPage() {
         </div>
         <div className="text-[17px] leading-normal text-ink2">
           Te mandamos un link a <strong className="text-ink">{email}</strong> para confirmar la cuenta. Después podés
-          ingresar. Tu nombre lo cargás en Ajustes.
+          ingresar.
         </div>
         <Link to="/" className="flex h-14 items-center justify-center rounded-full bg-surface2 text-[17px] font-semibold hover:bg-line">
           Volver a ingresar
@@ -53,6 +51,7 @@ export function RegistroPage() {
 
   return (
     <AuthLayout titulo="Creá tu cuenta" sub="Gratis. Solo vos ves tus datos.">
+      <IngresoGoogle onError={setError} />
       <form onSubmit={registrar} noValidate className="flex flex-col gap-5">
         <CampoAuth etiqueta="Tu nombre" autoComplete="name" placeholder="Ej. Lic. Ana Martínez" value={nombre} onChange={(e) => setNombre(e.target.value)} />
         <CampoAuth etiqueta="Mail" type="email" autoComplete="email" placeholder="vos@mail.com" value={email} onChange={(e) => { setEmail(e.target.value); setError('') }} />

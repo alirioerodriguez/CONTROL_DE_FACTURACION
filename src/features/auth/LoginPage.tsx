@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Alerta, Boton } from '../../components/ui'
 import { mensajeError, supabase } from '../../lib/supabase'
-import { AuthLayout, CampoAuth, claseBotonAuth, claseLinkAuth } from './AuthLayout'
+import { AuthLayout, CampoAuth, claseBotonAuth, claseLinkAuth, errorDeRedireccion, IngresoGoogle } from './AuthLayout'
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [cargando, setCargando] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(errorDeRedireccion)
 
   async function entrar(e: FormEvent) {
     e.preventDefault()
@@ -24,7 +24,8 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout titulo="Ingresá" sub="Con el mail de tu cuenta.">
+    <AuthLayout titulo="Ingresá" sub="Con Google o con tu mail.">
+      <IngresoGoogle onError={setError} />
       <form onSubmit={entrar} noValidate className="flex flex-col gap-5">
         <CampoAuth etiqueta="Mail" type="email" autoComplete="email" placeholder="vos@mail.com" value={email} onChange={(e) => { setEmail(e.target.value); setError('') }} />
         <CampoAuth etiqueta="Contraseña" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => { setPassword(e.target.value); setError('') }} />
