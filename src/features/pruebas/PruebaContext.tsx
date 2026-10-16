@@ -105,9 +105,16 @@ export function PruebaProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Los pasos de menos de un segundo (por ejemplo, al arrancar) no cuentan como visita a una pantalla.
+  function sumarPantalla(c: Cronometro, ahora: number) {
+    if (c.pantallaDesde == null) return
+    const ms = ahora - c.pantallaDesde
+    if (ms >= 1000 || c.pantallas[c.pantalla]) c.pantallas[c.pantalla] = (c.pantallas[c.pantalla] ?? 0) + ms
+  }
+
   function cerrarTramo(c: Cronometro, ahora: number) {
     if (c.activoDesde != null) c.acumulado += ahora - c.activoDesde
-    if (c.pantallaDesde != null) c.pantallas[c.pantalla] = (c.pantallas[c.pantalla] ?? 0) + (ahora - c.pantallaDesde)
+    sumarPantalla(c, ahora)
     c.activoDesde = null
     c.pantallaDesde = null
   }
@@ -119,7 +126,7 @@ export function PruebaProvider({ children }: { children: ReactNode }) {
     const ahora = Date.now()
     const nueva = nombrePantalla(pathname)
     if (nueva === c.pantalla) return
-    if (c.pantallaDesde != null) c.pantallas[c.pantalla] = (c.pantallas[c.pantalla] ?? 0) + (ahora - c.pantallaDesde)
+    sumarPantalla(c, ahora)
     c.pantalla = nueva
     c.pantallaDesde = document.hidden ? null : ahora
     guardarCrono()
