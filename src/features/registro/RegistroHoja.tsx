@@ -365,7 +365,7 @@ export function RegistroHoja({
       {(!esSesion || pagado) && (
         <div className="flex flex-col gap-2.5">
           <div className="text-[15px] font-semibold">Medio de pago</div>
-          <Segmentado opciones={MEDIOS} valor={medio} onCambio={setMedio} className="[&>button]:text-sm" />
+          <Segmentado opciones={MEDIOS} valor={medio} onCambio={setMedio} className="[&>button]:text-sm [&>button]:leading-tight [&>button]:whitespace-normal" />
         </div>
       )}
 
