@@ -1,4 +1,5 @@
 import { useState, type InputHTMLAttributes, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 import { Logo } from '../../components/Layout'
 import { Spinner } from '../../components/ui'
 import { mensajeError, supabase } from '../../lib/supabase'
@@ -27,6 +28,9 @@ export function AuthLayout({ titulo, sub, children }: { titulo: string; sub?: Re
               {sub && <div className="mt-2 text-[17px] leading-snug text-ink2">{sub}</div>}
             </div>
             {children}
+          </div>
+          <div className="text-center text-sm text-ink2">
+            <Link to="/privacidad" className="text-ink2">Privacidad</Link> · <Link to="/terminos" className="text-ink2">Condiciones</Link>
           </div>
         </div>
       </div>

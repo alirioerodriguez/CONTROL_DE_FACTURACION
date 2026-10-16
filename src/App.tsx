@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { EnConstruccion } from './components/EnConstruccion'
 import { Layout } from './components/Layout'
 import { Spinner } from './components/ui'
@@ -8,6 +8,7 @@ import { LoginPage } from './features/auth/LoginPage'
 import { NuevaClavePage } from './features/auth/NuevaClavePage'
 import { RecuperarPage } from './features/auth/RecuperarPage'
 import { RegistroPage } from './features/auth/RegistroPage'
+import { PrivacidadPage, TerminosPage } from './features/legal/LegalPage'
 import { InicioPage } from './features/inicio/InicioPage'
 import { FichaPage } from './features/pacientes/FichaPage'
 import { PacientesPage } from './features/pacientes/PacientesPage'
@@ -16,6 +17,11 @@ import { supabaseConfigurado } from './lib/supabase'
 
 export default function App() {
   const { session, cargando, recuperando } = useAuth()
+  const { pathname } = useLocation()
+
+  // Páginas públicas: se ven con o sin sesión (Google las pide para publicar el ingreso).
+  if (pathname === '/privacidad') return <PrivacidadPage />
+  if (pathname === '/terminos') return <TerminosPage />
 
   if (!supabaseConfigurado) return <FaltaConfiguracion />
   if (cargando) {
