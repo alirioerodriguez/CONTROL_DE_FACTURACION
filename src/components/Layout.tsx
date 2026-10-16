@@ -60,6 +60,7 @@ export function Layout() {
         </div>
         <button
           type="button"
+          data-tour="registrar"
           onClick={() => abrir({ modo: 'sesion' })}
           className="flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-full bg-acc text-base font-semibold text-on-acc hover:bg-acc-strong"
         >
@@ -122,6 +123,7 @@ export function Layout() {
       {conBotonFlotante && (
         <button
           type="button"
+          data-tour="registrar"
           onClick={() => abrir({ modo: 'sesion' })}
           className="fixed right-[18px] bottom-[calc(102px+env(safe-area-inset-bottom))] z-[21] flex h-[58px] items-center gap-2 rounded-full bg-acc px-[22px] text-[17px] font-semibold text-on-acc shadow-[0_10px_28px_rgba(25,50,38,.28)] hover:bg-acc-strong md:hidden"
         >

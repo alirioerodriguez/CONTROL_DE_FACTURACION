@@ -67,7 +67,7 @@ export function InicioPage() {
         <SelectorMes periodo={periodo} onCambio={setPeriodo} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
+      <div data-tour="resumen" className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
         <div className={`${tarjeta} col-span-2 md:col-span-1`}>
           <div className={etiqueta}>Cobrado ARS</div>
           <MontoGrande monto={r.cobrado.ARS} moneda="ARS" />
@@ -100,7 +100,7 @@ export function InicioPage() {
       </div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))]">
-        <Tarjeta className="p-2">
+        <Tarjeta className="p-2" data-tour="sin-abonar">
           <div className="flex items-baseline justify-between gap-3 px-3.5 pt-3.5 pb-2">
             <h2 className="m-0 text-xl font-semibold">Sesiones sin abonar</h2>
             <div className="text-[15px] text-ink2">{r.impagas.length ? plural(r.impagas.length, 'sesión', 'sesiones') : ''}</div>

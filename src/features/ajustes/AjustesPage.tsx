@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, FileSpreadsheet, LogOut, Moon, Upload } from 'lucide-react'
+import { ChevronRight, FileSpreadsheet, LogOut, Moon, Sparkles, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { DescargarExcel } from '../../components/DescargarExcel'
 import { Boton, Campo, EstadoError, Esqueleto, IC, Segmentado, Tarjeta } from '../../components/ui'
@@ -11,6 +11,7 @@ import {
 import { mensajeError, supabase } from '../../lib/supabase'
 import { cambiarTema, temaActual, type Tema } from '../../lib/tema'
 import { useAuth } from '../auth/AuthProvider'
+import { useTutorial } from '../tutorial/Tutorial'
 
 export function AjustesPage() {
   const { session } = useAuth()
@@ -18,6 +19,7 @@ export function AjustesPage() {
   const { data: pacientes = [] } = usePacientes()
   const guardar = useGuardar()
   const navegar = useNavigate()
+  const { iniciar: iniciarTutorial } = useTutorial()
 
   const [nombre, setNombre] = useState('')
   const [tarifaTxt, setTarifaTxt] = useState('')
@@ -92,7 +94,7 @@ export function AjustesPage() {
 
       <Tarjeta className="flex flex-col gap-[18px] p-[22px]">
         <h2 className="m-0 text-lg font-semibold">Cobros por defecto</h2>
-        <label className="flex flex-col gap-2 text-[15px] font-semibold">
+        <label data-tour="tarifa" className="flex flex-col gap-2 text-[15px] font-semibold">
           Tarifa estándar por hora
           <div className="flex h-14 items-center gap-2 rounded-[14px] border border-line bg-fondo px-4 focus-within:border-acc">
             <span className="text-xl font-medium text-ink2">{moneda === 'USD' ? 'US$' : '$'}</span>
@@ -171,7 +173,14 @@ export function AjustesPage() {
       </Tarjeta>
 
       <Tarjeta className="px-[22px] py-2">
-        <button type="button" onClick={() => navegar('/importar')} className={fila}>
+        <button type="button" onClick={iniciarTutorial} className={fila}>
+          <span className="flex items-center gap-3">
+            <Sparkles {...IC} />
+            Ver tutorial
+          </span>
+          <ChevronRight {...IC} className="text-ink2" />
+        </button>
+        <button type="button" onClick={() => navegar('/importar')} className={`${fila} border-t border-line`}>
           <span className="flex items-center gap-3">
             <Upload {...IC} />
             Importar planilla

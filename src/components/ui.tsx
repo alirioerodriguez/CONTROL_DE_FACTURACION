@@ -1,5 +1,5 @@
 // Piezas de UI compartidas, con las medidas del diseño (docs/diseno).
-import { useEffect, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react'
+import { useEffect, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react'
 import { CircleAlert, RefreshCw, X, type LucideIcon } from 'lucide-react'
 import { iniciales, partesMonto, type Moneda } from '../lib/formato'
 
@@ -206,8 +206,12 @@ export function Chip({ tono, children, grande }: { tono: Tono; children: ReactNo
   )
 }
 
-export function Tarjeta({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-[22px] border border-line bg-surface ${className}`}>{children}</div>
+export function Tarjeta({ children, className = '', ...props }: HTMLAttributes<HTMLDivElement> & { children: ReactNode }) {
+  return (
+    <div {...props} className={`rounded-[22px] border border-line bg-surface ${className}`}>
+      {children}
+    </div>
+  )
 }
 
 export function Titulo({ children, sub }: { children: ReactNode; sub?: ReactNode }) {

@@ -45,7 +45,7 @@ export function MesPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div data-tour="reporte-mes" className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="m-0 font-serif text-[clamp(38px,5cqi,52px)] leading-none font-normal">Reporte del mes</h1>
         <div className="flex flex-wrap gap-2.5">
           <SelectorMes periodo={periodo} onCambio={setPeriodo} />

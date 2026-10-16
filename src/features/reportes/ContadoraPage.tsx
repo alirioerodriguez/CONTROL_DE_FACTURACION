@@ -68,7 +68,7 @@ export function ContadoraPage() {
       </button>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <Titulo sub="Cobros según fecha de pago, por moneda y medio.">Reporte para contadora</Titulo>
-        <div className="flex flex-wrap gap-2">
+        <div data-tour="descargar-contadora" className="flex flex-wrap gap-2">
           <Boton variante="borde" icono={Download} disabled={!hayPagos} cargando={exportando === 'xlsx'} onClick={() => exportar('xlsx')}>
             Descargar Excel
           </Boton>

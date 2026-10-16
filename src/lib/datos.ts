@@ -15,6 +15,7 @@ export interface Perfil {
   tarifa_estandar: number
   moneda_default: Moneda
   plantilla_whatsapp: string
+  tutorial_visto: boolean
 }
 
 export interface Paciente {

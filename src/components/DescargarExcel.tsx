@@ -17,6 +17,7 @@ export function DescargarExcel({
   soloIcono,
   className = '',
   alto,
+  ...resto
 }: {
   /** true: siempre la plantilla vacía. */
   vacia?: boolean
@@ -24,6 +25,7 @@ export function DescargarExcel({
   soloIcono?: boolean
   className?: string
   alto?: string
+  'data-tour'?: string
 }) {
   const { perfil, pacientes, sesiones, pagos } = useDatos()
   const [cargando, setCargando] = useState(false)
@@ -59,6 +61,7 @@ export function DescargarExcel({
       aria-label={etiqueta}
       title={etiqueta}
       className={className}
+      {...resto}
     >
       {soloIcono ? <span className="hidden md:inline">{etiqueta}</span> : etiqueta}
     </Boton>

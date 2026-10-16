@@ -55,7 +55,7 @@ export function PacientesPage() {
           Pacientes
         </Titulo>
         <div className="flex gap-2">
-          <DescargarExcel soloIcono alto="h-12" className="px-4" />
+          <DescargarExcel soloIcono alto="h-12" className="px-4" data-tour="descargar-excel" />
           <Boton
             variante="borde"
             alto="h-12"
@@ -67,7 +67,7 @@ export function PacientesPage() {
           >
             <span className="hidden md:inline">Importar</span>
           </Boton>
-          <Boton alto="h-12" icono={Plus} className="px-[18px]" onClick={() => abrir({ modo: 'paciente' })}>
+          <Boton alto="h-12" icono={Plus} className="px-[18px]" data-tour="nuevo-paciente" onClick={() => abrir({ modo: 'paciente' })}>
             Nuevo paciente
           </Boton>
         </div>

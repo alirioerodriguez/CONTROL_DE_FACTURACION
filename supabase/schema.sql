@@ -31,9 +31,13 @@ create table if not exists public.profiles (
   moneda_default        text not null default 'ARS' check (moneda_default in ('ARS','USD')),
   plantilla_whatsapp    text not null default
     'Hola {nombre}, ¿cómo estás? Te escribo para recordarte el pago de {mes}: {monto}. ¡Gracias!',
+  tutorial_visto        boolean not null default false,
   created_at            timestamptz not null default now(),
   updated_at            timestamptz not null default now()
 );
+
+-- Columnas agregadas después de la primera versión (para bases ya creadas).
+alter table public.profiles add column if not exists tutorial_visto boolean not null default false;
 
 -- Crea el perfil automáticamente cuando alguien se registra
 -- (con Google también guarda el nombre).

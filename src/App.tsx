@@ -14,6 +14,7 @@ import { FichaPage } from './features/pacientes/FichaPage'
 import { PacientesPage } from './features/pacientes/PacientesPage'
 import { ContadoraPage } from './features/reportes/ContadoraPage'
 import { MesPage } from './features/reportes/MesPage'
+import { TutorialProvider } from './features/tutorial/Tutorial'
 import { RegistroProvider } from './features/registro/RegistroContext'
 import { supabaseConfigurado } from './lib/supabase'
 
@@ -47,6 +48,7 @@ export default function App() {
 
   return (
     <RegistroProvider>
+      <TutorialProvider>
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<InicioPage />} />
@@ -59,6 +61,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
+      </TutorialProvider>
     </RegistroProvider>
   )
 }
