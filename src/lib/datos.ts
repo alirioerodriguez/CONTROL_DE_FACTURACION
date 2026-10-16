@@ -20,6 +20,8 @@ export interface Perfil {
   profesion: string | null
   termino: Termino
   modo_cobro: ModoCobro
+  /** Ve los resultados de las pruebas con usuarias. Solo se cambia por SQL. */
+  es_admin?: boolean
 }
 
 export interface Paciente {

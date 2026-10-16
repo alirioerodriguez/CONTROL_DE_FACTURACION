@@ -13,11 +13,14 @@ import { FichaPage } from './features/pacientes/FichaPage'
 import { PacientesPage } from './features/pacientes/PacientesPage'
 import { TutorialProvider } from './features/tutorial/Tutorial'
 import { RegistroProvider } from './features/registro/RegistroContext'
+import { PruebaProvider } from './features/pruebas/PruebaContext'
+import { PruebasPage } from './features/pruebas/PruebasPage'
 import { supabaseConfigurado } from './lib/supabase'
 
 const ImportarPage = lazy(() => import('./features/importar/ImportarPage').then((m) => ({ default: m.ImportarPage })))
 const MesPage = lazy(() => import('./features/reportes/MesPage').then((m) => ({ default: m.MesPage })))
 const ContadoraPage = lazy(() => import('./features/reportes/ContadoraPage').then((m) => ({ default: m.ContadoraPage })))
+const ResultadosPage = lazy(() => import('./features/pruebas/ResultadosPage').then((m) => ({ default: m.ResultadosPage })))
 const PrivacidadPage = lazy(() => import('./features/legal/LegalPage').then((m) => ({ default: m.PrivacidadPage })))
 const TerminosPage = lazy(() => import('./features/legal/LegalPage').then((m) => ({ default: m.TerminosPage })))
 
@@ -59,6 +62,7 @@ export default function App() {
   return (
     <RegistroProvider>
       <TutorialProvider>
+      <PruebaProvider>
       <Suspense fallback={cargandoPantalla}>
       <Routes>
         <Route element={<Layout />}>
@@ -69,10 +73,13 @@ export default function App() {
           <Route path="contadora" element={<ContadoraPage />} />
           <Route path="importar" element={<ImportarPage />} />
           <Route path="ajustes" element={<AjustesPage />} />
+          <Route path="pruebas" element={<PruebasPage />} />
+          <Route path="pruebas/resultados" element={<ResultadosPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
       </Suspense>
+      </PruebaProvider>
       </TutorialProvider>
     </RegistroProvider>
   )

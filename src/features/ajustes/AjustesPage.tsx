@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, FileSpreadsheet, LogOut, Moon, Sparkles, Trash2, Upload } from 'lucide-react'
+import { ChevronRight, ClipboardList, FileSpreadsheet, LogOut, Moon, Sparkles, Trash2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { DescargarExcel } from '../../components/DescargarExcel'
 import { FotoUsuario } from '../../components/FotoUsuario'
@@ -309,6 +309,13 @@ export function AjustesPage() {
           <span className="flex items-center gap-3">
             <Sparkles {...IC} />
             Ver tutorial
+          </span>
+          <ChevronRight {...IC} className="text-ink2" />
+        </button>
+        <button type="button" onClick={() => navegar('/pruebas')} className={`${fila} border-t border-line`}>
+          <span className="flex items-center gap-3">
+            <ClipboardList {...IC} />
+            Probá honorapp y ayudanos a mejorarla
           </span>
           <ChevronRight {...IC} className="text-ink2" />
         </button>

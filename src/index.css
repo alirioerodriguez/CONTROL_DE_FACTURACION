@@ -70,6 +70,11 @@ html[data-theme='dark'] {
 /* Estilos base dentro de la capa de Tailwind: así las clases de utilidad
    (colores, tamaños) siempre les ganan. */
 @layer base {
+  /* Durante las pruebas con usuarias, la app baja lo que mide la barra de la prueba. */
+  #root {
+    padding-top: var(--barra-prueba, 0px);
+  }
+
   html,
   body {
     margin: 0;

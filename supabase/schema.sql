@@ -319,6 +319,79 @@ $$;
 revoke execute on function public.eliminar_mi_cuenta() from public, anon;
 grant execute on function public.eliminar_mi_cuenta() to authenticated;
 
+-- ---------------------------------------------------------------------------
+-- Pruebas con usuarias (/pruebas): una fila por persona con sus ejercicios,
+-- tiempos por pantalla y la encuesta. Cada una ve y escribe solo la suya;
+-- las cuentas con profiles.es_admin ven todas con resultados_pruebas().
+-- ---------------------------------------------------------------------------
+alter table public.profiles add column if not exists es_admin boolean not null default false;
+
+-- Nadie se da permisos de admin desde la app: solo se cambia por SQL (sin sesión de usuaria).
+create or replace function public.proteger_es_admin()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if auth.uid() is not null then
+    if tg_op = 'INSERT' then
+      new.es_admin := false;
+    else
+      new.es_admin := old.es_admin;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_proteger_es_admin on public.profiles;
+create trigger profiles_proteger_es_admin before insert or update on public.profiles
+  for each row execute function public.proteger_es_admin();
+
+create table if not exists public.pruebas (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade unique,
+  nombre      text,
+  dispositivo text,
+  ancho       integer,
+  letra       integer,
+  ejercicios  jsonb not null default '{}'::jsonb,
+  encuesta    jsonb,
+  terminado   boolean not null default false,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.pruebas enable row level security;
+
+drop policy if exists "pruebas propias" on public.pruebas;
+create policy "pruebas propias" on public.pruebas
+  for all to authenticated
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+
+drop trigger if exists pruebas_updated_at on public.pruebas;
+create trigger pruebas_updated_at before update on public.pruebas
+  for each row execute function public.set_updated_at();
+
+create or replace function public.resultados_pruebas()
+returns setof public.pruebas
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not exists (select 1 from public.profiles where id = auth.uid() and es_admin) then
+    raise exception 'Solo para administradores';
+  end if;
+  return query select * from public.pruebas order by created_at;
+end;
+$$;
+
+revoke execute on function public.resultados_pruebas() from public, anon;
+grant execute on function public.resultados_pruebas() to authenticated;
+
 -- Perfiles para usuarias que ya existían antes de correr este script.
 insert into public.profiles (id, email)
 select id, email from auth.users
