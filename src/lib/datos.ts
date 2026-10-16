@@ -2,6 +2,7 @@
 // pacientes, sesiones y pagos (son pocos datos) y la app calcula el resto.
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { CategoriaPerfil } from './monotributo'
 import type { Moneda } from './formato'
 import type { ModoCobro, Termino } from './terminos'
 import { supabase } from './supabase'
@@ -20,6 +21,10 @@ export interface Perfil {
   profesion: string | null
   termino: Termino
   modo_cobro: ModoCobro
+  /** Categoría del monotributo (A a K), 'no' si no usa monotributo, null si no eligió. */
+  monotributo_categoria: CategoriaPerfil
+  /** Pesos por dólar para sumar los cobros en USD al control del tope. */
+  tipo_cambio_usd: number | null
   /** Ve los resultados de las pruebas con usuarias. Solo se cambia por SQL. */
   es_admin?: boolean
 }
@@ -106,7 +111,11 @@ export function usePerfil() {
     queryFn: async (): Promise<Perfil> => {
       const { data, error } = await supabase.from('profiles').select('*').single()
       if (error) throw error
-      return { ...data, tarifa_estandar: n(data.tarifa_estandar) }
+      return {
+        ...data,
+        tarifa_estandar: n(data.tarifa_estandar),
+        tipo_cambio_usd: data.tipo_cambio_usd == null ? null : n(data.tipo_cambio_usd),
+      }
     },
   })
 }

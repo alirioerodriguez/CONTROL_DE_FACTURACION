@@ -13,6 +13,7 @@ import { mensajeError, supabase } from '../../lib/supabase'
 import { cambiarLetra, cambiarTema, letraActual, TAMANOS_LETRA, temaActual, type Tema } from '../../lib/tema'
 import { useAuth } from '../auth/AuthProvider'
 import { CamposProfesion } from '../tutorial/Bienvenida'
+import { MonotributoAjustes } from './MonotributoAjustes'
 import { useTutorial } from '../tutorial/Tutorial'
 import { etiquetaProfesion, palabras, PROFESIONES, type ModoCobro, type Termino } from '../../lib/terminos'
 
@@ -275,6 +276,8 @@ export function AjustesPage() {
           Guardar cambios
         </Boton>
       </Tarjeta>
+
+      {perfil.data && <MonotributoAjustes perfil={perfil.data} />}
 
       <Tarjeta className="px-[1.375rem] py-2">
         <button type="button" role="switch" aria-checked={tema === 'dark'} onClick={alternarTema} className={fila}>

@@ -15,6 +15,7 @@ import { resumenMes, type SesionImpaga } from '../../lib/inicio'
 import { deudaDe, saldosDe } from '../../lib/resumen'
 import { usePalabras } from '../../components/usePalabras'
 import { useRegistro } from '../registro/RegistroContext'
+import { TarjetaMonotributo } from './TarjetaMonotributo'
 
 const CHIP: Record<SesionImpaga['estado'], { tono: Tono; texto: string }> = {
   parcial: { tono: 'parcial', texto: 'Parcial' },
@@ -103,6 +104,8 @@ export function InicioPage() {
           <div className="text-sm text-ink2">de {r.pacientesActivos} en total</div>
         </div>
       </div>
+
+      {perfil && <TarjetaMonotributo perfil={perfil} pagos={pagos} />}
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:grid-cols-[repeat(auto-fit,minmax(min(100%,26.25rem),1fr))]">
         <Tarjeta className="@container p-2" data-tour="sin-abonar">

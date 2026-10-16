@@ -48,6 +48,17 @@ exception when duplicate_object then null; end $$;
 do $$ begin
   alter table public.profiles add constraint profiles_modo_cobro_check check (modo_cobro in ('hora','sesion'));
 exception when duplicate_object then null; end $$;
+-- Monotributo: categoría A a K, 'no' si no usa monotributo, null si todavía no eligió.
+-- Tipo de cambio para sumar los dólares al control del tope (la app no convierte sola).
+alter table public.profiles add column if not exists monotributo_categoria text;
+alter table public.profiles add column if not exists tipo_cambio_usd numeric(14,2);
+do $$ begin
+  alter table public.profiles add constraint profiles_monotributo_check
+    check (monotributo_categoria in ('A','B','C','D','E','F','G','H','I','J','K','no'));
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter table public.profiles add constraint profiles_tipo_cambio_check check (tipo_cambio_usd > 0);
+exception when duplicate_object then null; end $$;
 
 -- Crea el perfil automáticamente cuando alguien se registra
 -- (con Google también guarda el nombre).

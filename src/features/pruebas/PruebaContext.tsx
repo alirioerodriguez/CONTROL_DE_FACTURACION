@@ -66,6 +66,20 @@ function leerJSON<T>(clave: string): T | null {
   }
 }
 
+// Los pasos de menos de un segundo (por ejemplo, al arrancar) no cuentan como visita a una pantalla.
+function sumarPantalla(c: Cronometro, ahora: number) {
+  if (c.pantallaDesde == null) return
+  const ms = ahora - c.pantallaDesde
+  if (ms >= 1000 || c.pantallas[c.pantalla]) c.pantallas[c.pantalla] = (c.pantallas[c.pantalla] ?? 0) + ms
+}
+
+function cerrarTramo(c: Cronometro, ahora: number) {
+  if (c.activoDesde != null) c.acumulado += ahora - c.activoDesde
+  sumarPantalla(c, ahora)
+  c.activoDesde = null
+  c.pantallaDesde = null
+}
+
 export function PruebaProvider({ children }: { children: ReactNode }) {
   const pal = usePalabras()
   const ejercicios = useMemo(() => armarEjercicios(pal), [pal])
@@ -104,20 +118,6 @@ export function PruebaProvider({ children }: { children: ReactNode }) {
     // Solo al montar.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // Los pasos de menos de un segundo (por ejemplo, al arrancar) no cuentan como visita a una pantalla.
-  function sumarPantalla(c: Cronometro, ahora: number) {
-    if (c.pantallaDesde == null) return
-    const ms = ahora - c.pantallaDesde
-    if (ms >= 1000 || c.pantallas[c.pantalla]) c.pantallas[c.pantalla] = (c.pantallas[c.pantalla] ?? 0) + ms
-  }
-
-  function cerrarTramo(c: Cronometro, ahora: number) {
-    if (c.activoDesde != null) c.acumulado += ahora - c.activoDesde
-    sumarPantalla(c, ahora)
-    c.activoDesde = null
-    c.pantallaDesde = null
-  }
 
   // Cambio de pantalla: se suma el tiempo a la anterior.
   useEffect(() => {
