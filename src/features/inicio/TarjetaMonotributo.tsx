@@ -14,6 +14,11 @@ const ESTADO: Record<EstadoTope, { tono: Tono; texto: string }> = {
 }
 
 /** Control del tope del monotributo en Inicio. No aparece si la persona marcó que no usa monotributo. */
+/** Un monto que no se corta en dos renglones. */
+function M({ children }: { children: string }) {
+  return <span className="whitespace-nowrap">{children}</span>
+}
+
 export function TarjetaMonotributo({ perfil, pagos }: { perfil: Perfil; pagos: Pago[] }) {
   const navegar = useNavigate()
   const guardar = useGuardar()
@@ -37,7 +42,7 @@ export function TarjetaMonotributo({ perfil, pagos }: { perfil: Perfil; pagos: P
       <Tarjeta className="flex flex-col gap-3 p-[1.375rem]">
         <h2 className="m-0 text-xl font-semibold">Monotributo</h2>
         <p className="m-0 text-[0.9375rem] leading-normal">
-          En los últimos 12 meses cobraste {formatMonto(c.total, 'ARS')}.{' '}
+          En los últimos 12 meses cobraste <M>{formatMonto(c.total, 'ARS')}</M>.{' '}
           {c.sugerida ? `Te correspondería la categoría ${c.sugerida.letra}.` : 'Superás el tope de la categoría K.'} Elegí
           tu categoría y te avisamos cuando te acerques al tope.
         </p>
@@ -96,16 +101,16 @@ export function TarjetaMonotributo({ perfil, pagos }: { perfil: Perfil; pagos: P
 
       <div className="flex flex-col gap-1 text-[0.9375rem] leading-normal">
         <div>
-          Llevás <strong>{formatMonto(c.total, 'ARS')}</strong> de {formatMonto(c.elegida.tope, 'ARS')}, cobrados de{' '}
+          Llevás <strong><M>{formatMonto(c.total, 'ARS')}</M></strong> de <M>{formatMonto(c.elegida.tope, 'ARS')}</M>, cobrados de{' '}
           {formatPeriodo(c.desde)} a {formatPeriodo(c.hasta)}.
         </div>
         {c.estado === 'bien' || c.estado === 'cerca' ? (
-          <div>Te quedan {formatMonto(c.margen ?? 0, 'ARS')} antes del tope.</div>
+          <div>Te quedan <M>{formatMonto(c.margen ?? 0, 'ARS')}</M> antes del tope.</div>
         ) : null}
         {(c.estado === 'cerca' || c.estado === 'pasado') && c.sugerida && c.sugerida.letra !== c.elegida.letra && (
           <div>
             Con lo cobrado te correspondería la <strong>categoría {c.sugerida.letra}</strong> (hasta{' '}
-            {formatMonto(c.sugerida.tope, 'ARS')}). Hablalo con tu contadora.
+            <M>{formatMonto(c.sugerida.tope, 'ARS')}</M>). Hablalo con tu contadora.
           </div>
         )}
         {c.estado === 'bien' && c.sugerida && c.sugerida.letra < c.elegida.letra && (
@@ -118,7 +123,7 @@ export function TarjetaMonotributo({ perfil, pagos }: { perfil: Perfil; pagos: P
         )}
         {c.faltaTipoCambio && (
           <div className="text-ink2">
-            Además cobraste {formatMonto(c.usd, 'USD')}, que no están sumados. Poné el dólar en Ajustes → Monotributo para
+            Además cobraste <M>{formatMonto(c.usd, 'USD')}</M>, que no están sumados. Poné el dólar en Ajustes → Monotributo para
             incluirlos.
           </div>
         )}

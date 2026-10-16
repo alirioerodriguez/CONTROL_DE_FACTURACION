@@ -7,6 +7,11 @@ import { CATEGORIAS, controlTope, datosCategoria, VIGENCIA_MONOTRIBUTO, type Cat
 import { mensajeError } from '../../lib/supabase'
 
 /** Tarjeta de Ajustes: elegir la categoría del monotributo y el dólar para sumar los cobros en USD. */
+/** Un monto que no se corta en dos renglones. */
+function M({ children }: { children: string }) {
+  return <span className="whitespace-nowrap">{children}</span>
+}
+
 export function MonotributoAjustes({ perfil }: { perfil: Perfil }) {
   const guardar = useGuardar()
   const { data: pagos = [] } = usePagos()
@@ -85,8 +90,8 @@ export function MonotributoAjustes({ perfil }: { perfil: Perfil }) {
 
       {datos ? (
         <div className="text-[0.9375rem] leading-normal">
-          <strong>Categoría {datos.letra}:</strong> hasta {formatMonto(datos.tope, 'ARS')} por año · cuota mensual para
-          servicios: {formatMonto(datos.cuota, 'ARS')}.
+          <strong>Categoría {datos.letra}:</strong> hasta <M>{formatMonto(datos.tope, 'ARS')}</M> por año · cuota mensual para
+          servicios: <M>{formatMonto(datos.cuota, 'ARS')}</M>.
         </div>
       ) : elegida === 'no' ? (
         <div className="text-[0.9375rem] text-ink2">Marcaste que no usás monotributo: el control no aparece en Inicio.</div>
@@ -94,7 +99,7 @@ export function MonotributoAjustes({ perfil }: { perfil: Perfil }) {
 
       {control.total > 0 && (
         <div className="text-[0.9375rem] leading-normal text-ink2">
-          Según lo que cobraste en los últimos 12 meses ({formatMonto(control.total, 'ARS')})
+          Según lo que cobraste en los últimos 12 meses (<M>{formatMonto(control.total, 'ARS')}</M>)
           {control.sugerida ? ` te correspondería la categoría ${control.sugerida.letra}.` : ' superás el tope de la categoría K.'}
         </div>
       )}
