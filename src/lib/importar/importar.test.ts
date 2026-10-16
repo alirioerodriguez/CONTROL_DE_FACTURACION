@@ -106,6 +106,7 @@ describe('planilla genérica', () => {
     ])
     expect(r.duplicadas).toBe(2) // Lucía ya estaba cargada; Rocío repetida en el archivo
     expect(r.pacientes.map((p) => p.nombre)).toEqual(['Rocío Herrera', 'Sofía Ruiz', 'Diego Luna'])
+    expect(r.pacientes[1]).toMatchObject({ tipo_tarifa: 'personalizada', tarifa_personalizada: 50, moneda: 'USD' })
     expect(r.sesiones).toHaveLength(3)
     expect(r.sesiones.find((s) => s.fecha === '2026-10-07')).toMatchObject({ moneda: 'USD', tarifa_hora: 50 })
     expect(r.sesiones.find((s) => s.fecha === '2026-10-08')?.moneda).toBe('ARS') // sin moneda: la de Ajustes

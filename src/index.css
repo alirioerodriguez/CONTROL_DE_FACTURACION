@@ -64,57 +64,63 @@ html[data-theme='dark'] {
   --font-serif: 'Instrument Serif', Georgia, serif;
 }
 
-html,
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--ink);
-  font-family: var(--font-sans);
-  -webkit-font-smoothing: antialiased;
-  -webkit-text-size-adjust: 100%;
+/* Estilos base dentro de la capa de Tailwind: así las clases de utilidad
+   (colores, tamaños) siempre les ganan. */
+@layer base {
+  html,
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    color: inherit;
+  }
+
+  /* iOS hace zoom si un campo tiene menos de 16px. */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
+
+  input::placeholder {
+    color: var(--ink2);
+    opacity: 0.8;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 2px;
+  }
+
+  button:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
-button,
-input,
-select,
-textarea {
-  font: inherit;
-  color: inherit;
-}
+@layer components {
+  /* Números grandes del diseño: Figtree 600, tabulares. */
+  .num {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    white-space: nowrap;
+  }
 
-/* iOS hace zoom si un campo tiene menos de 16px. */
-input,
-select,
-textarea {
-  font-size: max(16px, 1em);
-}
-
-input::placeholder {
-  color: var(--ink2);
-  opacity: 0.8;
-}
-
-:focus-visible {
-  outline: 2px solid var(--acc);
-  outline-offset: 2px;
-}
-
-button:not(:disabled) {
-  cursor: pointer;
-}
-
-/* Números grandes del diseño: Figtree 600, tabulares. */
-.num {
-  font-family: var(--font-sans);
-  font-weight: 600;
-  letter-spacing: -0.025em;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.tabular {
-  font-variant-numeric: tabular-nums;
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
 }
 
 @keyframes pulso {

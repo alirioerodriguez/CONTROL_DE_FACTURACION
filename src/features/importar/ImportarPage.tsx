@@ -461,7 +461,7 @@ function Confirmacion({
             </strong>
             .{' '}
             {p.pacientesExistentes > 0 && `${plural(p.pacientesExistentes, 'ya existía', 'ya existían')} y se reutilizan. `}
-            {!plantilla && 'Quedan con tu tarifa estándar; después podés cambiarla.'}
+            {!plantilla && 'Toman como tarifa el honorario de su primera sesión; después podés cambiarla.'}
           </span>
         </label>
       )}

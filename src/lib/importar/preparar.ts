@@ -239,7 +239,7 @@ export function prepararGenerico(hoja: Hoja, mapeo: Mapeo, ctx: Contexto): Prepa
       existentesUsados.add(existente)
     } else {
       const r = `n:${clave}`
-      if (!nuevos.has(clave)) nuevos.set(clave, pacienteBasico(r, nombre, moneda))
+      if (!nuevos.has(clave)) nuevos.set(clave, pacienteBasico(r, nombre, moneda, monto, ctx))
       ref = { paciente_ref: r }
     }
 
@@ -273,7 +273,9 @@ export function prepararGenerico(hoja: Hoja, mapeo: Mapeo, ctx: Contexto): Prepa
   return res
 }
 
-function pacienteBasico(ref: string, nombre: string, moneda: Moneda): PacienteNuevo {
+/** Paciente creado desde una sesión: usa la tarifa estándar si coincide; si no, la de esa sesión. */
+function pacienteBasico(ref: string, nombre: string, moneda: Moneda, monto: number, ctx: Contexto): PacienteNuevo {
+  const esEstandar = moneda === ctx.monedaDefecto && monto === ctx.tarifaEstandar
   return {
     ref,
     nombre,
@@ -286,8 +288,8 @@ function pacienteBasico(ref: string, nombre: string, moneda: Moneda): PacienteNu
     email: null,
     domicilio: null,
     frecuencia: null,
-    tipo_tarifa: 'estandar',
-    tarifa_personalizada: null,
+    tipo_tarifa: esEstandar ? 'estandar' : 'personalizada',
+    tarifa_personalizada: esEstandar ? null : monto,
     moneda,
     fecha_alta: hoyAR(),
     activo: true,
