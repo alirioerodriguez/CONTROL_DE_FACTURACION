@@ -31,10 +31,19 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+        // index.html NO va al precache: si una publicación agarra al service worker a
+        // mitad de camino, quedaría guardada una página que apunta a archivos viejos
+        // (pantalla sin estilos). La página se pide siempre a internet primero.
+        globPatterns: ['**/*.{js,css,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/plantilla-cobros\.xlsx$/],
+        navigateFallback: null,
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: { cacheName: 'paginas', networkTimeoutSeconds: 5 },
+          },
+        ],
         // La versión nueva se activa apenas se descarga (si no, queda "en espera"
         // hasta cerrar todas las pestañas y la gente sigue viendo la vieja).
         skipWaiting: true,
