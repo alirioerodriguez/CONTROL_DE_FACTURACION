@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Paciente, Pago, Perfil, Sesion } from './datos'
-import { libroBackup } from './exportar'
+import { libroBackup, pdfContadora } from './exportar'
 import { leerXlsx } from './importar/leer'
 import { esPlantilla, prepararPlantilla } from './importar/preparar'
 
@@ -63,5 +63,16 @@ describe('Excel de backup', () => {
   it('subido a la misma cuenta, no duplica nada', async () => {
     const r = prepararPlantilla(await ida(), { pacientes, sesiones, pagos, monedaDefecto: 'ARS', tarifaEstandar: 50000 })
     expect(r).toMatchObject({ pacientes: [], sesiones: [], pagos: [], errores: [], duplicadas: 4, pacientesExistentes: 2 })
+  })
+})
+
+describe('PDF para contadora', () => {
+  it('arma el documento con el resumen y el detalle', async () => {
+    const doc = await pdfContadora('2026-10-01', '2026-11-01', perfil, pacientes, pagos)
+    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(1)
+    const texto = doc.output()
+    expect(texto).toContain('Reporte de cobros')
+    expect(texto).toContain('Detalle de pagos')
+    expect(texto).toContain('Noviembre 2026')
   })
 })

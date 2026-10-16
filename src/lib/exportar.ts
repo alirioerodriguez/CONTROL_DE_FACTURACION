@@ -192,7 +192,8 @@ export async function exportarContadoraXlsx(desde: string, hasta: string, perfil
   await guardarLibro(libro, `contadora-${mesArchivo(desde)}-a-${mesArchivo(hasta)}.xlsx`)
 }
 
-export async function exportarContadoraPdf(desde: string, hasta: string, perfil: Perfil | undefined, pacientes: Paciente[], pagos: Pago[]) {
+/** Arma el PDF para la contadora (separado de la descarga para poder probarlo). */
+export async function pdfContadora(desde: string, hasta: string, perfil: Perfil | undefined, pacientes: Paciente[], pagos: Pago[]) {
   const r = reporteContadora(desde, hasta, hoyAR(), pacientes, pagos)
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')])
   const doc = new jsPDF({ unit: 'pt', format: 'a4' })
@@ -257,6 +258,11 @@ export async function exportarContadoraPdf(desde: string, hasta: string, perfil:
     columnStyles: { 5: { halign: 'right' } },
   })
 
+  return doc
+}
+
+export async function exportarContadoraPdf(desde: string, hasta: string, perfil: Perfil | undefined, pacientes: Paciente[], pagos: Pago[]) {
+  const doc = await pdfContadora(desde, hasta, perfil, pacientes, pagos)
   doc.save(`contadora-${mesArchivo(desde)}-a-${mesArchivo(hasta)}.pdf`)
 }
 
