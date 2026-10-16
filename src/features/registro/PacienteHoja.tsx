@@ -6,6 +6,7 @@ import { Alerta, Boton, Campo, CampoMonto, Confirmar, Hoja, Segmentado, type Opc
 import { nombreCompleto, useDatos, useGuardar, type Paciente } from '../../lib/datos'
 import { formatMonto, hoyAR, montoParaInput, parseMontoAR, type Moneda } from '../../lib/formato'
 import { mensajeError } from '../../lib/supabase'
+import { usePalabras } from '../../components/usePalabras'
 import { opcionesHoras } from './opciones'
 
 const DIAS: Opcion<number>[] = [
@@ -22,6 +23,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
   const { perfil } = useDatos()
   const guardar = useGuardar()
   const navegar = useNavigate()
+  const pal = usePalabras()
   const tarifaEstandar = perfil?.tarifa_estandar ?? 0
   const monedaEstandar = perfil?.moneda_default ?? 'ARS'
 
@@ -48,7 +50,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
     const limpio = nombre.trim().replace(/\s+/g, ' ')
     if (!limpio) return setError('Escribí el nombre del paciente.')
     const tarifa = parseMontoAR(tarifaTxt)
-    if (tipo === 'personalizada' && !(tarifa != null && tarifa > 0)) return setError('Ingresá la tarifa por hora.')
+    if (tipo === 'personalizada' && !(tarifa != null && tarifa > 0)) return setError(`Ingresá la tarifa ${pal.porUnidad}.`)
     setError('')
     const fila = {
       nombre: limpio,
@@ -58,7 +60,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
       tarifa_personalizada: tipo === 'personalizada' ? tarifa : null,
       // Con tarifa estándar el paciente usa la moneda de la tarifa estándar.
       moneda: tipo === 'estandar' ? monedaEstandar : moneda,
-      horas_por_sesion: horas,
+      horas_por_sesion: pal.porHora ? horas : 1,
       dias_semana: dias,
       frecuencia,
       activo,
@@ -132,7 +134,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
       />
 
       <div className="flex flex-col gap-2.5">
-        <div className="text-[15px] font-semibold">Honorario por hora</div>
+        <div className="text-[15px] font-semibold">Honorario {pal.porUnidad}</div>
         <Segmentado
           opciones={[
             { v: 'estandar', l: 'Tarifa estándar' },
@@ -144,13 +146,13 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
         {tipo === 'estandar' ? (
           <div className="text-[15px] text-ink2">
             {tarifaEstandar > 0
-              ? `${formatMonto(tarifaEstandar, monedaEstandar)} por hora. Si cambiás la tarifa estándar en Ajustes, cambia para este paciente.`
+              ? `${formatMonto(tarifaEstandar, monedaEstandar)} ${pal.porUnidad}. Si cambiás la tarifa estándar en Ajustes, cambia para este paciente.`
               : 'Todavía no cargaste tu tarifa estándar. Hacelo en Ajustes.'}
           </div>
         ) : (
           <div className="flex gap-2.5">
             <CampoMonto
-              etiqueta="Tarifa por hora"
+              etiqueta={`Tarifa ${pal.porUnidad}`}
               simbolo={moneda === 'USD' ? 'US$' : '$'}
               valor={tarifaTxt}
               onCambio={(v) => {
@@ -173,15 +175,17 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
         )}
       </div>
 
+      {pal.porHora && (
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-[15px] font-semibold">Duración de la sesión</div>
+        <div className="text-[15px] font-semibold">Duración de la {pal.sesion}</div>
         <Segmentado opciones={opcionesHoras(horas)} valor={horas} onCambio={setHoras} className="min-w-[200px]" alto="h-10" />
       </div>
+      )}
 
       <div className="flex flex-col gap-2.5">
         <div>
           <div className="text-[15px] font-semibold">Días fijos</div>
-          <div className="text-sm text-ink2">Para cargar las sesiones del mes de un toque.</div>
+          <div className="text-sm text-ink2">Para cargar las {pal.sesiones} del mes de un toque.</div>
         </div>
         <div className="grid grid-cols-6 gap-1.5">
           {DIAS.map((d) => {

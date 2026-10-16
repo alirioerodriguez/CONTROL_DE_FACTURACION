@@ -38,6 +38,16 @@ create table if not exists public.profiles (
 
 -- Columnas agregadas después de la primera versión (para bases ya creadas).
 alter table public.profiles add column if not exists tutorial_visto boolean not null default false;
+-- Profesión y vocabulario: 'sesión' o 'consulta'; tarifa por hora o por sesión/consulta.
+alter table public.profiles add column if not exists profesion text;
+alter table public.profiles add column if not exists termino text not null default 'sesion';
+alter table public.profiles add column if not exists modo_cobro text not null default 'hora';
+do $ begin
+  alter table public.profiles add constraint profiles_termino_check check (termino in ('sesion','consulta'));
+exception when duplicate_object then null; end $;
+do $ begin
+  alter table public.profiles add constraint profiles_modo_cobro_check check (modo_cobro in ('hora','sesion'));
+exception when duplicate_object then null; end $;
 
 -- Crea el perfil automáticamente cuando alguien se registra
 -- (con Google también guarda el nombre).

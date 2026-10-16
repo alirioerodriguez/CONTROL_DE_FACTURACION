@@ -16,6 +16,7 @@ import {
 import { aFavorDe, deudaDe, saldosDe } from '../../lib/resumen'
 import { estadoSesion, fechasDelMes, pagadoPorSesion, tarifaVigente, type EstadoSesion } from '../../lib/saldos'
 import { mensajeError } from '../../lib/supabase'
+import { usePalabras } from '../../components/usePalabras'
 import { useRegistro } from '../registro/RegistroContext'
 
 const CHIP_ESTADO: Record<EstadoSesion, { tono: Tono; texto: string }> = {
@@ -31,6 +32,7 @@ export function FichaPage() {
   const navegar = useNavigate()
   const { perfil, pacientes, sesiones, pagos, cargando, error, reintentar } = useDatos()
   const { abrir } = useRegistro()
+  const pal = usePalabras()
   const [generando, setGenerando] = useState(false)
   const paciente = pacientes.find((p) => p.id === id)
 
@@ -79,17 +81,17 @@ export function FichaPage() {
     { k: 'Teléfono', v: paciente.telefono || '—' },
     {
       k: 'Honorario',
-      v: tarifa > 0 ? `${formatMonto(tarifa, paciente.moneda)}/h · ${paciente.tipo_tarifa === 'estandar' ? 'estándar' : 'personalizado'}` : 'Sin tarifa',
+      v: tarifa > 0 ? `${formatMonto(tarifa, paciente.moneda)}${pal.sufijo} · ${paciente.tipo_tarifa === 'estandar' ? 'estándar' : 'personalizado'}` : 'Sin tarifa',
     },
     { k: 'Moneda', v: paciente.moneda === 'ARS' ? 'Pesos (ARS)' : 'Dólares (USD)' },
-    { k: 'Duración', v: `${montoParaInput(paciente.horas_por_sesion)} h por sesión` },
     {
       k: 'Días fijos',
       v: paciente.dias_semana.length ? paciente.dias_semana.map((d) => capitalizar(NOMBRES_DIAS[d])).join(', ') : '—',
     },
     { k: 'Frecuencia', v: paciente.frecuencia || '—' },
-    { k: 'Sesiones', v: String(calculos.ses.length) },
+    { k: pal.Sesiones, v: String(calculos.ses.length) },
   ]
+  if (pal.porHora) datos.splice(3, 0, { k: 'Duración', v: `${montoParaInput(paciente.horas_por_sesion)} h por ${pal.sesion}` })
   if (paciente.notas_admin) datos.push({ k: 'Notas', v: paciente.notas_admin })
 
   return (
@@ -136,7 +138,7 @@ export function FichaPage() {
                       colorDecimales="text-bad"
                     />
                   ))}
-                <div className="text-sm text-ink2">{plural(calculos.impagas, 'sesión sin abonar', 'sesiones sin abonar')}</div>
+                <div className="text-sm text-ink2">{plural(calculos.impagas, `${pal.sesion} sin abonar`, `${pal.sesiones} sin abonar`)}</div>
               </>
             ) : (
               <>
@@ -144,7 +146,7 @@ export function FichaPage() {
                 <div className="text-sm text-ink2">
                   {monedasAFavor.length
                     ? `A favor ${monedasAFavor.map((m) => formatMonto(calculos.aFavor[m], m)).join(' + ')}`
-                    : 'No debe ninguna sesión'}
+                    : `No debe ninguna ${pal.sesion}`}
                 </div>
               </>
             )}
@@ -152,14 +154,14 @@ export function FichaPage() {
         </div>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
           <Boton alto="h-[54px]" icono={Calendar} onClick={() => abrir({ modo: 'sesion', pacienteId: paciente.id })}>
-            Registrar sesión
+            Registrar {pal.sesion}
           </Boton>
           <Boton variante="suave" alto="h-[54px]" icono={Banknote} onClick={() => abrir({ modo: 'pago', pacienteId: paciente.id })}>
             Registrar pago
           </Boton>
           {paciente.dias_semana.length > 0 && (
             <Boton variante="borde" alto="h-[54px]" icono={CalendarPlus} onClick={() => setGenerando(true)}>
-              Cargar sesiones del mes
+              Cargar {pal.sesiones} del mes
             </Boton>
           )}
         </div>
@@ -214,6 +216,7 @@ export function FichaPage() {
 
 function GrupoMes({ periodo, items, cubierto }: { periodo: string; items: Movimiento[]; cubierto: Map<string, number> }) {
   const { abrir } = useRegistro()
+  const pal = usePalabras()
   const cantSesiones = items.filter((i) => i.sesion).length
   const cobrado = { ARS: 0, USD: 0 }
   for (const i of items) if (i.pago) cobrado[i.pago.moneda] += i.pago.monto
@@ -227,7 +230,7 @@ function GrupoMes({ periodo, items, cubierto }: { periodo: string; items: Movimi
       <div className="mx-1.5 flex flex-wrap items-baseline justify-between gap-3 border-t border-line px-3.5 pt-3.5 pb-1.5">
         <div className="text-base font-bold">{capitalizar(formatPeriodo(periodo))}</div>
         <div className="text-sm text-ink2">
-          {plural(cantSesiones, 'sesión', 'sesiones')}
+          {plural(cantSesiones, pal.sesion, pal.sesiones)}
           {textoCobrado && ` · cobrado ${textoCobrado}`}
         </div>
       </div>
@@ -247,7 +250,7 @@ function GrupoMes({ periodo, items, cubierto }: { periodo: string; items: Movimi
                 <Calendar {...IC} />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-base font-semibold">Sesión{s.horas !== 1 ? ` · ${montoParaInput(s.horas)} h` : ''}</div>
+                <div className="text-base font-semibold">{pal.Sesion}{s.horas !== 1 ? ` · ${montoParaInput(s.horas)} h` : ''}</div>
                 <div className="mt-0.5 truncate text-sm text-ink2">
                   {etiquetaDia(s.fecha)}
                   {pagado > 0 && pagado < s.monto ? ` · abonó ${formatMonto(pagado, s.moneda)}` : ''}
@@ -288,17 +291,19 @@ function GrupoMes({ periodo, items, cubierto }: { periodo: string; items: Movimi
   )
 }
 
-/** Carga de un toque las sesiones del mes según los días fijos del paciente. */
+/** Carga de un toque las sesiones (o consultas) del mes según los días fijos del paciente. */
 function GenerarSesiones({ paciente, tarifa, onCerrar }: { paciente: Paciente; tarifa: number; onCerrar: () => void }) {
   const { sesiones } = useDatos()
   const guardar = useGuardar()
+  const pal = usePalabras()
+  const horas = pal.porHora ? paciente.horas_por_sesion : 1
   const actual = periodoDe(hoyAR())
   const [periodo, setPeriodo] = useState(actual)
 
   const yaCargadas = new Set(sesiones.filter((s) => s.patient_id === paciente.id).map((s) => s.fecha))
   const fechas = fechasDelMes(periodo, paciente.dias_semana)
   const nuevas = tarifa > 0 ? fechas.filter((f) => !yaCargadas.has(f)) : []
-  const total = tarifa * paciente.horas_por_sesion * nuevas.length
+  const total = tarifa * horas * nuevas.length
 
   async function cargar() {
     try {
@@ -309,13 +314,13 @@ function GenerarSesiones({ paciente, tarifa, onCerrar }: { paciente: Paciente; t
           filas: nuevas.map((fecha) => ({
             patient_id: paciente.id,
             fecha,
-            horas: paciente.horas_por_sesion,
+            horas,
             tarifa_hora: tarifa,
             moneda: paciente.moneda,
           })),
         },
       ])
-      toast.success(`Cargamos ${plural(nuevas.length, 'sesión', 'sesiones')} de ${nombreMes(periodo)}`)
+      toast.success(`Cargamos ${plural(nuevas.length, pal.sesion, pal.sesiones)} de ${nombreMes(periodo)}`)
       onCerrar()
     } catch (e) {
       toast.error(`No se pudieron cargar: ${mensajeError(e)}`)
@@ -324,8 +329,8 @@ function GenerarSesiones({ paciente, tarifa, onCerrar }: { paciente: Paciente; t
 
   return (
     <Confirmar
-      titulo="Cargar sesiones"
-      textoConfirmar={nuevas.length ? `Cargar ${plural(nuevas.length, 'sesión', 'sesiones')}` : 'Nada para cargar'}
+      titulo={`Cargar ${pal.sesiones}`}
+      textoConfirmar={nuevas.length ? `Cargar ${plural(nuevas.length, pal.sesion, pal.sesiones)}` : 'Nada para cargar'}
       peligroso={false}
       cargando={guardar.isPending}
       onConfirmar={() => (nuevas.length ? cargar() : onCerrar())}
@@ -357,7 +362,7 @@ function GenerarSesiones({ paciente, tarifa, onCerrar }: { paciente: Paciente; t
             </div>
             <span>
               {nuevas.length
-                ? `${plural(nuevas.length, 'sesión nueva', 'sesiones nuevas')} · ${formatMonto(total, paciente.moneda)} en total.`
+                ? `${plural(nuevas.length, `${pal.sesion} nueva`, `${pal.sesiones} nuevas`)} · ${formatMonto(total, paciente.moneda)} en total.`
                 : 'Ya están todas cargadas.'}
               {nuevas.length < fechas.length && nuevas.length > 0 ? ' Las tachadas ya estaban.' : ''}
             </span>

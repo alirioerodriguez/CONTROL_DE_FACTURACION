@@ -13,6 +13,7 @@ import {
   type CampoGenerico, type Mapeo, type Preparado,
 } from '../../lib/importar/preparar'
 import { mensajeError, supabase } from '../../lib/supabase'
+import { usePalabras } from '../../components/usePalabras'
 
 type Paso = 1 | 2 | 3
 const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -28,6 +29,7 @@ export function ImportarPage() {
   const qc = useQueryClient()
   const { perfil, pacientes, sesiones, pagos } = useDatos()
   const entrada = useRef<HTMLInputElement>(null)
+  const pal = usePalabras()
 
   const [paso, setPaso] = useState<Paso>(1)
   const [archivo, setArchivo] = useState('')
@@ -119,7 +121,7 @@ export function ImportarPage() {
       const r = data as { pacientes: number; sesiones: number; pagos: number }
       await qc.invalidateQueries()
       const partes = [
-        r.sesiones && plural(r.sesiones, 'sesión', 'sesiones'),
+        r.sesiones && plural(r.sesiones, pal.sesion, pal.sesiones),
         r.pagos && plural(r.pagos, 'pago', 'pagos'),
         r.pacientes && plural(r.pacientes, 'paciente nuevo', 'pacientes nuevos'),
       ].filter(Boolean)
@@ -147,7 +149,7 @@ export function ImportarPage() {
         <ChevronLeft {...IC} />
         Ajustes
       </button>
-      <Titulo sub="Traé tus pacientes, sesiones y pagos desde Excel o CSV.">Importar planilla</Titulo>
+      <Titulo sub={`Traé tus pacientes, ${pal.sesiones} y pagos desde Excel o CSV.`}>Importar planilla</Titulo>
 
       <div className="flex flex-wrap items-center gap-2.5">
         {pasos.map((l, i) => {
@@ -380,6 +382,7 @@ function Confirmacion({
   onConfirmar: () => void
   onCambiar: () => void
 }) {
+  const pal = usePalabras()
   const total = p.sesiones.length + p.pagos.length + p.pacientes.length
   const faltaConfirmarPacientes = p.pacientes.length > 0 && !crearPacientes
   const sumas = (lista: { moneda: 'ARS' | 'USD'; monto?: number; tarifa_hora?: number; horas?: number }[]) =>
@@ -396,7 +399,7 @@ function Confirmacion({
     <div className="flex flex-col gap-4">
       <ArchivoElegido
         nombre={archivo}
-        detalle={plantilla ? 'Reconocimos la plantilla de honorapp' : 'Planilla de sesiones'}
+        detalle={plantilla ? 'Reconocimos la plantilla de honorapp' : `Planilla de ${pal.sesiones}`}
         onCambiar={onCambiar}
       />
 
@@ -406,7 +409,7 @@ function Confirmacion({
           <div className={`${numero} text-acc-strong`}>{p.sesiones.length + p.pagos.length}</div>
           <div className="text-sm text-ink2">
             {[
-              plural(p.sesiones.length, 'sesión', 'sesiones'),
+              plural(p.sesiones.length, pal.sesion, pal.sesiones),
               plural(p.pagos.length, 'pago', 'pagos'),
             ].join(' · ')}
           </div>
@@ -425,7 +428,7 @@ function Confirmacion({
 
       {(p.sesiones.length > 0 || p.pagos.length > 0) && (
         <div className="text-[15px] text-ink2">
-          {p.sesiones.length > 0 && <>Sesiones por {sumas(p.sesiones)}. </>}
+          {p.sesiones.length > 0 && <>{pal.Sesiones} por {sumas(p.sesiones)}. </>}
           {p.pagos.length > 0 && <>Pagos por {sumas(p.pagos)}.</>}
         </div>
       )}

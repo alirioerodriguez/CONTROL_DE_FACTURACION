@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
@@ -6,6 +6,9 @@ import {
   Upload, Users, type LucideIcon,
 } from 'lucide-react'
 import { Boton, IC } from '../../components/ui'
+import { usePalabras } from '../../components/usePalabras'
+import type { Palabras } from '../../lib/terminos'
+import { Bienvenida } from './Bienvenida'
 import { usePerfil } from '../../lib/datos'
 import { supabase } from '../../lib/supabase'
 import { guardarPreferencia, preferencia } from '../../lib/tema'
@@ -19,7 +22,9 @@ interface Paso {
   texto: string
 }
 
-const PASOS: Paso[] = [
+/** Pasos del recorrido, con el vocabulario de la cuenta (sesión/consulta, por hora/por sesión). */
+function armarPasos(p: Palabras): Paso[] {
+  return [
   {
     ruta: '/',
     icono: Sparkles,
@@ -33,7 +38,7 @@ const PASOS: Paso[] = [
     icono: SlidersHorizontal,
     titulo: 'Primero, tu tarifa',
     texto:
-      'Cargá cuánto cobrás la hora. Los pacientes con tarifa estándar la usan solos. Si la cambiás, las sesiones nuevas se cobran con el valor nuevo y las ya cargadas conservan su precio.',
+      `Cargá cuánto cobrás ${p.porUnidad}. Los pacientes con tarifa estándar la usan solos. Si la cambiás, las ${p.sesiones} nuevas se cobran con el valor nuevo y las ya cargadas conservan su precio.`,
   },
   {
     ruta: '/pacientes',
@@ -41,7 +46,7 @@ const PASOS: Paso[] = [
     icono: Users,
     titulo: 'Tus pacientes',
     texto:
-      'Creá cada paciente con su teléfono, si usa tu tarifa estándar o una personalizada, cuánto dura la sesión y sus días fijos (por ejemplo, todos los lunes).',
+      `Creá cada paciente con su teléfono, si usa tu tarifa estándar o una personalizada${p.porHora ? `, cuánto dura la ${p.sesion}` : ''} y sus días fijos (por ejemplo, todos los lunes).`,
   },
   {
     ruta: '/pacientes',
@@ -57,14 +62,14 @@ const PASOS: Paso[] = [
     icono: Plus,
     titulo: 'Registrar en segundos',
     texto:
-      'Con «Registrar» cargás una sesión o un pago: elegís paciente, fecha y monto, y listo. Si ya te pagó la sesión, lo marcás en el mismo paso.',
+      `Con «Registrar» cargás una ${p.sesion} o un pago: elegís paciente, fecha y monto, y listo. Si ya te pagó la ${p.sesion}, lo marcás en el mismo paso.`,
   },
   {
     ruta: '/pacientes',
     icono: Calendar,
     titulo: 'La ficha de cada paciente',
     texto:
-      'Tocando un paciente ves cuánto debe (pesos y dólares por separado), su historial mes a mes y un botón para cargar de un toque todas las sesiones del mes según sus días fijos. Ahí también editás o borrás sesiones y pagos.',
+      `Tocando un paciente ves cuánto debe (pesos y dólares por separado), su historial mes a mes y un botón para cargar de un toque todas las ${p.sesiones} del mes según sus días fijos. Ahí también editás o borrás ${p.sesiones} y pagos.`,
   },
   {
     ruta: '/',
@@ -80,7 +85,7 @@ const PASOS: Paso[] = [
     icono: MessageCircle,
     titulo: 'Recordatorios por WhatsApp',
     texto:
-      'Acá aparecen las sesiones sin abonar. Con el botón verde le mandás al paciente un recordatorio ya escrito con lo que debe. El mensaje lo podés cambiar en Ajustes.',
+      `Acá aparecen las ${p.sesiones} sin abonar. Con el botón verde le mandás al paciente un recordatorio ya escrito con lo que debe. El mensaje lo podés cambiar en Ajustes.`,
   },
   {
     ruta: '/mes',
@@ -88,7 +93,7 @@ const PASOS: Paso[] = [
     icono: ChartColumn,
     titulo: 'Reporte del mes',
     texto:
-      'Cuánto facturaste, cuánto cobraste y quién debe, paciente por paciente, con cada sesión marcada como pagada, parcial o pendiente. Lo podés descargar en Excel.',
+      `Cuánto facturaste, cuánto cobraste y quién debe, paciente por paciente, con cada ${p.sesion} marcada como pagada, parcial o pendiente. Lo podés descargar en Excel.`,
   },
   {
     ruta: '/contadora',
@@ -111,7 +116,8 @@ const PASOS: Paso[] = [
     titulo: '¡Listo!',
     texto: 'Empezá por tu tarifa y tus pacientes. Si querés repasar algo, el tutorial está en Ajustes → «Ver tutorial».',
   },
-]
+  ]
+}
 
 interface TutorialApi {
   iniciar: () => void
@@ -136,7 +142,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
   // Arranca solo la primera vez (cuenta nueva). La marca local evita repetirlo si no se pudo guardar.
   useEffect(() => {
-    if (!perfil || perfil.tutorial_visto || yaArrancoSolo.current) return
+    if (!perfil || !perfil.profesion || perfil.tutorial_visto || yaArrancoSolo.current) return
     if (preferencia<string>(`tutorial-${perfil.id}`, '') === 'visto') return
     yaArrancoSolo.current = true
     setIndice(0)
@@ -155,6 +161,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{ iniciar: () => setIndice(0) }}>
       {children}
+      {perfil && !perfil.profesion && <Bienvenida perfil={perfil} />}
       {indice !== null && <Recorrido indice={indice} setIndice={setIndice} onTerminar={terminar} />}
     </Ctx.Provider>
   )
@@ -176,6 +183,8 @@ function Recorrido({
   setIndice: (i: number) => void
   onTerminar: () => void
 }) {
+  const palabrasCuenta = usePalabras()
+  const PASOS = useMemo(() => armarPasos(palabrasCuenta), [palabrasCuenta])
   const paso = PASOS[indice]
   const navegar = useNavigate()
   const { pathname } = useLocation()

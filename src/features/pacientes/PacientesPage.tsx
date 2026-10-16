@@ -9,6 +9,7 @@ import { nombreCompleto, useDatos } from '../../lib/datos'
 import { formatMonto, normalizar, plural } from '../../lib/formato'
 import { debeAlgo, deudaDe, saldosDe, textoDeuda } from '../../lib/resumen'
 import { tarifaVigente } from '../../lib/saldos'
+import { usePalabras } from '../../components/usePalabras'
 import { useRegistro } from '../registro/RegistroContext'
 
 const FILTROS = ['Todos', 'Deben', 'Activos', 'Inactivos'] as const
@@ -17,6 +18,7 @@ type Filtro = (typeof FILTROS)[number]
 export function PacientesPage() {
   const { perfil, pacientes, sesiones, pagos, cargando, error, reintentar } = useDatos()
   const { abrir } = useRegistro()
+  const pal = usePalabras()
   const navegar = useNavigate()
   const [busqueda, setBusqueda] = useState('')
   const [filtro, setFiltro] = useState<Filtro>('Todos')
@@ -127,7 +129,7 @@ export function PacientesPage() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[17px] font-semibold">{nombre}</div>
                       <div className="mt-[3px] truncate text-sm text-ink2">
-                        {tarifa > 0 ? `${formatMonto(tarifa, p.moneda)}/h` : 'Sin tarifa'}
+                        {tarifa > 0 ? `${formatMonto(tarifa, p.moneda)}${pal.sufijo}` : 'Sin tarifa'}
                         {p.tipo_tarifa === 'personalizada' ? ' · personalizada' : ''}
                         {p.frecuencia ? ` · ${p.frecuencia}` : ''}
                         {p.activo ? '' : ' · Inactivo'}

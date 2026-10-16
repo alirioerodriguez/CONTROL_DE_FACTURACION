@@ -12,7 +12,9 @@ import {
 import { mensajeError, supabase } from '../../lib/supabase'
 import { cambiarTema, temaActual, type Tema } from '../../lib/tema'
 import { useAuth } from '../auth/AuthProvider'
+import { CamposProfesion } from '../tutorial/Bienvenida'
 import { useTutorial } from '../tutorial/Tutorial'
+import { palabras, PROFESIONES, type ModoCobro, type Termino } from '../../lib/terminos'
 
 export function AjustesPage() {
   const { session } = useAuth()
@@ -27,6 +29,11 @@ export function AjustesPage() {
   const [moneda, setMoneda] = useState<Moneda>('ARS')
   const [plantilla, setPlantilla] = useState('')
   const [tema, setTema] = useState<Tema>(temaActual())
+  const [profesion, setProfesion] = useState('')
+  const [otra, setOtra] = useState('')
+  const [termino, setTermino] = useState<Termino>('sesion')
+  const [modo, setModo] = useState<ModoCobro>('hora')
+  const pal = palabras(termino, modo)
 
   useEffect(() => {
     if (!perfil.data) return
@@ -34,11 +41,19 @@ export function AjustesPage() {
     setTarifaTxt(perfil.data.tarifa_estandar ? montoParaInput(perfil.data.tarifa_estandar) : '')
     setMoneda(perfil.data.moneda_default)
     setPlantilla(perfil.data.plantilla_whatsapp || PLANTILLA_WHATSAPP_DEFECTO)
+    const prof = perfil.data.profesion ?? ''
+    const conocida = PROFESIONES.some((x) => x.v === prof)
+    setProfesion(prof && !conocida ? 'otra' : prof)
+    setOtra(prof && !conocida && prof !== 'otra' ? prof : '')
+    setTermino(perfil.data.termino)
+    setModo(perfil.data.modo_cobro)
   }, [perfil.data])
 
   if (perfil.isPending) return <Esqueleto que="los ajustes" />
   if (perfil.error) return <EstadoError que="los ajustes" reintentar={() => perfil.refetch()} />
 
+  // Vocabulario guardado (la tarjeta de profesión puede tener cambios sin guardar).
+  const palGuardado = palabras(perfil.data?.termino, perfil.data?.modo_cobro)
   const conEstandar = pacientes.filter((p) => p.tipo_tarifa === 'estandar').length
 
   async function guardarCobros() {
@@ -69,7 +84,19 @@ export function AjustesPage() {
         )
       }
       setTarifaTxt(tarifa ? montoParaInput(tarifa) : '')
-      toast.success(`Ajustes guardados · ${formatMonto(tarifa, moneda)} por hora`)
+      toast.success(`Ajustes guardados · ${formatMonto(tarifa, moneda)} ${palGuardado.porUnidad}`)
+    } catch (e) {
+      toast.error(`No se pudo guardar: ${mensajeError(e)}`)
+    }
+  }
+
+  async function guardarProfesion() {
+    const valor = profesion === 'otra' ? otra.trim() || 'otra' : profesion || null
+    try {
+      await guardar.mutateAsync([
+        { tipo: 'actualizar', tabla: 'profiles', id: perfil.data!.id, cambios: { profesion: valor, termino, modo_cobro: modo } },
+      ])
+      toast.success(`Listo: ${pal.sesiones}, cobro ${pal.porUnidad}`)
     } catch (e) {
       toast.error(`No se pudo guardar: ${mensajeError(e)}`)
     }
@@ -94,9 +121,26 @@ export function AjustesPage() {
       <h1 className="m-0 mb-2 font-serif text-[clamp(38px,5cqi,52px)] leading-none font-normal">Ajustes</h1>
 
       <Tarjeta className="flex flex-col gap-[18px] p-[22px]">
+        <h2 className="m-0 text-lg font-semibold">Tu profesión</h2>
+        <CamposProfesion
+          profesion={profesion}
+          setProfesion={setProfesion}
+          otra={otra}
+          setOtra={setOtra}
+          termino={termino}
+          setTermino={setTermino}
+          modo={modo}
+          setModo={setModo}
+        />
+        <Boton alto="h-[50px]" className="self-start" cargando={guardar.isPending} onClick={guardarProfesion}>
+          Guardar profesión
+        </Boton>
+      </Tarjeta>
+
+      <Tarjeta className="flex flex-col gap-[18px] p-[22px]">
         <h2 className="m-0 text-lg font-semibold">Cobros por defecto</h2>
         <label data-tour="tarifa" className="flex flex-col gap-2 text-[15px] font-semibold">
-          Tarifa estándar por hora
+          Tarifa estándar {palGuardado.porUnidad}
           <div className="flex h-14 items-center gap-2 rounded-[14px] border border-line bg-fondo px-4 focus-within:border-acc">
             <span className="text-xl font-medium text-ink2">{moneda === 'USD' ? 'US$' : '$'}</span>
             <input
@@ -109,7 +153,7 @@ export function AjustesPage() {
           </div>
           <span className="text-sm font-normal text-ink2">
             {conEstandar
-              ? `La usan ${conEstandar} ${conEstandar === 1 ? 'paciente' : 'pacientes'}. Si la cambiás, las sesiones nuevas se cobran con la tarifa nueva; las ya cargadas conservan su precio.`
+              ? `La usan ${conEstandar} ${conEstandar === 1 ? 'paciente' : 'pacientes'}. Si la cambiás, las ${palGuardado.sesiones} nuevas se cobran con la tarifa nueva; las ya cargadas conservan su precio.`
               : 'Los pacientes con tarifa estándar usan este valor.'}
           </span>
         </label>

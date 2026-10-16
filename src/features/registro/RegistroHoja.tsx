@@ -15,6 +15,7 @@ import { deudaDe, debeAlgo, saldosDe, textoDeuda } from '../../lib/resumen'
 import { periodoSugerido, tarifaVigente } from '../../lib/saldos'
 import { mensajeError } from '../../lib/supabase'
 import { guardarPreferencia, preferencia } from '../../lib/tema'
+import { usePalabras } from '../../components/usePalabras'
 import { opcionesHoras } from './opciones'
 import type { Apertura } from './RegistroContext'
 
@@ -38,6 +39,7 @@ export function RegistroHoja({
 }) {
   const { perfil, pacientes, sesiones, pagos } = useDatos()
   const guardar = useGuardar()
+  const pal = usePalabras()
   const hoy = hoyAR()
 
   const edSesion = apertura.modo === 'editar-sesion' ? apertura.sesion : null
@@ -51,8 +53,10 @@ export function RegistroHoja({
     if (!p) return { horas: 1, monto: '', moneda: perfil?.moneda_default ?? ('ARS' as Moneda), periodo: periodoDe(fecha) }
     if (esSesion) {
       const tarifa = tarifaVigente(p, tarifaEstandar)
-      const monto = tarifa * p.horas_por_sesion
-      return { horas: p.horas_por_sesion, monto: monto ? montoParaInput(monto) : '', moneda: p.moneda, periodo: periodoDe(fecha) }
+      // Con tarifa por sesión/consulta, cada encuentro vale una unidad.
+      const horas = pal.porHora ? p.horas_por_sesion : 1
+      const monto = tarifa * horas
+      return { horas, monto: monto ? montoParaInput(monto) : '', moneda: p.moneda, periodo: periodoDe(fecha) }
     }
     const saldos = saldosDe(p.id, sesiones, pagos)
     const deuda = deudaDe(saldos)[p.moneda]
@@ -136,7 +140,7 @@ export function RegistroHoja({
     ? (() => {
         const d = deudaDe(saldosDe(paciente.id, sesiones, pagos))
         const tarifa = tarifaVigente(paciente, tarifaEstandar)
-        return `${debeAlgo(d) ? `Debe ${textoDeuda(d)}` : 'Al día'} · ${formatMonto(tarifa, paciente.moneda)}/h`
+        return `${debeAlgo(d) ? `Debe ${textoDeuda(d)}` : 'Al día'} · ${formatMonto(tarifa, paciente.moneda)}${pal.sufijo}`
       })()
     : ''
 
@@ -151,7 +155,7 @@ export function RegistroHoja({
         const fila = { patient_id: pid, fecha, horas, tarifa_hora: redondear2(monto / horas), moneda }
         if (edSesion) {
           await guardar.mutateAsync([{ tipo: 'actualizar', tabla: 'sessions', id: edSesion.id, cambios: fila }])
-          toast.success('Sesión actualizada')
+          toast.success(`${pal.Sesion} actualizada`)
         } else {
           const [creadas] = await guardar.mutateAsync([{ tipo: 'insertar', tabla: 'sessions', filas: [fila] }])
           if (pagado) {
@@ -164,7 +168,7 @@ export function RegistroHoja({
               },
             ])
           }
-          toast.success(`Sesión guardada · ${nombre} · ${formatMonto(monto, moneda)} · ${pagado ? 'pagada' : 'pendiente'}`)
+          toast.success(`${pal.Sesion} guardada · ${nombre} · ${formatMonto(monto, moneda)} · ${pagado ? 'pagada' : 'pendiente'}`)
         }
       } else {
         const nro = factura.trim()
@@ -199,7 +203,7 @@ export function RegistroHoja({
     const id = (edSesion ?? edPago)!.id
     try {
       await guardar.mutateAsync([{ tipo: 'borrar', tabla, id }])
-      toast.success(edSesion ? 'Sesión eliminada' : 'Pago eliminado')
+      toast.success(edSesion ? `${pal.Sesion} eliminada` : 'Pago eliminado')
       onCerrar()
     } catch (e) {
       toast.error(`No se pudo eliminar: ${mensajeError(e)}`)
@@ -207,22 +211,22 @@ export function RegistroHoja({
     }
   }
 
-  const titulo = edSesion ? 'Editar sesión' : edPago ? 'Editar pago' : 'Registrar'
+  const titulo = edSesion ? `Editar ${pal.sesion}` : edPago ? 'Editar pago' : 'Registrar'
   const textoBoton = editando
     ? 'Guardar cambios'
-    : `${esSesion ? 'Guardar sesión' : 'Guardar pago'}${monto > 0 ? ` · ${formatMonto(monto, moneda)}` : ''}`
+    : `${esSesion ? `Guardar ${pal.sesion}` : 'Guardar pago'}${monto > 0 ? ` · ${formatMonto(monto, moneda)}` : ''}`
 
   if (confirmarBorrado) {
     return (
       <Confirmar
-        titulo={edSesion ? '¿Eliminar la sesión?' : '¿Eliminar el pago?'}
+        titulo={edSesion ? `¿Eliminar la ${pal.sesion}?` : '¿Eliminar el pago?'}
         textoConfirmar="Sí, eliminar"
         cargando={guardar.isPending}
         onConfirmar={borrar}
         onCancelar={() => setConfirmarBorrado(false)}
       >
         {edSesion
-          ? `Se borra la sesión del ${fecha.split('-').reverse().join('/')} de ${paciente ? nombreCompleto(paciente) : 'este paciente'}. No se puede deshacer.`
+          ? `Se borra la ${pal.sesion} del ${fecha.split('-').reverse().join('/')} de ${paciente ? nombreCompleto(paciente) : 'este paciente'}. No se puede deshacer.`
           : `Se borra el pago de ${formatMonto(monto, moneda)}. No se puede deshacer.`}
       </Confirmar>
     )
@@ -233,7 +237,7 @@ export function RegistroHoja({
       {!editando && (
         <Segmentado
           opciones={[
-            { v: 'sesion', l: 'Sesión' },
+            { v: 'sesion', l: pal.Sesion },
             { v: 'pago', l: 'Pago' },
           ]}
           valor={esSesion ? 'sesion' : 'pago'}
@@ -311,7 +315,7 @@ export function RegistroHoja({
         </div>
       </div>
 
-      {esSesion && (
+      {esSesion && pal.porHora && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-[15px] font-semibold">Duración</div>
           <Segmentado opciones={opcionesHoras(horas)} valor={horas} onCambio={cambiarHoras} className="min-w-[200px]" alto="h-10" />
@@ -398,7 +402,7 @@ export function RegistroHoja({
       </Boton>
       {editando && (
         <Boton variante="texto" icono={Trash2} className="text-bad hover:bg-bad-soft" onClick={() => setConfirmarBorrado(true)}>
-          {edSesion ? 'Eliminar sesión' : 'Eliminar pago'}
+          {edSesion ? `Eliminar ${pal.sesion}` : 'Eliminar pago'}
         </Boton>
       )}
     </Hoja>

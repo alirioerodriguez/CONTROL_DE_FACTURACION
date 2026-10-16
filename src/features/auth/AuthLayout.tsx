@@ -12,7 +12,7 @@ export function AuthLayout({ titulo, sub, children }: { titulo: string; sub?: Re
         <div>
           <div className="max-w-[540px] font-serif text-[76px] leading-none text-balance">Tus cobros, en orden.</div>
           <p className="mt-[22px] max-w-[420px] text-[19px] leading-normal text-pretty text-ink2">
-            Sesiones, pagos y saldos de tus pacientes en un solo lugar. Sin planillas.
+            Pacientes, cobros y saldos en un solo lugar. Sin planillas.
           </p>
         </div>
         <div className="text-sm text-ink2">Pesos y dólares · Efectivo, transferencia y MercadoPago</div>

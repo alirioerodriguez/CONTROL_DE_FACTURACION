@@ -3,6 +3,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Moneda } from './formato'
+import type { ModoCobro, Termino } from './terminos'
 import { supabase } from './supabase'
 
 export type Medio = 'efectivo' | 'transferencia' | 'mercadopago' | 'otro'
@@ -16,6 +17,9 @@ export interface Perfil {
   moneda_default: Moneda
   plantilla_whatsapp: string
   tutorial_visto: boolean
+  profesion: string | null
+  termino: Termino
+  modo_cobro: ModoCobro
 }
 
 export interface Paciente {

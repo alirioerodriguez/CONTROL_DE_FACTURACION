@@ -9,6 +9,7 @@ import { etiquetaDia, formatMonto, nombreMes, plural } from '../../lib/formato'
 import { reporteMes } from '../../lib/reportes'
 import type { EstadoSesion } from '../../lib/saldos'
 import { mensajeError } from '../../lib/supabase'
+import { usePalabras } from '../../components/usePalabras'
 import { useRegistro } from '../registro/RegistroContext'
 
 const PUNTO: Record<EstadoSesion, string> = {
@@ -23,6 +24,7 @@ export function MesPage() {
   const { pacientes, sesiones, pagos, cargando, error, reintentar } = useDatos()
   const [periodo, setPeriodo] = useMesSeleccionado()
   const { abrir } = useRegistro()
+  const pal = usePalabras()
   const navegar = useNavigate()
   const [exportando, setExportando] = useState(false)
   const r = useMemo(() => reporteMes(periodo, pacientes, sesiones, pagos), [periodo, pacientes, sesiones, pagos])
@@ -61,14 +63,14 @@ export function MesPage() {
       {r.filas.length === 0 ? (
         <EstadoVacio
           icono={Calendar}
-          titulo={`No hubo sesiones en ${nombreMes(periodo)}`}
+          titulo={`No hubo ${pal.sesiones} en ${nombreMes(periodo)}`}
           acciones={
             <Boton icono={Plus} alto="h-[50px]" onClick={() => abrir({ modo: 'sesion' })}>
-              Registrar sesión
+              Registrar {pal.sesion}
             </Boton>
           }
         >
-          Cuando registres sesiones de este mes, vas a ver acá lo cobrado y lo pendiente.
+          Cuando registres {pal.sesiones} de este mes, vas a ver acá lo cobrado y lo pendiente.
         </EstadoVacio>
       ) : (
         <>
@@ -79,7 +81,7 @@ export function MesPage() {
                 <Tarjeta key={t.moneda} className="flex flex-col gap-3.5 p-[22px]">
                   <div className="flex justify-between text-[15px] font-medium text-ink2">
                     <span>{t.moneda === 'ARS' ? 'Pesos · ARS' : 'Dólares · USD'}</span>
-                    <span>{plural(t.sesiones, 'sesión', 'sesiones')}</span>
+                    <span>{plural(t.sesiones, pal.sesion, pal.sesiones)}</span>
                   </div>
                   <div>
                     <div className="mb-1.5 text-sm text-ink2">Cobrado</div>
@@ -108,7 +110,7 @@ export function MesPage() {
               <div className="min-w-[720px]">
                 <div className={`grid ${COLUMNAS} gap-3 border-b border-line px-[22px] py-4 text-[13px] font-bold tracking-[.06em] text-ink2 uppercase`}>
                   <div>Paciente</div>
-                  <div>Sesiones</div>
+                  <div>{pal.Sesiones}</div>
                   <div className="text-right">Facturado</div>
                   <div className="text-right">Cobrado</div>
                   <div className="text-right">Pendiente</div>
@@ -145,7 +147,7 @@ export function MesPage() {
                 {r.totales.map((t) => (
                   <div key={t.moneda} className={`grid ${COLUMNAS} gap-3 bg-surface2 px-[22px] py-4 text-base font-bold tabular`}>
                     <div>Total {t.moneda}</div>
-                    <div className="font-medium text-ink2">{plural(t.sesiones, 'sesión', 'sesiones')}</div>
+                    <div className="font-medium text-ink2">{plural(t.sesiones, pal.sesion, pal.sesiones)}</div>
                     <div className="text-right">{formatMonto(t.facturado, t.moneda)}</div>
                     <div className="text-right">{formatMonto(t.cobrado, t.moneda)}</div>
                     <div className="text-right text-bad">{formatMonto(t.pendiente, t.moneda)}</div>

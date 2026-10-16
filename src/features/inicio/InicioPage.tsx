@@ -13,6 +13,7 @@ import {
 } from '../../lib/formato'
 import { resumenMes, type SesionImpaga } from '../../lib/inicio'
 import { deudaDe, saldosDe } from '../../lib/resumen'
+import { usePalabras } from '../../components/usePalabras'
 import { useRegistro } from '../registro/RegistroContext'
 
 const CHIP: Record<SesionImpaga['estado'], { tono: Tono; texto: string }> = {
@@ -26,6 +27,7 @@ export function InicioPage() {
   const navegar = useNavigate()
   const [periodo, setPeriodo] = useMesSeleccionado()
   const usuario = useUsuario()
+  const pal = usePalabras()
   const [monedaGrafico, setMonedaGrafico] = useState<Moneda>('ARS')
 
   const r = useMemo(() => resumenMes(periodo, pacientes, sesiones, pagos), [periodo, pacientes, sesiones, pagos])
@@ -92,7 +94,7 @@ export function InicioPage() {
           </div>
           <MontoGrande monto={r.pendiente.ARS} moneda="ARS" className="text-[clamp(28px,3.2cqi,42px)]" />
           <div className="text-sm text-ink2">
-            {r.pendiente.USD > 0 ? `+ ${formatMonto(r.pendiente.USD, 'USD')} · ` : ''}sesiones de {mes}
+            {r.pendiente.USD > 0 ? `+ ${formatMonto(r.pendiente.USD, 'USD')} · ` : ''}{pal.sesiones} de {mes}
           </div>
         </div>
         <div className={tarjeta}>
@@ -105,8 +107,8 @@ export function InicioPage() {
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))]">
         <Tarjeta className="p-2" data-tour="sin-abonar">
           <div className="flex items-baseline justify-between gap-3 px-3.5 pt-3.5 pb-2">
-            <h2 className="m-0 text-xl font-semibold">Sesiones sin abonar</h2>
-            <div className="text-[15px] text-ink2">{r.impagas.length ? plural(r.impagas.length, 'sesión', 'sesiones') : ''}</div>
+            <h2 className="m-0 text-xl font-semibold">{pal.Sesiones} sin abonar</h2>
+            <div className="text-[15px] text-ink2">{r.impagas.length ? plural(r.impagas.length, pal.sesion, pal.sesiones) : ''}</div>
           </div>
           {r.impagas.length > 0 ? (
             r.impagas.map((i) => {
@@ -159,13 +161,13 @@ export function InicioPage() {
               <div className="grid size-[52px] place-items-center rounded-2xl bg-acc-soft text-[22px] text-acc-strong">
                 <Check {...IC} />
               </div>
-              <div className="text-lg font-semibold">{sinNadaCargado ? `${capitalizar(mes)} sin sesiones todavía` : 'Todo al día'}</div>
+              <div className="text-lg font-semibold">{sinNadaCargado ? `${capitalizar(mes)} sin ${pal.sesiones} todavía` : 'Todo al día'}</div>
               <div className="max-w-[300px] text-[15px] leading-snug text-ink2">
-                {sinNadaCargado ? 'Cuando registres una sesión, la vas a ver acá.' : 'Ninguna sesión quedó sin abonar.'}
+                {sinNadaCargado ? `Cuando registres una ${pal.sesion}, la vas a ver acá.` : `Ninguna ${pal.sesion} quedó sin abonar.`}
               </div>
               {r.sesionesDelMes === 0 && (
                 <Boton alto="h-12" icono={Plus} className="mt-1.5" onClick={() => abrir({ modo: 'sesion' })}>
-                  Registrar sesión
+                  Registrar {pal.sesion}
                 </Boton>
               )}
             </div>
