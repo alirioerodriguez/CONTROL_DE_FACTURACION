@@ -481,7 +481,9 @@ function Confirmacion({
         <Boton disabled={total === 0 || faltaConfirmarPacientes} cargando={guardando} onClick={onConfirmar}>
           {guardando
             ? 'Importando…'
-            : p.sesiones.length + p.pagos.length > 0
+            : total === 0
+              ? 'Importar'
+              : p.sesiones.length + p.pagos.length > 0
               ? `Importar ${plural(p.sesiones.length + p.pagos.length, 'fila', 'filas')}`
               : `Importar ${plural(p.pacientes.length, 'paciente', 'pacientes')}`}
         </Boton>
