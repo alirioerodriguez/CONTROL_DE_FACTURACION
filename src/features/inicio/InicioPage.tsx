@@ -87,7 +87,7 @@ export function InicioPage() {
             {plural(r.cantPagos.USD, 'pago', 'pagos')} en {mes}
           </div>
         </div>
-        <div className={`${tarjeta} order-last col-span-2 md:order-none md:col-span-1`}>
+        <div className={`${tarjeta} order-last col-span-2 max-md:letra-grande:col-span-1 md:order-none md:col-span-1`}>
           <div className={`${etiqueta} flex items-center gap-2`}>
             <span className="size-2 rounded-full bg-bad" />
             Pendiente de cobro
