@@ -1,5 +1,4 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { EnConstruccion } from './components/EnConstruccion'
 import { Layout } from './components/Layout'
 import { Spinner } from './components/ui'
 import { AjustesPage } from './features/ajustes/AjustesPage'
@@ -13,6 +12,8 @@ import { ImportarPage } from './features/importar/ImportarPage'
 import { InicioPage } from './features/inicio/InicioPage'
 import { FichaPage } from './features/pacientes/FichaPage'
 import { PacientesPage } from './features/pacientes/PacientesPage'
+import { ContadoraPage } from './features/reportes/ContadoraPage'
+import { MesPage } from './features/reportes/MesPage'
 import { RegistroProvider } from './features/registro/RegistroContext'
 import { supabaseConfigurado } from './lib/supabase'
 
@@ -51,8 +52,8 @@ export default function App() {
           <Route index element={<InicioPage />} />
           <Route path="pacientes" element={<PacientesPage />} />
           <Route path="pacientes/:id" element={<FichaPage />} />
-          <Route path="mes" element={<EnConstruccion titulo="Reporte del mes" fase={5} />} />
-          <Route path="contadora" element={<EnConstruccion titulo="Reporte para contadora" fase={5} />} />
+          <Route path="mes" element={<MesPage />} />
+          <Route path="contadora" element={<ContadoraPage />} />
           <Route path="importar" element={<ImportarPage />} />
           <Route path="ajustes" element={<AjustesPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />

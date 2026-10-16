@@ -1,8 +1,9 @@
 import { useMemo, useRef, useState, type DragEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Check, ChevronLeft, Download, FileSpreadsheet } from 'lucide-react'
+import { Check, ChevronLeft, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
+import { DescargarExcel } from '../../components/DescargarExcel'
 import { Alerta, Boton, IC, Spinner, Tarjeta, Titulo } from '../../components/ui'
 import { useDatos } from '../../lib/datos'
 import { capitalizar, formatFecha, formatMonto, plural } from '../../lib/formato'
@@ -108,6 +109,7 @@ export function ImportarPage() {
     if (!preparado) return
     setGuardando(true)
     try {
+      if (!navigator.onLine) throw new Error('Sin conexión: no se puede importar ahora.')
       const { data, error } = await supabase.rpc('importar_datos', {
         p_pacientes: preparado.pacientes,
         p_sesiones: preparado.sesiones,
@@ -201,13 +203,16 @@ export function ImportarPage() {
             )}
           </label>
           {error && <Alerta>{error}</Alerta>}
-          <div className="flex flex-wrap items-center justify-between gap-3 text-[15px] text-ink2">
-            <span>Necesitamos al menos: paciente, fecha y monto.</span>
-            <a href="/plantilla-cobros.xlsx" download className="flex items-center gap-1.5 py-1.5 font-semibold text-acc-strong">
-              <Download size={16} strokeWidth={1.8} />
-              Descargar la plantilla
-            </a>
-          </div>
+          <div className="text-[15px] text-ink2">Necesitamos al menos: paciente, fecha y monto.</div>
+          <Tarjeta className="flex flex-wrap items-center justify-between gap-4 p-5">
+            <div className="min-w-0 flex-[1_1_260px]">
+              <div className="text-base font-semibold">¿No tenés planilla?</div>
+              <div className="mt-1 text-[15px] leading-snug text-ink2">
+                Descargá el Excel, completalo con tus pacientes, sesiones y pagos, y subilo acá.
+              </div>
+            </div>
+            <DescargarExcel vacia />
+          </Tarjeta>
         </div>
       )}
 

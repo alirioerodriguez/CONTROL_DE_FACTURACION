@@ -24,8 +24,10 @@ export interface Paciente {
   apellido: string | null
   dni: string | null
   cuil_cuit: string | null
+  condicion_iva: string | null
   telefono: string | null
   email: string | null
+  domicilio: string | null
   frecuencia: string | null
   dias_semana: number[]
   horas_por_sesion: number
@@ -171,6 +173,7 @@ type Operacion =
   | { tipo: 'borrar'; tabla: Tabla; id: string }
 
 async function ejecutar(op: Operacion) {
+  if (!navigator.onLine) throw new Error('Sin conexión: no se puede guardar ahora.')
   if (op.tipo === 'insertar') {
     const { data, error } = await supabase.from(op.tabla).insert(op.filas).select()
     if (error) throw error

@@ -35,5 +35,5 @@ Registro abierto: cualquier colega puede crearse una cuenta y ve solo sus datos.
 2. ✅ Pacientes, ficha y registro rápido (incluye generar sesiones del mes).
 3. ✅ Inicio (dashboard) y recordatorio por WhatsApp.
 4. ✅ Importación .xlsx/.csv con tests (plantilla o columnas a elegir; guarda todo o nada con la función SQL importar_datos).
-5. Reporte para contadora (xlsx/PDF), ajustes, backup, modo oscuro, PWA.
+5. ✅ Reporte del mes, reporte para contadora (xlsx/PDF), "Descargar Excel" (backup re-importable), PWA y aviso sin conexión.
 6. Repaso responsive y README final.

@@ -1,0 +1,174 @@
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Calendar, Download, FileSpreadsheet, Plus } from 'lucide-react'
+import { toast } from 'sonner'
+import { SelectorMes, useMesSeleccionado } from '../../components/SelectorMes'
+import { Avatar, Boton, EstadoError, EstadoVacio, Esqueleto, MontoGrande, Tarjeta } from '../../components/ui'
+import { useDatos } from '../../lib/datos'
+import { etiquetaDia, formatMonto, nombreMes, plural } from '../../lib/formato'
+import { reporteMes } from '../../lib/reportes'
+import type { EstadoSesion } from '../../lib/saldos'
+import { mensajeError } from '../../lib/supabase'
+import { useRegistro } from '../registro/RegistroContext'
+
+const PUNTO: Record<EstadoSesion, string> = {
+  pagada: 'bg-acc-soft text-acc-strong',
+  parcial: 'bg-warn-soft text-warn',
+  pendiente: 'bg-bad-soft text-bad',
+}
+const TEXTO_ESTADO: Record<EstadoSesion, string> = { pagada: 'Pagada', parcial: 'Parcial', pendiente: 'Pendiente' }
+const COLUMNAS = 'grid-cols-[minmax(190px,1.5fr)_minmax(220px,2fr)_repeat(3,minmax(120px,1fr))]'
+
+export function MesPage() {
+  const { pacientes, sesiones, pagos, cargando, error, reintentar } = useDatos()
+  const [periodo, setPeriodo] = useMesSeleccionado()
+  const { abrir } = useRegistro()
+  const navegar = useNavigate()
+  const [exportando, setExportando] = useState(false)
+  const r = useMemo(() => reporteMes(periodo, pacientes, sesiones, pagos), [periodo, pacientes, sesiones, pagos])
+
+  if (cargando) return <Esqueleto que="el reporte" tarjetas />
+  if (error) return <EstadoError que="el reporte" reintentar={reintentar} />
+
+  async function exportar() {
+    setExportando(true)
+    try {
+      const { exportarReporteMes } = await import('../../lib/exportar')
+      await exportarReporteMes(periodo, pacientes, sesiones, pagos)
+      toast.success(`Reporte de ${nombreMes(periodo)} exportado`)
+    } catch (e) {
+      toast.error(`No se pudo exportar: ${mensajeError(e)}`)
+    } finally {
+      setExportando(false)
+    }
+  }
+
+  return (
+    <section className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <h1 className="m-0 font-serif text-[clamp(38px,5cqi,52px)] leading-none font-normal">Reporte del mes</h1>
+        <div className="flex flex-wrap gap-2.5">
+          <SelectorMes periodo={periodo} onCambio={setPeriodo} />
+          <Boton variante="borde" icono={FileSpreadsheet} onClick={() => navegar('/contadora')}>
+            Para contadora
+          </Boton>
+          <Boton variante="borde" icono={Download} disabled={!r.filas.length} cargando={exportando} onClick={exportar}>
+            Descargar Excel
+          </Boton>
+        </div>
+      </div>
+
+      {r.filas.length === 0 ? (
+        <EstadoVacio
+          icono={Calendar}
+          titulo={`No hubo sesiones en ${nombreMes(periodo)}`}
+          acciones={
+            <Boton icono={Plus} alto="h-[50px]" onClick={() => abrir({ modo: 'sesion' })}>
+              Registrar sesión
+            </Boton>
+          }
+        >
+          Cuando registres sesiones de este mes, vas a ver acá lo cobrado y lo pendiente.
+        </EstadoVacio>
+      ) : (
+        <>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] gap-3">
+            {r.totales.map((t) => {
+              const pct = t.facturado ? Math.round((t.cobrado / t.facturado) * 100) : 0
+              return (
+                <Tarjeta key={t.moneda} className="flex flex-col gap-3.5 p-[22px]">
+                  <div className="flex justify-between text-[15px] font-medium text-ink2">
+                    <span>{t.moneda === 'ARS' ? 'Pesos · ARS' : 'Dólares · USD'}</span>
+                    <span>{plural(t.sesiones, 'sesión', 'sesiones')}</span>
+                  </div>
+                  <div>
+                    <div className="mb-1.5 text-sm text-ink2">Cobrado</div>
+                    <MontoGrande monto={t.cobrado} moneda={t.moneda} className="text-[clamp(32px,4cqi,42px)]" />
+                  </div>
+                  <div
+                    className="h-2.5 overflow-hidden rounded-full bg-bad-soft"
+                    role="progressbar"
+                    aria-valuenow={pct}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                  >
+                    <div className="h-full rounded-full bg-acc" style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="flex flex-wrap justify-between gap-3 text-[15px]">
+                    <span className="text-ink2">de {formatMonto(t.facturado, t.moneda)} facturado</span>
+                    <span className="font-semibold text-bad">Pendiente {formatMonto(t.pendiente, t.moneda)}</span>
+                  </div>
+                </Tarjeta>
+              )
+            })}
+          </div>
+
+          <Tarjeta className="overflow-hidden">
+            <div className="overflow-x-auto">
+              <div className="min-w-[720px]">
+                <div className={`grid ${COLUMNAS} gap-3 border-b border-line px-[22px] py-4 text-[13px] font-bold tracking-[.06em] text-ink2 uppercase`}>
+                  <div>Paciente</div>
+                  <div>Sesiones</div>
+                  <div className="text-right">Facturado</div>
+                  <div className="text-right">Cobrado</div>
+                  <div className="text-right">Pendiente</div>
+                </div>
+                {r.filas.map((f) => (
+                  <button
+                    key={`${f.paciente.id}-${f.moneda}`}
+                    type="button"
+                    onClick={() => navegar(`/pacientes/${f.paciente.id}`)}
+                    className={`grid w-full ${COLUMNAS} items-center gap-3 border-b border-line px-[22px] py-3.5 text-left text-base tabular hover:bg-surface2`}
+                  >
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <Avatar nombre={f.nombre} className="size-9 text-[13px]" />
+                      <span className="truncate font-semibold">{f.nombre}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {f.sesiones.map((s) => (
+                        <span
+                          key={s.fecha}
+                          title={`${etiquetaDia(s.fecha)} · ${TEXTO_ESTADO[s.estado]}`}
+                          className={`grid size-[34px] place-items-center rounded-full text-[13px] font-bold ${PUNTO[s.estado]}`}
+                        >
+                          {Number(s.fecha.slice(8))}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="text-right">{formatMonto(f.facturado, f.moneda)}</div>
+                    <div className="text-right">{formatMonto(f.cobrado, f.moneda)}</div>
+                    <div className={`text-right font-semibold ${f.pendiente ? 'text-bad' : 'text-ink2'}`}>
+                      {f.pendiente ? formatMonto(f.pendiente, f.moneda) : '—'}
+                    </div>
+                  </button>
+                ))}
+                {r.totales.map((t) => (
+                  <div key={t.moneda} className={`grid ${COLUMNAS} gap-3 bg-surface2 px-[22px] py-4 text-base font-bold tabular`}>
+                    <div>Total {t.moneda}</div>
+                    <div className="font-medium text-ink2">{plural(t.sesiones, 'sesión', 'sesiones')}</div>
+                    <div className="text-right">{formatMonto(t.facturado, t.moneda)}</div>
+                    <div className="text-right">{formatMonto(t.cobrado, t.moneda)}</div>
+                    <div className="text-right text-bad">{formatMonto(t.pendiente, t.moneda)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Tarjeta>
+
+          <div className="flex flex-wrap gap-[18px] text-sm text-ink2">
+            {(['pagada', 'parcial', 'pendiente'] as const).map((e) => (
+              <span key={e} className="flex items-center gap-2">
+                <span
+                  className={`size-3 rounded-full border-2 ${
+                    e === 'pagada' ? 'border-acc bg-acc-soft' : e === 'parcial' ? 'border-warn bg-warn-soft' : 'border-bad bg-bad-soft'
+                  }`}
+                />
+                {TEXTO_ESTADO[e]}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
+  )
+}

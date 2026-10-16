@@ -1,6 +1,6 @@
 // Valida las filas importadas y arma lo que hay que guardar (funciones puras).
 import { nombreCompleto, type Comprobante, type Medio, type Paciente, type Pago, type Sesion } from '../datos'
-import { hoyAR, normalizar, parseFechaAR, parseMontoAR, periodoDe, type Moneda } from '../formato'
+import { hoyAR, normalizar, parseFechaAR, parseMontoAR, periodoDe, redondear2, type Moneda } from '../formato'
 import type { Celda, Hoja } from './leer'
 
 export interface PacienteNuevo {
@@ -411,6 +411,7 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
       paciente: columna(hs, 'ID paciente'),
       monto: columna(hs, 'Monto'),
       moneda: columna(hs, 'Moneda'),
+      horas: columna(hs, 'Horas'),
       obs: columna(hs, 'Observaciones'),
     }
     for (const { numero, celdas } of hs.filas) {
@@ -443,7 +444,16 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
       const idSesion = texto(v(c.id))
       const refSesion = idSesion ? `s:${normalizar(idSesion)}` : undefined
       if (refSesion) refsSesion.add(refSesion)
-      res.sesiones.push({ ...ref, ref: refSesion, fecha, horas: 1, tarifa_hora: monto, moneda, observaciones: texto(v(c.obs)) })
+      const horas = parseMontoAR(v(c.horas)) ?? 1
+      res.sesiones.push({
+        ...ref,
+        ref: refSesion,
+        fecha,
+        horas: horas > 0 ? horas : 1,
+        tarifa_hora: redondear2(monto / (horas > 0 ? horas : 1)),
+        moneda,
+        observaciones: texto(v(c.obs)),
+      })
     }
   }
 

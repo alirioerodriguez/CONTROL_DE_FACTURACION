@@ -6,6 +6,7 @@ import { Check, CircleAlert } from 'lucide-react'
 import { Toaster } from 'sonner'
 import './index.css'
 import App from './App.tsx'
+import { SinConexion } from './components/SinConexion'
 import { AuthProvider } from './features/auth/AuthProvider'
 
 // refetchOnWindowFocus: al volver a la app se recargan los datos, así lo
@@ -28,6 +29,7 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
+          <SinConexion />
           <App />
           <Toaster
             position="bottom-center"

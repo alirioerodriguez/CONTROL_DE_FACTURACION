@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronRight, Plus, Search, Upload, Users } from 'lucide-react'
+import { DescargarExcel } from '../../components/DescargarExcel'
 import {
   Avatar, Boton, Chip, EstadoError, EstadoVacio, Esqueleto, IC, Pastilla, Tarjeta, Titulo,
 } from '../../components/ui'
@@ -54,6 +55,7 @@ export function PacientesPage() {
           Pacientes
         </Titulo>
         <div className="flex gap-2">
+          <DescargarExcel soloIcono alto="h-12" className="px-4" />
           <Boton
             variante="borde"
             alto="h-12"
@@ -83,10 +85,11 @@ export function PacientesPage() {
               <Boton variante="suave" icono={Upload} alto="h-[50px]" onClick={() => navegar('/importar')}>
                 Importar planilla
               </Boton>
+              <DescargarExcel vacia alto="h-[50px]" />
             </>
           }
         >
-          Cargalos uno por uno o traé tu planilla de Excel en un paso.
+          Cargalos uno por uno, traé tu planilla de Excel o descargá la nuestra para completarla.
         </EstadoVacio>
       ) : (
         <>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronRight, FileSpreadsheet, LogOut, Moon, Upload } from 'lucide-react'
 import { toast } from 'sonner'
+import { DescargarExcel } from '../../components/DescargarExcel'
 import { Boton, Campo, EstadoError, Esqueleto, IC, Segmentado, Tarjeta } from '../../components/ui'
 import { useGuardar, usePacientes, usePerfil } from '../../lib/datos'
 import {
@@ -155,6 +156,18 @@ export function AjustesPage() {
             <span className="size-[26px] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,.25)]" />
           </span>
         </button>
+      </Tarjeta>
+
+      <Tarjeta className="flex flex-col gap-3 p-[22px]">
+        <h2 className="m-0 text-lg font-semibold">Tus datos en Excel</h2>
+        <p className="m-0 text-[15px] leading-normal text-ink2">
+          Descargá todo (pacientes, sesiones y pagos) como backup. El archivo tiene el mismo formato que la plantilla:
+          podés completarlo o corregirlo en Excel y volver a subirlo desde Importar, sin que se dupliquen datos.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <DescargarExcel etiqueta="Descargar Excel" />
+          <DescargarExcel vacia etiqueta="Planilla vacía" />
+        </div>
       </Tarjeta>
 
       <Tarjeta className="px-[22px] py-2">
