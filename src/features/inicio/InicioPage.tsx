@@ -72,8 +72,8 @@ export function InicioPage() {
         <SelectorMes periodo={periodo} onCambio={setPeriodo} />
       </div>
 
-      <div data-tour="resumen" className="grid grid-cols-2 gap-3 md:grid-cols-[repeat(auto-fit,minmax(13.75rem,1fr))]">
-        <div className={`${tarjeta} col-span-2 md:col-span-1`}>
+      <div data-tour="resumen" className="grid grid-cols-2 gap-3 max-md:letra-grande:grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(13.75rem,1fr))]">
+        <div className={`${tarjeta} col-span-2 max-md:letra-grande:col-span-1 md:col-span-1`}>
           <div className={etiqueta}>Cobrado ARS</div>
           <MontoGrande monto={r.cobrado.ARS} moneda="ARS" />
           <div className="text-sm text-ink2">

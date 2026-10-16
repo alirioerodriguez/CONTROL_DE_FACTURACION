@@ -1,5 +1,8 @@
 @import 'tailwindcss';
 
+/* Letra grande (tamaño 3 a 5 en Ajustes): algunas grillas pasan a una columna en el celular. */
+@custom-variant letra-grande (&:where([data-letra='3'] *, [data-letra='4'] *, [data-letra='5'] *));
+
 /* Paleta del diseño (docs/diseno/): verde salvia. */
 :root {
   --page: #e6e5df;

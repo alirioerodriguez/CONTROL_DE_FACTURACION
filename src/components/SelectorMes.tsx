@@ -57,7 +57,7 @@ export function SelectorMes({ periodo, onCambio }: { periodo: string; onCambio: 
           onClick={() => setAbierto((a) => !a)}
           aria-expanded={abierto}
           aria-label={`Elegir mes (ahora ${formatPeriodo(periodo)})`}
-          className="flex min-w-[9.375rem] items-center justify-center gap-2 rounded-full px-2 py-2 text-[1.0625rem] font-semibold hover:bg-surface2"
+          className="flex min-w-[7.5rem] items-center justify-center gap-2 rounded-full px-2 py-2 text-[1.0625rem] font-semibold hover:bg-surface2"
         >
           <CalendarDays {...IC} className="text-ink2" />
           {capitalizar(formatPeriodo(periodo))}

@@ -30,6 +30,7 @@ export function letraActual(): number {
 export function cambiarLetra(n: number) {
   const t = TAMANOS_LETRA.find((x) => x.n === n) ?? TAMANOS_LETRA[0]
   document.documentElement.style.fontSize = t.n === 1 ? '' : t.escala
+  document.documentElement.dataset.letra = String(t.n)
   guardarPreferencia('letra', String(t.n))
 }
 

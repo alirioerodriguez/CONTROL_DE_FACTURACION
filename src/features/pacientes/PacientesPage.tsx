@@ -56,7 +56,7 @@ export function PacientesPage() {
         <Titulo sub={pacientes.length ? `${plural(activos, 'activo', 'activos')} · ${conSaldo} con saldo` : undefined}>
           Pacientes
         </Titulo>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <DescargarExcel soloIcono alto="h-12" className="px-4" data-tour="descargar-excel" />
           <Boton
             variante="borde"
