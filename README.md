@@ -45,12 +45,16 @@ App publicada: **https://control-de-facturacion-eight.vercel.app**
 - Si cambia la dirección de la app, actualizarla en los dos lados (orígenes en Google; Site URL y Redirect URLs en Supabase).
 - Las páginas `/privacidad` y `/terminos` son públicas: Google las pide para mantener la app publicada.
 
-### 4. Cuenta de la profesional
+### 4. Mails (Gmail)
+- Los mails de la app salen desde **honorapp.ar@gmail.com**, con nombre «honorapp».
+- Supabase → Authentication → Emails → SMTP Settings: `smtp.gmail.com`, puerto `465`, usuario `honorapp.ar@gmail.com` y como contraseña una **contraseña de aplicación** de Google (myaccount.google.com/apppasswords, requiere verificación en 2 pasos). Si se cambia la contraseña de la cuenta de Gmail, hay que generar una nueva y pegarla ahí.
+- Los textos están en `docs/mails/` y cargados en Supabase → Authentication → Emails → Templates.
+- Límite: 30 mails por hora (Authentication → Rate Limits). Gmail permite unos 500 por día; si la app crece, pasar a un servicio transaccional (por ejemplo [Resend](https://resend.com)).
+
+### 5. Cuenta de la profesional
 Abrir la app → «¿No tenés cuenta? Creá una» (o «Continuar con Google»). Las colegas pueden hacer lo mismo.
 
 ## Recomendado a futuro
-
-- **Mails en castellano y sin límite chico**: hoy los mails de confirmar cuenta y recuperar contraseña salen en inglés y el servicio de Supabase manda pocos por hora. Configurando un SMTP propio (por ejemplo, [Resend](https://resend.com), que tiene plan gratis) en Supabase → Authentication → Emails → SMTP Settings, se pueden editar los textos y mandar sin ese límite.
 - **Protección contra contraseñas filtradas**: Supabase la ofrece en el plan Pro (Authentication → Attack Protection).
 - **Ingreso con Apple**: requiere una cuenta de Apple Developer (USD 99 por año).
 

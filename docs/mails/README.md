@@ -1,6 +1,6 @@
 # Mails de la app (Supabase → Authentication → Emails)
 
-Textos en castellano para los mails que manda Supabase. Solo se pueden editar con un SMTP propio configurado (hoy: Gmail).
+Textos en castellano para los mails que manda Supabase. Ya están cargados en Supabase (SMTP propio: honorapp.ar@gmail.com).
 Para cambiarlos: copiar el asunto y el HTML de cada archivo en la plantilla correspondiente del panel.
 
 | Archivo | Asunto |
