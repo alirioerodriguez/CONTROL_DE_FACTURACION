@@ -28,7 +28,15 @@ Esto hace que funcionen los links de "confirmar mail" y "recuperar contraseña".
    - `VITE_SUPABASE_ANON_KEY` = anon public
 4. **Deployments → Redeploy** para que tome las variables.
 
-### 5. Crear la cuenta de ella
+### 5. Ingreso con Google (ya configurado)
+- Google Cloud, proyecto **Consultorio** → Google Auth Platform: app **en producción**, cliente web "Consultorio web".
+  - Orígenes autorizados: la dirección de Vercel y `http://localhost:5173`.
+  - Redirección autorizada: `https://uxcpfnupwetwtpqhoqvd.supabase.co/auth/v1/callback`.
+- Supabase → Authentication → Sign In / Providers → Google: activado, con el Client ID y el Client Secret de ese cliente.
+- Si cambia la dirección de la app, actualizala en los dos lados (orígenes en Google; Site URL y Redirect URLs en Supabase).
+- Las páginas `/privacidad` y `/terminos` son públicas: Google las pide para mantener la app publicada.
+
+### 6. Crear la cuenta de ella
 Abrí la app, tocá **"¿No tenés cuenta? Creá una"** y registrate con su mail. Le llega un mail para confirmar. Sus colegas pueden hacer lo mismo: cada cuenta ve solo sus datos.
 
 ## Desarrollo local
