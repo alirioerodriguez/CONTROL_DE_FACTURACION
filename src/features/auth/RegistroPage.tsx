@@ -39,8 +39,8 @@ export function RegistroPage() {
           <Check {...IC} />
         </div>
         <div className="text-[17px] leading-normal text-ink2">
-          Te mandamos un link a <strong className="text-ink">{email}</strong> para confirmar la cuenta. Después podés
-          ingresar.
+          Te mandamos un mail a <strong className="text-ink">{email}</strong>. Abrilo y tocá «Confirmar mi cuenta» para
+          activarla. Si no lo ves en unos minutos, fijate en Spam o Correo no deseado.
         </div>
         <Link to="/" className="flex h-14 items-center justify-center rounded-full bg-surface2 text-[17px] font-semibold hover:bg-line">
           Volver a ingresar
@@ -50,16 +50,28 @@ export function RegistroPage() {
   }
 
   return (
-    <AuthLayout titulo="Creá tu cuenta" sub="Gratis. Solo vos ves tus datos.">
+    <AuthLayout titulo="Creá tu cuenta" sub="Gratis. Tus datos son privados: ninguna otra cuenta puede verlos." presentacion>
       <IngresoGoogle onError={setError} />
       <form onSubmit={registrar} noValidate className="flex flex-col gap-5">
-        <CampoAuth etiqueta="Tu nombre" autoComplete="name" placeholder="Ej. Lic. Ana Martínez" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+        <CampoAuth etiqueta="Tu nombre" autoComplete="name" placeholder="Ej. Lic. Ana Martínez" ayuda="Aparece en el saludo y en el reporte para tu contadora." value={nombre} onChange={(e) => setNombre(e.target.value)} />
         <CampoAuth etiqueta="Mail" type="email" autoComplete="email" placeholder="vos@mail.com" value={email} onChange={(e) => { setEmail(e.target.value); setError('') }} />
-        <CampoAuth etiqueta="Contraseña" type="password" autoComplete="new-password" placeholder="Mínimo 8 caracteres" value={password} onChange={(e) => { setPassword(e.target.value); setError('') }} />
+        <CampoAuth etiqueta="Contraseña" type="password" autoComplete="new-password" ayuda="Mínimo 8 caracteres." value={password} onChange={(e) => { setPassword(e.target.value); setError('') }} />
         {error && <Alerta>{error}</Alerta>}
+        <ul className="flex flex-col gap-1.5 text-[15px] text-ink2">
+          {['Gratis, sin tarjeta.', 'No es historia clínica: solo datos de cobro.', 'Descargás o borrás tus datos cuando quieras.'].map((t) => (
+            <li key={t} className="flex items-start gap-2">
+              <Check {...IC} className="mt-0.5 shrink-0 text-acc-strong" />
+              {t}
+            </li>
+          ))}
+        </ul>
         <Boton type="submit" cargando={cargando} className={claseBotonAuth}>
           {cargando ? 'Creando…' : 'Crear cuenta'}
         </Boton>
+        <p className="-mt-1 text-center text-sm leading-snug text-ink2">
+          Al crear tu cuenta, con tu mail o con Google, aceptás los <Link to="/terminos">Términos y condiciones</Link> y
+          la <Link to="/privacidad">Política de privacidad</Link>.
+        </p>
       </form>
       <Link to="/" className={`${claseLinkAuth} text-ink2`}>
         Ya tengo cuenta

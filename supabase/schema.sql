@@ -42,12 +42,12 @@ alter table public.profiles add column if not exists tutorial_visto boolean not 
 alter table public.profiles add column if not exists profesion text;
 alter table public.profiles add column if not exists termino text not null default 'sesion';
 alter table public.profiles add column if not exists modo_cobro text not null default 'hora';
-do $ begin
+do $$ begin
   alter table public.profiles add constraint profiles_termino_check check (termino in ('sesion','consulta'));
-exception when duplicate_object then null; end $;
-do $ begin
+exception when duplicate_object then null; end $$;
+do $$ begin
   alter table public.profiles add constraint profiles_modo_cobro_check check (modo_cobro in ('hora','sesion'));
-exception when duplicate_object then null; end $;
+exception when duplicate_object then null; end $$;
 
 -- Crea el perfil automáticamente cuando alguien se registra
 -- (con Google también guarda el nombre).
@@ -236,7 +236,7 @@ returns jsonb
 language plpgsql
 security invoker
 set search_path = ''
-as $
+as $$
 declare
   r jsonb;
   nuevo uuid;
@@ -293,10 +293,31 @@ begin
 
   return jsonb_build_object('pacientes', n_pac, 'sesiones', n_ses, 'pagos', n_pag);
 end;
-$;
+$$;
 
 revoke execute on function public.importar_datos(jsonb, jsonb, jsonb) from public, anon;
 grant execute on function public.importar_datos(jsonb, jsonb, jsonb) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Eliminar mi cuenta: borra el usuario de auth y, en cascada, perfil,
+-- pacientes, sesiones y pagos. Solo puede borrar la cuenta de quien la llama.
+-- ---------------------------------------------------------------------------
+create or replace function public.eliminar_mi_cuenta()
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Sin sesión';
+  end if;
+  delete from auth.users where id = auth.uid();
+end;
+$$;
+
+revoke execute on function public.eliminar_mi_cuenta() from public, anon;
+grant execute on function public.eliminar_mi_cuenta() to authenticated;
 
 -- Perfiles para usuarias que ya existían antes de correr este script.
 insert into public.profiles (id, email)

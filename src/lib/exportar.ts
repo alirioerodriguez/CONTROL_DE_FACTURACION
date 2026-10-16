@@ -397,5 +397,5 @@ export async function libroBackup(perfil: Perfil | undefined, pacientes: Pacient
 }
 
 export async function exportarBackup(perfil: Perfil | undefined, pacientes: Paciente[], sesiones: Sesion[], pagos: Pago[]) {
-  await guardarLibro(await libroBackup(perfil, pacientes, sesiones, pagos), `honorapp-backup-${hoyAR()}.xlsx`)
+  await guardarLibro(await libroBackup(perfil, pacientes, sesiones, pagos), `honorapp-datos-${hoyAR()}.xlsx`)
 }

@@ -73,7 +73,7 @@ export interface Pago {
 export const ETIQUETA_MEDIO: Record<Medio, string> = {
   efectivo: 'Efectivo',
   transferencia: 'Transferencia',
-  mercadopago: 'MercadoPago',
+  mercadopago: 'Mercado Pago',
   otro: 'Otro',
 }
 

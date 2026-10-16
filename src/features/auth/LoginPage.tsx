@@ -24,11 +24,11 @@ export function LoginPage() {
   }
 
   return (
-    <AuthLayout titulo="Ingresá" sub="Con Google o con tu mail.">
+    <AuthLayout titulo="Ingresá" sub="Con Google o con tu mail." presentacion>
       <IngresoGoogle onError={setError} />
       <form onSubmit={entrar} noValidate className="flex flex-col gap-5">
         <CampoAuth etiqueta="Mail" type="email" autoComplete="email" placeholder="vos@mail.com" value={email} onChange={(e) => { setEmail(e.target.value); setError('') }} />
-        <CampoAuth etiqueta="Contraseña" type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => { setPassword(e.target.value); setError('') }} />
+        <CampoAuth etiqueta="Contraseña" type="password" autoComplete="current-password" placeholder="Tu contraseña" value={password} onChange={(e) => { setPassword(e.target.value); setError('') }} />
         {error && <Alerta>{error}</Alerta>}
         <Boton type="submit" cargando={cargando} className={claseBotonAuth}>
           {cargando ? 'Ingresando…' : 'Ingresar'}

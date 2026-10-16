@@ -1,27 +1,64 @@
 import { useState, type InputHTMLAttributes, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { Check, Eye, EyeOff } from 'lucide-react'
 import { Logo } from '../../components/Layout'
-import { Spinner } from '../../components/ui'
+import { IC, Spinner } from '../../components/ui'
 import { mensajeError, supabase } from '../../lib/supabase'
 
-export function AuthLayout({ titulo, sub, children }: { titulo: string; sub?: ReactNode; children: ReactNode }) {
+const QUE_HACE = [
+  'Anotás sesiones y pagos, en pesos y en dólares.',
+  'Ves de un vistazo quién te debe.',
+  'Mandás el recordatorio por WhatsApp.',
+  'Descargás el reporte del mes para tu contadora.',
+]
+
+export function AuthLayout({
+  titulo,
+  sub,
+  presentacion = false,
+  children,
+}: {
+  titulo: string
+  sub?: ReactNode
+  /** En el celular, muestra arriba qué es honorapp (en la compu ya lo dice el panel verde). */
+  presentacion?: boolean
+  children: ReactNode
+}) {
   return (
     <main className="flex min-h-dvh bg-fondo text-ink">
       <div className="hidden flex-1 flex-col justify-between gap-10 bg-acc-soft p-14 md:flex">
         <Logo />
         <div>
           <div className="max-w-[540px] font-serif text-[76px] leading-none text-balance">Tus cobros, en orden.</div>
-          <p className="mt-[22px] max-w-[420px] text-[19px] leading-normal text-pretty text-ink2">
-            Pacientes, cobros y saldos en un solo lugar. Sin planillas.
-          </p>
+          <ul className="mt-[22px] flex max-w-[440px] flex-col gap-2.5 text-[19px] leading-snug text-ink2">
+            {QUE_HACE.map((t) => (
+              <li key={t} className="flex items-start gap-2.5">
+                <Check {...IC} className="mt-1 shrink-0 text-acc-strong" />
+                {t}
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className="text-sm text-ink2">Pesos y dólares · Efectivo, transferencia y MercadoPago</div>
+        <div className="text-sm text-ink2">Gratis · No es historia clínica: solo datos de cobro</div>
       </div>
       <div className="flex flex-1 items-center justify-center overflow-auto px-6 py-8">
         <div className="flex w-full max-w-[380px] flex-col gap-6">
           <div className="md:hidden">
             <Logo />
           </div>
+          {presentacion && (
+            <div className="rounded-[22px] bg-acc-soft px-5 py-4 md:hidden">
+              <div className="font-serif text-[28px] leading-tight">Tus cobros, en orden.</div>
+              <ul className="mt-2.5 flex flex-col gap-1.5 text-[15px] leading-snug text-ink2">
+                {QUE_HACE.map((t) => (
+                  <li key={t} className="flex items-start gap-2">
+                    <Check {...IC} className="mt-0.5 shrink-0 text-acc-strong" />
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="flex flex-col gap-5">
             <div>
               <h1 className="m-0 font-serif text-[44px] leading-none font-normal">{titulo}</h1>
@@ -30,7 +67,7 @@ export function AuthLayout({ titulo, sub, children }: { titulo: string; sub?: Re
             {children}
           </div>
           <div className="text-center text-sm text-ink2">
-            <Link to="/privacidad" className="text-ink2">Privacidad</Link> · <Link to="/terminos" className="text-ink2">Condiciones</Link>
+            <Link to="/privacidad" className="text-ink2">Privacidad</Link> · <Link to="/terminos" className="text-ink2">Términos y condiciones</Link>
           </div>
         </div>
       </div>
@@ -38,15 +75,44 @@ export function AuthLayout({ titulo, sub, children }: { titulo: string; sub?: Re
   )
 }
 
-export function CampoAuth({ etiqueta, ...props }: InputHTMLAttributes<HTMLInputElement> & { etiqueta: string }) {
+export function CampoAuth({
+  etiqueta,
+  ayuda,
+  type,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { etiqueta: string; ayuda?: string }) {
+  const esClave = type === 'password'
+  const [visible, setVisible] = useState(false)
+  const input = (
+    <input
+      {...props}
+      type={esClave && visible ? 'text' : type}
+      className={`h-[54px] w-full rounded-[14px] border border-line bg-surface px-4 text-[17px] font-normal outline-none focus:border-acc focus:shadow-[0_0_0_3px_var(--acc-soft)] ${esClave ? 'pr-14' : ''}`}
+    />
+  )
   return (
-    <label className="flex flex-col gap-2 text-[15px] font-semibold">
-      {etiqueta}
-      <input
-        {...props}
-        className="h-[54px] w-full rounded-[14px] border border-line bg-surface px-4 text-[17px] font-normal outline-none focus:border-acc focus:shadow-[0_0_0_3px_var(--acc-soft)]"
-      />
-    </label>
+    <div className="flex flex-col gap-2">
+      <label className="flex flex-col gap-2 text-[15px] font-semibold">
+        {etiqueta}
+        {esClave ? (
+          <span className="relative">
+            {input}
+            <button
+              type="button"
+              onClick={() => setVisible((v) => !v)}
+              aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              title={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              className="absolute inset-y-0 right-1 grid w-12 place-items-center text-ink2 hover:text-ink"
+            >
+              {visible ? <EyeOff {...IC} /> : <Eye {...IC} />}
+            </button>
+          </span>
+        ) : (
+          input
+        )}
+      </label>
+      {ayuda && <span className="text-sm leading-snug text-ink2">{ayuda}</span>}
+    </div>
   )
 }
 
@@ -78,6 +144,7 @@ export function IngresoGoogle({ onError }: { onError: (mensaje: string) => void 
         {cargando ? <Spinner /> : <LogoGoogle />}
         Continuar con Google
       </button>
+      <div className="-mt-2 text-center text-sm text-ink2">De Google solo usamos tu nombre y tu mail.</div>
       <div className="flex items-center gap-3 text-sm text-ink2">
         <span className="h-px flex-1 bg-line" />o con tu mail<span className="h-px flex-1 bg-line" />
       </div>

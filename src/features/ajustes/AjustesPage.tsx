@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, FileSpreadsheet, LogOut, Moon, Sparkles, Upload } from 'lucide-react'
+import { ChevronRight, FileSpreadsheet, LogOut, Moon, Sparkles, Trash2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { DescargarExcel } from '../../components/DescargarExcel'
 import { FotoUsuario } from '../../components/FotoUsuario'
-import { Boton, Campo, EstadoError, Esqueleto, IC, Segmentado, Tarjeta } from '../../components/ui'
+import { Boton, Campo, Confirmar, EstadoError, Esqueleto, IC, Segmentado, Tarjeta } from '../../components/ui'
 import { useGuardar, usePacientes, usePerfil } from '../../lib/datos'
 import {
   completarPlantilla, formatMonto, montoParaInput, parseMontoAR, PLANTILLA_WHATSAPP_DEFECTO, type Moneda,
@@ -33,6 +33,9 @@ export function AjustesPage() {
   const [otra, setOtra] = useState('')
   const [termino, setTermino] = useState<Termino>('sesion')
   const [modo, setModo] = useState<ModoCobro>('hora')
+  const [borrar, setBorrar] = useState(false)
+  const [textoBorrar, setTextoBorrar] = useState('')
+  const [borrando, setBorrando] = useState(false)
   const pal = palabras(termino, modo)
 
   useEffect(() => {
@@ -112,6 +115,19 @@ export function AjustesPage() {
     const { error } = await supabase.auth.signOut()
     if (error) toast.error(mensajeError(error))
     else toast.success('Sesión cerrada')
+  }
+
+  async function eliminarCuenta() {
+    setBorrando(true)
+    const { error } = await supabase.rpc('eliminar_mi_cuenta')
+    if (error) {
+      setBorrando(false)
+      toast.error(`No se pudo eliminar la cuenta: ${mensajeError(error)}`)
+      return
+    }
+    // El usuario ya no existe: alcanza con limpiar la sesión de este navegador.
+    await supabase.auth.signOut({ scope: 'local' })
+    toast.success('Tu cuenta y todos tus datos se eliminaron')
   }
 
   const fila = 'flex h-16 w-full items-center justify-between gap-3 bg-transparent p-0 text-base font-semibold'
@@ -208,7 +224,7 @@ export function AjustesPage() {
       <Tarjeta className="flex flex-col gap-3 p-[22px]">
         <h2 className="m-0 text-lg font-semibold">Tus datos en Excel</h2>
         <p className="m-0 text-[15px] leading-normal text-ink2">
-          Descargá todo (pacientes, sesiones y pagos) como backup. El archivo tiene el mismo formato que la plantilla:
+          Descargá todo (pacientes, sesiones y pagos) como copia de seguridad. El archivo tiene el mismo formato que la plantilla:
           podés completarlo o corregirlo en Excel y volver a subirlo desde Importar, sin que se dupliquen datos.
         </p>
         <div className="flex flex-wrap gap-2">
@@ -253,7 +269,43 @@ export function AjustesPage() {
           <LogOut {...IC} />
           Cerrar sesión
         </button>
+        <button
+          type="button"
+          onClick={() => { setTextoBorrar(''); setBorrar(true) }}
+          className={`${fila} justify-start border-t border-line font-normal text-ink2`}
+        >
+          <Trash2 {...IC} />
+          Eliminar mi cuenta
+        </button>
       </Tarjeta>
+
+      {borrar && (
+        <Confirmar
+          titulo="Eliminar tu cuenta"
+          textoConfirmar="Eliminar para siempre"
+          cargando={borrando}
+          onCancelar={() => setBorrar(false)}
+          onConfirmar={() => {
+            if (textoBorrar.trim().toUpperCase() !== 'ELIMINAR') toast.error('Escribí ELIMINAR para confirmar.')
+            else void eliminarCuenta()
+          }}
+        >
+          <p className="m-0">
+            Se borran tu cuenta, tus pacientes, sesiones y pagos. <strong className="text-ink">No se puede deshacer.</strong>
+          </p>
+          <p className="mt-3 mb-0">Si querés guardar una copia, descargá antes tus datos en Excel desde «Tus datos en Excel».</p>
+          <label className="mt-4 flex flex-col gap-2 text-[15px] font-semibold text-ink">
+            Para confirmar, escribí ELIMINAR
+            <input
+              value={textoBorrar}
+              onChange={(e) => setTextoBorrar(e.target.value)}
+              autoCapitalize="characters"
+              autoComplete="off"
+              className="h-[54px] w-full rounded-[14px] border border-line bg-surface px-4 text-[17px] font-normal outline-none focus:border-acc"
+            />
+          </label>
+        </Confirmar>
+      )}
     </section>
   )
 }

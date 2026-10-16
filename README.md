@@ -81,6 +81,7 @@ src/features/            una carpeta por pantalla (auth, inicio, pacientes, regi
 src/components/          piezas de UI compartidas (botones, hojas, navegación, Descargar Excel)
 docs/diseno/             prototipo de Claude Design y logo (docs/diseno/logo)
 docs/mails/              textos de los mails de la app en castellano
+docs/investigacion/      informes: legal, ARCA, WhatsApp, competencia, dominios, pruebas, textos de presentación
 public/                  plantilla de Excel e íconos de la app
 ```
 
