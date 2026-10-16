@@ -52,7 +52,10 @@ export function Layout() {
   const email = session?.user.email ?? ''
   const nombre = perfil?.nombre?.trim() || email
   // Cada pantalla arranca desde arriba.
-  useEffect(() => window.scrollTo(0, 0), [pathname])
+  // Con llaves: en Chrome nuevo scrollTo devuelve una promesa y React la tomaría como limpieza.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
 
   const conBotonFlotante = ['/', '/pacientes', '/mes'].includes(pathname) && !abierto
 
