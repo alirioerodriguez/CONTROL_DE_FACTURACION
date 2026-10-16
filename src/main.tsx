@@ -4,10 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { Check, CircleAlert } from 'lucide-react'
 import { Toaster } from 'sonner'
+import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App.tsx'
 import { SinConexion } from './components/SinConexion'
 import { AuthProvider } from './features/auth/AuthProvider'
+
+// Cuando hay una versión nueva publicada, la app se actualiza sola.
+registerSW({ immediate: true })
 
 // refetchOnWindowFocus: al volver a la app se recargan los datos, así lo
 // que se cargó en el celular aparece en la PC y viceversa.

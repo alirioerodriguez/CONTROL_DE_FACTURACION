@@ -12,6 +12,7 @@ export default defineConfig({
     // abre igual, pero avisa y no deja cargar nada.
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: false, // se registra en main.tsx
       includeAssets: ['favicon-32.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'Consultorio',
@@ -37,6 +38,20 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    // exceljs y jspdf pesan ~1 MB, pero se cargan solo al importar o exportar.
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        // Librerías en archivos aparte: cambian poco y el navegador las guarda entre versiones.
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          supabase: ['@supabase/supabase-js'],
+          datos: ['@tanstack/react-query', 'sonner'],
+        },
+      },
+    },
+  },
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],

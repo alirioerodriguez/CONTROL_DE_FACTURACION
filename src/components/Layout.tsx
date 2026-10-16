@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { ChartColumn, FileSpreadsheet, House, Plus, SlidersHorizontal, Upload, Users, type LucideIcon } from 'lucide-react'
 import { useRegistro } from '../features/registro/RegistroContext'
@@ -50,6 +51,9 @@ export function Layout() {
   const { data: perfil } = usePerfil()
   const email = session?.user.email ?? ''
   const nombre = perfil?.nombre?.trim() || email
+  // Cada pantalla arranca desde arriba.
+  useEffect(() => window.scrollTo(0, 0), [pathname])
+
   const conBotonFlotante = ['/', '/pacientes', '/mes'].includes(pathname) && !abierto
 
   return (

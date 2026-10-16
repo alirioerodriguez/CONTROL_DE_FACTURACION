@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { Spinner } from './components/ui'
@@ -7,24 +8,33 @@ import { LoginPage } from './features/auth/LoginPage'
 import { NuevaClavePage } from './features/auth/NuevaClavePage'
 import { RecuperarPage } from './features/auth/RecuperarPage'
 import { RegistroPage } from './features/auth/RegistroPage'
-import { PrivacidadPage, TerminosPage } from './features/legal/LegalPage'
-import { ImportarPage } from './features/importar/ImportarPage'
 import { InicioPage } from './features/inicio/InicioPage'
 import { FichaPage } from './features/pacientes/FichaPage'
 import { PacientesPage } from './features/pacientes/PacientesPage'
-import { ContadoraPage } from './features/reportes/ContadoraPage'
-import { MesPage } from './features/reportes/MesPage'
 import { TutorialProvider } from './features/tutorial/Tutorial'
 import { RegistroProvider } from './features/registro/RegistroContext'
 import { supabaseConfigurado } from './lib/supabase'
+
+const ImportarPage = lazy(() => import('./features/importar/ImportarPage').then((m) => ({ default: m.ImportarPage })))
+const MesPage = lazy(() => import('./features/reportes/MesPage').then((m) => ({ default: m.MesPage })))
+const ContadoraPage = lazy(() => import('./features/reportes/ContadoraPage').then((m) => ({ default: m.ContadoraPage })))
+const PrivacidadPage = lazy(() => import('./features/legal/LegalPage').then((m) => ({ default: m.PrivacidadPage })))
+const TerminosPage = lazy(() => import('./features/legal/LegalPage').then((m) => ({ default: m.TerminosPage })))
+
+const cargandoPantalla = (
+  <div className="grid min-h-[50vh] place-items-center text-acc">
+    <Spinner className="size-7 border-[3px]" />
+  </div>
+)
 
 export default function App() {
   const { session, cargando, recuperando } = useAuth()
   const { pathname } = useLocation()
 
   // Páginas públicas: se ven con o sin sesión (Google las pide para publicar el ingreso).
-  if (pathname === '/privacidad') return <PrivacidadPage />
-  if (pathname === '/terminos') return <TerminosPage />
+  if (pathname === '/privacidad' || pathname === '/terminos') {
+    return <Suspense fallback={cargandoPantalla}>{pathname === '/privacidad' ? <PrivacidadPage /> : <TerminosPage />}</Suspense>
+  }
 
   if (!supabaseConfigurado) return <FaltaConfiguracion />
   if (cargando) {
@@ -49,6 +59,7 @@ export default function App() {
   return (
     <RegistroProvider>
       <TutorialProvider>
+      <Suspense fallback={cargandoPantalla}>
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<InicioPage />} />
@@ -61,6 +72,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
+      </Suspense>
       </TutorialProvider>
     </RegistroProvider>
   )
