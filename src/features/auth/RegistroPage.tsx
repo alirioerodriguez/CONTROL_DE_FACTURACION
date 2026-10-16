@@ -69,8 +69,8 @@ export function RegistroPage() {
           {cargando ? 'Creando…' : 'Crear cuenta'}
         </Boton>
         <p className="-mt-1 text-center text-sm leading-snug text-ink2">
-          Al crear tu cuenta, con tu mail o con Google, aceptás los <Link to="/terminos">Términos y condiciones</Link> y
-          la <Link to="/privacidad">Política de privacidad</Link>.
+          Al crear tu cuenta, con tu mail o con Google, aceptás los <Link to="/terminos" className="underline">Términos y condiciones</Link> y
+          la <Link to="/privacidad" className="underline">Política de privacidad</Link>.
         </p>
       </form>
       <Link to="/" className={`${claseLinkAuth} text-ink2`}>

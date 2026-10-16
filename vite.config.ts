@@ -35,6 +35,11 @@ export default defineConfig({
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/plantilla-cobros\.xlsx$/],
+        // La versión nueva se activa apenas se descarga (si no, queda "en espera"
+        // hasta cerrar todas las pestañas y la gente sigue viendo la vieja).
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
       },
     }),
   ],
