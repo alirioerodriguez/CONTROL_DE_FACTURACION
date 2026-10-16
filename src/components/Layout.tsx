@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { ChartColumn, FileSpreadsheet, House, Plus, SlidersHorizontal, Upload, Users, type LucideIcon } from 'lucide-react'
 import { useRegistro } from '../features/registro/RegistroContext'
 import { FotoUsuario, useUsuario } from './FotoUsuario'
+import { AvisoPrueba } from './AvisoPrueba'
 import { IC } from './ui'
 
 interface Seccion {
@@ -119,6 +120,7 @@ export function Layout() {
 
       <main className="min-w-0 flex-1 [container-type:inline-size]">
         <div className="mx-auto max-w-[70rem] px-5 pt-6 pb-[11.25rem] md:px-12 md:pt-10 md:pb-16">
+          <AvisoPrueba className="mb-6" />
           <Outlet />
         </div>
       </main>
