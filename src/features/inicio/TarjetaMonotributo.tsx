@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Boton, Chip, Tarjeta, type Tono } from '../../components/ui'
-import { useGuardar, type Pago, type Perfil } from '../../lib/datos'
+import { useGuardar, useTopesMonotributo, type Pago, type Perfil } from '../../lib/datos'
 import { formatMonto, formatPeriodo, hoyAR } from '../../lib/formato'
 import { controlTope, proximaRecategorizacion, type EstadoTope } from '../../lib/monotributo'
 import { mensajeError } from '../../lib/supabase'
@@ -22,11 +22,12 @@ function M({ children }: { children: string }) {
 export function TarjetaMonotributo({ perfil, pagos }: { perfil: Perfil; pagos: Pago[] }) {
   const navegar = useNavigate()
   const guardar = useGuardar()
+  const { categorias } = useTopesMonotributo()
   const hoy = hoyAR()
   const cat = perfil.monotributo_categoria
   if (cat === 'no') return null
 
-  const c = controlTope(pagos, cat, perfil.tipo_cambio_usd, hoy)
+  const c = controlTope(pagos, cat, perfil.tipo_cambio_usd, hoy, categorias)
   const recat = proximaRecategorizacion(hoy)
   const nota = (
     <p className="m-0 text-xs leading-snug text-ink2">

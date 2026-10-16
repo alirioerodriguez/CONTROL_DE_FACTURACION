@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Boton, CampoMonto, Tarjeta } from '../../components/ui'
-import { useGuardar, usePagos, type Perfil } from '../../lib/datos'
+import { useGuardar, usePagos, useTopesMonotributo, type Perfil } from '../../lib/datos'
 import { formatCompacto, formatFecha, formatMonto, hoyAR, montoParaInput, parseMontoAR } from '../../lib/formato'
-import { CATEGORIAS, controlTope, datosCategoria, VIGENCIA_MONOTRIBUTO, type CategoriaPerfil } from '../../lib/monotributo'
+import { controlTope, datosCategoria, type CategoriaPerfil } from '../../lib/monotributo'
 import { mensajeError } from '../../lib/supabase'
 
 /** Tarjeta de Ajustes: elegir la categoría del monotributo y el dólar para sumar los cobros en USD. */
@@ -15,6 +15,7 @@ function M({ children }: { children: string }) {
 export function MonotributoAjustes({ perfil }: { perfil: Perfil }) {
   const guardar = useGuardar()
   const { data: pagos = [] } = usePagos()
+  const { categorias, vigencia } = useTopesMonotributo()
   const [tcTxt, setTcTxt] = useState('')
 
   useEffect(() => {
@@ -29,8 +30,8 @@ export function MonotributoAjustes({ perfil }: { perfil: Perfil }) {
   }, [])
 
   const elegida = perfil.monotributo_categoria
-  const datos = datosCategoria(elegida)
-  const control = controlTope(pagos, elegida, perfil.tipo_cambio_usd, hoyAR())
+  const datos = datosCategoria(elegida, categorias)
+  const control = controlTope(pagos, elegida, perfil.tipo_cambio_usd, hoyAR(), categorias)
 
   async function elegir(cat: CategoriaPerfil) {
     try {
@@ -71,7 +72,7 @@ export function MonotributoAjustes({ perfil }: { perfil: Perfil }) {
       </div>
 
       <div role="radiogroup" aria-label="Categoría del monotributo" className="grid grid-cols-[repeat(auto-fill,minmax(4.5rem,1fr))] gap-2">
-        {CATEGORIAS.map((c) => (
+        {categorias.map((c) => (
           <button
             key={c.letra}
             type="button"
@@ -79,7 +80,7 @@ export function MonotributoAjustes({ perfil }: { perfil: Perfil }) {
             aria-checked={elegida === c.letra}
             aria-label={`Categoría ${c.letra}, hasta ${formatMonto(c.tope, 'ARS')} por año`}
             disabled={guardar.isPending}
-            onClick={() => void elegir(c.letra)}
+            onClick={() => void elegir(c.letra as CategoriaPerfil)}
             className={botonCat(elegida === c.letra)}
           >
             <span className="text-xl leading-none font-semibold">{c.letra}</span>
@@ -120,7 +121,7 @@ export function MonotributoAjustes({ perfil }: { perfil: Perfil }) {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3.5">
-        <span className="text-sm text-ink2">Valores de ARCA vigentes desde el {formatFecha(VIGENCIA_MONOTRIBUTO)}.</span>
+        <span className="text-sm text-ink2">Valores de ARCA vigentes desde el {formatFecha(vigencia)}. Se actualizan solos.</span>
         {elegida !== 'no' && (
           <Boton variante="texto" alto="h-10" className="px-3 text-sm" onClick={() => void elegir('no')}>
             No uso monotributo

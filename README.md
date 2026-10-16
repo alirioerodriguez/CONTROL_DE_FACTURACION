@@ -23,8 +23,11 @@ App publicada: **https://control-de-facturacion-eight.vercel.app**
 - **Control del tope del monotributo**: la categoría se elige en Ajustes; Inicio muestra lo cobrado en los últimos 12 meses contra el tope, avisa desde el 80 % y sugiere categoría. Los dólares se suman solo si se carga el tipo de cambio. Es orientativo.
 - **Pruebas con usuarias** (`/pruebas`): 13 tareas guiadas con reloj y tiempo por pantalla, más una encuesta. Las cuentas con `profiles.es_admin` ven el tablero en `/pruebas/resultados` (se activa solo por SQL).
 
-### Mantenimiento: topes del monotributo
-ARCA actualiza los topes en **febrero y agosto**. Cuando cambien, copiar la tabla de [arca.gob.ar/monotributo/categorias.asp](https://www.arca.gob.ar/monotributo/categorias.asp) en `src/lib/monotributo.ts` (`CATEGORIAS`: tope de ingresos y total mensual de servicios) y actualizar `VIGENCIA_MONOTRIBUTO`. Hoy: valores desde el 1/08/2026.
+### Topes del monotributo (se actualizan solos)
+La función de Supabase `actualizar-monotributo` (`supabase/functions/actualizar-monotributo`) lee la tabla de [arca.gob.ar/monotributo/categorias.asp](https://www.arca.gob.ar/monotributo/categorias.asp) **todos los días a las 9** (pg_cron) y la guarda en `monotributo_categorias`. La app lee esa tabla.
+- Si ARCA cambia el diseño de la página y no se puede leer, no se pisa nada: queda el error en `monotributo_revisiones` y la app sigue con los últimos valores buenos.
+- Para ver cómo viene: `select * from monotributo_revisiones order by fecha desc limit 5;`
+- Respaldo en el código (`CATEGORIAS` en `src/lib/monotributo.ts`): se usa solo si la base no responde. Conviene actualizarlo de vez en cuando; el test `src/lib/arca.test.ts` compara el lector con una copia real de la página.
 
 ## Puesta en marcha (ya hecha; sirve para rehacerla)
 

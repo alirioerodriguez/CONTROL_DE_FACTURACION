@@ -2,7 +2,7 @@
 // pacientes, sesiones y pagos (son pocos datos) y la app calcula el resto.
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { CategoriaPerfil } from './monotributo'
+import { CATEGORIAS, VIGENCIA_MONOTRIBUTO, type CategoriaPerfil, type CategoriaTope } from './monotributo'
 import type { Moneda } from './formato'
 import type { ModoCobro, Termino } from './terminos'
 import { supabase } from './supabase'
@@ -153,6 +153,26 @@ export function usePagos() {
 }
 
 /** Todo junto, con un solo estado de carga y error. */
+/**
+ * Topes del monotributo: los de la base (se actualizan solos desde ARCA) o, si la base no responde,
+ * los que trae el código de respaldo.
+ */
+export function useTopesMonotributo(): { categorias: readonly CategoriaTope[]; vigencia: string } {
+  const { data } = useQuery({
+    queryKey: ['monotributo'],
+    staleTime: 60 * 60 * 1000,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('monotributo_categorias').select('letra, tope, cuota, vigencia').order('letra')
+      if (error) throw error
+      return data
+    },
+  })
+  if (data?.length === CATEGORIAS.length) {
+    return { categorias: data.map((f) => ({ letra: f.letra, tope: n(f.tope), cuota: n(f.cuota) })), vigencia: data[0].vigencia }
+  }
+  return { categorias: CATEGORIAS, vigencia: VIGENCIA_MONOTRIBUTO }
+}
+
 export function useDatos() {
   const perfil = usePerfil()
   const pacientes = usePacientes()

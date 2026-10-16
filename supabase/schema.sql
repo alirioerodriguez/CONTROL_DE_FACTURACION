@@ -403,6 +403,67 @@ $$;
 revoke execute on function public.resultados_pruebas() from public, anon;
 grant execute on function public.resultados_pruebas() to authenticated;
 
+-- ---------------------------------------------------------------------------
+-- Topes del monotributo. Los actualiza solos la función actualizar-monotributo
+-- (lee arca.gob.ar todos los días, ver más abajo). Todas las cuentas los leen;
+-- nadie los escribe desde la app.
+-- ---------------------------------------------------------------------------
+create table if not exists public.monotributo_categorias (
+  letra       text primary key check (letra ~ '^[A-K]$'),
+  tope        numeric(16,2) not null check (tope > 0),
+  cuota       numeric(14,2) not null check (cuota > 0),
+  vigencia    date not null,
+  actualizado timestamptz not null default now()
+);
+
+alter table public.monotributo_categorias enable row level security;
+drop policy if exists "todas leen los topes" on public.monotributo_categorias;
+create policy "todas leen los topes" on public.monotributo_categorias
+  for select to authenticated using (true);
+
+-- Cada revisión de la página de ARCA: si salió bien, con qué vigencia, o qué falló.
+create table if not exists public.monotributo_revisiones (
+  id        bigint generated always as identity primary key,
+  fecha     timestamptz not null default now(),
+  ok        boolean not null,
+  vigencia  date,
+  cambio    boolean not null default false,
+  mensaje   text
+);
+alter table public.monotributo_revisiones enable row level security;
+
+-- Valores iniciales (ARCA, desde el 1/08/2026). Solo se cargan si la tabla está vacía.
+insert into public.monotributo_categorias (letra, tope, cuota, vigencia)
+select * from (values
+  ('A', 12009410.45, 49527.18, date '2026-08-01'),
+  ('B', 17595182.74, 56379.08, date '2026-08-01'),
+  ('C', 24670494.31, 66020.12, date '2026-08-01'),
+  ('D', 30628651.43, 84612.93, date '2026-08-01'),
+  ('E', 36028231.33, 119811.45, date '2026-08-01'),
+  ('F', 45151659.41, 150784.21, date '2026-08-01'),
+  ('G', 53995798.87, 230312.94, date '2026-08-01'),
+  ('H', 81924660.37, 522706.68, date '2026-08-01'),
+  ('I', 91699761.90, 963747.86, date '2026-08-01'),
+  ('J', 105012519.20, 1167299.76, date '2026-08-01'),
+  ('K', 126610838.75, 1614446.04, date '2026-08-01')
+) as v(letra, tope, cuota, vigencia)
+where not exists (select 1 from public.monotributo_categorias);
+
+-- Revisión diaria de ARCA a las 9 (hora argentina = 12 UTC) con pg_cron + pg_net.
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+select cron.unschedule('actualizar-monotributo')
+where exists (select 1 from cron.job where jobname = 'actualizar-monotributo');
+select cron.schedule(
+  'actualizar-monotributo',
+  '0 12 * * *',
+  $$select net.http_post(
+      url := 'https://uxcpfnupwetwtpqhoqvd.supabase.co/functions/v1/actualizar-monotributo',
+      headers := '{"Content-Type": "application/json"}'::jsonb,
+      body := '{}'::jsonb
+    )$$
+);
+
 -- Perfiles para usuarias que ya existían antes de correr este script.
 insert into public.profiles (id, email)
 select id, email from auth.users
