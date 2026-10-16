@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   etiquetaDia, fechaLarga, formatFecha, formatMonto, formatPeriodo, hoyAR, iniciales, normalizar,
-  numeroWhatsApp, parseFechaAR, parseMontoAR, partesMonto, periodoDe, plural, sumarDias, sumarMeses,
+  completarPlantilla, formatCompacto, numeroWhatsApp, parseFechaAR, parseMontoAR, partesMonto, periodoDe, plural, sumarDias, sumarMeses,
 } from './formato'
 
 describe('formatMonto', () => {
@@ -54,6 +54,26 @@ describe('textos', () => {
     expect(normalizar('Lucía')).toBe('lucia')
     expect(plural(1, 'sesión', 'sesiones')).toBe('1 sesión')
     expect(plural(3, 'sesión', 'sesiones')).toBe('3 sesiones')
+  })
+})
+
+describe('formatCompacto y plantilla', () => {
+  it('abrevia montos para el gráfico', () => {
+    expect(formatCompacto(248000, 'ARS')).toBe('$ 248 mil')
+    expect(formatCompacto(1250000, 'ARS')).toBe('$ 1,3 M')
+    expect(formatCompacto(90, 'USD')).toBe('US$ 90')
+    expect(formatCompacto(0, 'ARS')).toBe('')
+  })
+
+  it('completa la plantilla del recordatorio', () => {
+    expect(
+      completarPlantilla('Hola {nombre}, debés {monto} de {mes}. {Nombre}', {
+        nombre: 'Lucía',
+        mes: 'octubre',
+        monto: '$ 50.000,00',
+      }),
+    ).toBe('Hola Lucía, debés $ 50.000,00 de octubre. Lucía')
+    expect(completarPlantilla('', { nombre: 'Ana', mes: 'mayo', monto: '$ 1' })).toContain('Hola Ana')
   })
 })
 

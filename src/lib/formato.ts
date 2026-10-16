@@ -215,6 +215,29 @@ export function numeroWhatsApp(telefono: string | null | undefined): string | nu
   return `549${d}`
 }
 
+/** Monto abreviado para gráficos: "$ 248 mil", "$ 1,2 M", "US$ 90". */
+export function formatCompacto(monto: number, moneda: Moneda): string {
+  if (!monto) return ''
+  if (moneda === 'USD') return `US$ ${new Intl.NumberFormat('es-AR').format(Math.round(monto))}`
+  if (monto >= 1e6) return `$ ${new Intl.NumberFormat('es-AR', { maximumFractionDigits: 1 }).format(monto / 1e6)} M`
+  if (monto >= 1000) return `$ ${Math.round(monto / 1000)} mil`
+  return `$ ${Math.round(monto)}`
+}
+
+export const PLANTILLA_WHATSAPP_DEFECTO =
+  'Hola {nombre}, ¿cómo estás? Te escribo para recordarte el pago de {mes}: {monto}. ¡Gracias!'
+
+/** Completa la plantilla del recordatorio: {nombre}, {mes} y {monto}. */
+export function completarPlantilla(
+  plantilla: string,
+  valores: { nombre: string; mes: string; monto: string },
+): string {
+  return (plantilla || PLANTILLA_WHATSAPP_DEFECTO)
+    .replace(/\{nombre\}/gi, valores.nombre)
+    .replace(/\{mes\}/gi, valores.mes)
+    .replace(/\{monto\}/gi, valores.monto)
+}
+
 /** Suma (o resta) meses a un periodo 'AAAA-MM-01'. */
 export function sumarMeses(periodo: string, cantidad: number): string {
   const [a, m] = periodo.split('-').map(Number)

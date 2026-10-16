@@ -4,7 +4,9 @@ import { ChevronRight, FileSpreadsheet, LogOut, Moon, Upload } from 'lucide-reac
 import { toast } from 'sonner'
 import { Boton, Campo, EstadoError, Esqueleto, IC, Segmentado, Tarjeta } from '../../components/ui'
 import { useGuardar, usePacientes, usePerfil } from '../../lib/datos'
-import { formatMonto, montoParaInput, parseMontoAR, type Moneda } from '../../lib/formato'
+import {
+  completarPlantilla, formatMonto, montoParaInput, parseMontoAR, PLANTILLA_WHATSAPP_DEFECTO, type Moneda,
+} from '../../lib/formato'
 import { mensajeError, supabase } from '../../lib/supabase'
 import { cambiarTema, temaActual, type Tema } from '../../lib/tema'
 import { useAuth } from '../auth/AuthProvider'
@@ -19,6 +21,7 @@ export function AjustesPage() {
   const [nombre, setNombre] = useState('')
   const [tarifaTxt, setTarifaTxt] = useState('')
   const [moneda, setMoneda] = useState<Moneda>('ARS')
+  const [plantilla, setPlantilla] = useState('')
   const [tema, setTema] = useState<Tema>(temaActual())
 
   useEffect(() => {
@@ -26,6 +29,7 @@ export function AjustesPage() {
     setNombre(perfil.data.nombre ?? '')
     setTarifaTxt(perfil.data.tarifa_estandar ? montoParaInput(perfil.data.tarifa_estandar) : '')
     setMoneda(perfil.data.moneda_default)
+    setPlantilla(perfil.data.plantilla_whatsapp || PLANTILLA_WHATSAPP_DEFECTO)
   }, [perfil.data])
 
   if (perfil.isPending) return <Esqueleto que="los ajustes" />
@@ -45,7 +49,12 @@ export function AjustesPage() {
           tipo: 'actualizar',
           tabla: 'profiles',
           id: perfil.data!.id,
-          cambios: { nombre: nombre.trim() || null, tarifa_estandar: tarifa, moneda_default: moneda },
+          cambios: {
+            nombre: nombre.trim() || null,
+            tarifa_estandar: tarifa,
+            moneda_default: moneda,
+            plantilla_whatsapp: plantilla.trim() || PLANTILLA_WHATSAPP_DEFECTO,
+          },
         },
       ])
       // Los pacientes con tarifa estándar siguen la moneda de la tarifa estándar.
@@ -113,6 +122,20 @@ export function AjustesPage() {
           />
         </div>
         <Campo etiqueta="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Lic. Ana Martínez" />
+        <label className="flex flex-col gap-2 text-[15px] font-semibold">
+          Mensaje de recordatorio por WhatsApp
+          <textarea
+            value={plantilla}
+            rows={3}
+            maxLength={500}
+            onChange={(e) => setPlantilla(e.target.value)}
+            className="rounded-[14px] border border-line bg-bg px-4 py-3 text-base font-normal outline-none focus:border-acc"
+          />
+          <span className="text-sm font-normal text-ink2">
+            Usá {'{nombre}'}, {'{mes}'} y {'{monto}'}. Así queda: “
+            {completarPlantilla(plantilla, { nombre: 'Lucía', mes: 'octubre', monto: '$ 50.000,00' })}”
+          </span>
+        </label>
         <Boton alto="h-[50px]" className="self-start" cargando={guardar.isPending} onClick={guardarCobros}>
           Guardar cambios
         </Boton>

@@ -8,10 +8,10 @@ import { LoginPage } from './features/auth/LoginPage'
 import { NuevaClavePage } from './features/auth/NuevaClavePage'
 import { RecuperarPage } from './features/auth/RecuperarPage'
 import { RegistroPage } from './features/auth/RegistroPage'
+import { InicioPage } from './features/inicio/InicioPage'
 import { FichaPage } from './features/pacientes/FichaPage'
 import { PacientesPage } from './features/pacientes/PacientesPage'
 import { RegistroProvider } from './features/registro/RegistroContext'
-import { fechaLarga, hoyAR } from './lib/formato'
 import { supabaseConfigurado } from './lib/supabase'
 
 export default function App() {
@@ -41,7 +41,7 @@ export default function App() {
     <RegistroProvider>
       <Routes>
         <Route element={<Layout />}>
-          <Route index element={<EnConstruccion titulo="Inicio" fase={3} sub={fechaLarga(hoyAR())} />} />
+          <Route index element={<InicioPage />} />
           <Route path="pacientes" element={<PacientesPage />} />
           <Route path="pacientes/:id" element={<FichaPage />} />
           <Route path="mes" element={<EnConstruccion titulo="Reporte del mes" fase={5} />} />

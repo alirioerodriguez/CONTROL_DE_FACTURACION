@@ -32,8 +32,8 @@ Registro abierto: cualquier colega puede crearse una cuenta y ve solo sus datos.
 
 ## Fases
 1. ✅ Base, schema, auth, formato, saldos con tests.
-2. Pacientes, ficha y registro rápido (incluye generar sesiones del mes).
-3. Inicio (dashboard) y recordatorio por WhatsApp.
+2. ✅ Pacientes, ficha y registro rápido (incluye generar sesiones del mes).
+3. ✅ Inicio (dashboard) y recordatorio por WhatsApp.
 4. Importación .xlsx/.csv con tests.
 5. Reporte para contadora (xlsx/PDF), ajustes, backup, modo oscuro, PWA.
 6. Repaso responsive y README final.
