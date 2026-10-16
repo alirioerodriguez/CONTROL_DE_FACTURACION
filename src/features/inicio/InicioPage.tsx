@@ -99,7 +99,7 @@ export function InicioPage() {
         </div>
       </div>
 
-      <div className="grid items-start gap-4 md:grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))]">
+      <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:grid-cols-[repeat(auto-fit,minmax(min(100%,420px),1fr))]">
         <Tarjeta className="p-2">
           <div className="flex items-baseline justify-between gap-3 px-3.5 pt-3.5 pb-2">
             <h2 className="m-0 text-xl font-semibold">Sesiones sin abonar</h2>

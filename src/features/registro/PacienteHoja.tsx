@@ -233,7 +233,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
               rows={2}
               onChange={(e) => setNotas(e.target.value)}
               placeholder="Ej. paga a fin de mes, factura a nombre de la madre"
-              className="rounded-[14px] border border-line bg-bg px-4 py-3 text-base font-normal outline-none focus:border-acc"
+              className="rounded-[14px] border border-line bg-fondo px-4 py-3 text-base font-normal outline-none focus:border-acc"
             />
           </label>
         </>

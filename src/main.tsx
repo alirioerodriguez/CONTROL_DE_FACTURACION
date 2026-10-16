@@ -38,7 +38,7 @@ createRoot(document.getElementById('root')!).render(
               unstyled: true,
               classNames: {
                 toast:
-                  'flex w-full items-center gap-2.5 rounded-full bg-ink py-3 pr-5 pl-3 text-[15px] font-medium text-bg shadow-[0_12px_32px_rgba(0,0,0,.22)]',
+                  'flex w-full items-center gap-2.5 rounded-full bg-ink py-3 pr-5 pl-3 text-[15px] font-medium text-fondo shadow-[0_12px_32px_rgba(0,0,0,.22)]',
                 icon: 'shrink-0',
                 title: 'leading-snug',
               },

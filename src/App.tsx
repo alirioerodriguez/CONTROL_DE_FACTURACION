@@ -26,7 +26,7 @@ export default function App() {
   if (!supabaseConfigurado) return <FaltaConfiguracion />
   if (cargando) {
     return (
-      <div className="grid min-h-dvh place-items-center bg-bg text-acc">
+      <div className="grid min-h-dvh place-items-center bg-fondo text-acc">
         <Spinner className="size-7 border-[3px]" />
       </div>
     )

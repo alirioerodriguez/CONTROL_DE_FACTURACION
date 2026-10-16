@@ -7,7 +7,7 @@ const ACTUALIZADO = '16 de octubre de 2026'
 
 function Marco({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
-    <main className="min-h-dvh bg-bg px-5 py-10 text-ink">
+    <main className="min-h-dvh bg-fondo px-5 py-10 text-ink">
       <article className="mx-auto flex max-w-[720px] flex-col gap-5 text-[17px] leading-relaxed [&_h2]:mt-4 [&_h2]:text-xl [&_h2]:font-semibold [&_li]:ml-5 [&_li]:list-disc">
         <Link to="/" className="no-underline">
           <Logo />

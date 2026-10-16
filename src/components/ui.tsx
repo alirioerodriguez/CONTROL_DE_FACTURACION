@@ -53,7 +53,7 @@ export function Boton({
 }
 
 const claseInput =
-  'h-[52px] w-full rounded-[14px] border border-line bg-bg px-4 text-[17px] outline-none transition focus:border-acc focus:shadow-[0_0_0_3px_var(--acc-soft)]'
+  'h-[52px] w-full rounded-[14px] border border-line bg-fondo px-4 text-[17px] outline-none transition focus:border-acc focus:shadow-[0_0_0_3px_var(--acc-soft)]'
 
 export function Campo({
   etiqueta,
@@ -90,7 +90,7 @@ export function CampoMonto({
 }) {
   return (
     <div
-      className={`flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-line bg-bg px-[18px] focus-within:border-acc ${grande ? 'h-[62px]' : 'h-14'}`}
+      className={`flex min-w-0 flex-1 items-center gap-2 rounded-2xl border border-line bg-fondo px-[18px] focus-within:border-acc ${grande ? 'h-[62px]' : 'h-14'}`}
     >
       <span className={`font-medium text-ink2 ${grande ? 'text-[22px]' : 'text-xl'}`}>{simbolo}</span>
       <input
@@ -169,7 +169,7 @@ export function Pastilla({
       aria-pressed={activa}
       onClick={onClick}
       className={`shrink-0 rounded-full border px-4 text-[15px] font-semibold whitespace-nowrap ${alto} ${
-        activa ? 'border-ink bg-ink text-bg' : 'border-line bg-surface text-ink'
+        activa ? 'border-ink bg-ink text-fondo' : 'border-line bg-surface text-ink'
       }`}
     >
       {children}

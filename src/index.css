@@ -43,7 +43,7 @@ html[data-theme='dark'] {
 
 @theme inline {
   --color-page: var(--page);
-  --color-bg: var(--bg);
+  --color-fondo: var(--bg);
   --color-surface: var(--surface);
   --color-surface2: var(--surface2);
   --color-ink: var(--ink);

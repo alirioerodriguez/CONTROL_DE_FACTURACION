@@ -6,7 +6,7 @@ import { mensajeError, supabase } from '../../lib/supabase'
 
 export function AuthLayout({ titulo, sub, children }: { titulo: string; sub?: ReactNode; children: ReactNode }) {
   return (
-    <main className="flex min-h-dvh bg-bg text-ink">
+    <main className="flex min-h-dvh bg-fondo text-ink">
       <div className="hidden flex-1 flex-col justify-between gap-10 bg-acc-soft p-14 md:flex">
         <Logo />
         <div>

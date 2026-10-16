@@ -150,7 +150,7 @@ export function FichaPage() {
             )}
           </div>
         </div>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2.5">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
           <Boton alto="h-[54px]" icono={Calendar} onClick={() => abrir({ modo: 'sesion', pacienteId: paciente.id })}>
             Registrar sesión
           </Boton>

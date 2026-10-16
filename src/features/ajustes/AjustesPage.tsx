@@ -93,7 +93,7 @@ export function AjustesPage() {
         <h2 className="m-0 text-lg font-semibold">Cobros por defecto</h2>
         <label className="flex flex-col gap-2 text-[15px] font-semibold">
           Tarifa estándar por hora
-          <div className="flex h-14 items-center gap-2 rounded-[14px] border border-line bg-bg px-4 focus-within:border-acc">
+          <div className="flex h-14 items-center gap-2 rounded-[14px] border border-line bg-fondo px-4 focus-within:border-acc">
             <span className="text-xl font-medium text-ink2">{moneda === 'USD' ? 'US$' : '$'}</span>
             <input
               inputMode="decimal"
@@ -129,7 +129,7 @@ export function AjustesPage() {
             rows={3}
             maxLength={500}
             onChange={(e) => setPlantilla(e.target.value)}
-            className="rounded-[14px] border border-line bg-bg px-4 py-3 text-base font-normal outline-none focus:border-acc"
+            className="rounded-[14px] border border-line bg-fondo px-4 py-3 text-base font-normal outline-none focus:border-acc"
           />
           <span className="text-sm font-normal text-ink2">
             Usá {'{nombre}'}, {'{mes}'} y {'{monto}'}. Así queda: “

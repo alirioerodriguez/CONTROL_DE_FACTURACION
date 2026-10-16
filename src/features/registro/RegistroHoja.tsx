@@ -83,7 +83,7 @@ export function RegistroHoja({
   const [fecha, setFecha] = useState(inicial.fecha)
   const [horas, setHoras] = useState(inicial.horas)
   const [montoTxt, setMontoTxt] = useState(inicial.monto)
-  const [montoTocado, setMontoTocado] = useState(editando)
+  const [montoTocado, setMontoTocado] = useState(false)
   const [moneda, setMoneda] = useState<Moneda>(inicial.moneda)
   const [periodo, setPeriodo] = useState(inicial.periodo)
   const [pagado, setPagado] = useState(false)
@@ -108,8 +108,11 @@ export function RegistroHoja({
 
   function cambiarHoras(h: number) {
     setHoras(h)
-    // Si no escribió el monto a mano, se recalcula con la tarifa.
-    if (!montoTocado && paciente) setMontoTxt(montoParaInput(tarifaVigente(paciente, tarifaEstandar) * h))
+    // Si no escribió el monto a mano, se recalcula. Al editar se usa la tarifa
+    // guardada en la sesión, para no cambiarle el precio con el que se cargó.
+    if (montoTocado || !paciente) return
+    const tarifa = edSesion ? edSesion.tarifa_hora : tarifaVigente(paciente, tarifaEstandar)
+    setMontoTxt(montoParaInput(tarifa * h))
   }
 
   const candidatos = useMemo(() => {
@@ -255,7 +258,7 @@ export function RegistroHoja({
           </div>
         ) : (
           <>
-            <label className="flex h-[50px] items-center gap-2.5 rounded-[14px] border border-line bg-bg px-4 text-[17px] text-ink2 focus-within:border-acc">
+            <label className="flex h-[50px] items-center gap-2.5 rounded-[14px] border border-line bg-fondo px-4 text-[17px] text-ink2 focus-within:border-acc">
               <Search {...IC} />
               <input
                 value={busqueda}
@@ -303,7 +306,7 @@ export function RegistroHoja({
             aria-label="Fecha"
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
-            className="h-[46px] min-w-[150px] flex-1 rounded-full border border-line bg-bg px-3.5"
+            className="h-[46px] min-w-[150px] flex-1 rounded-full border border-line bg-fondo px-3.5"
           />
         </div>
       </div>
@@ -369,7 +372,7 @@ export function RegistroHoja({
             <select
               value={periodo}
               onChange={(e) => setPeriodo(e.target.value)}
-              className="h-[50px] rounded-[14px] border border-line bg-bg px-3.5 font-normal"
+              className="h-[50px] rounded-[14px] border border-line bg-fondo px-3.5 font-normal"
             >
               {meses.map((m) => (
                 <option key={m} value={m}>

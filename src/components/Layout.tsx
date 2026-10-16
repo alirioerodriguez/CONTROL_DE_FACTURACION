@@ -53,7 +53,7 @@ export function Layout() {
   const conBotonFlotante = ['/', '/pacientes', '/mes'].includes(pathname) && !abierto
 
   return (
-    <div className="min-h-dvh bg-bg text-ink md:flex">
+    <div className="min-h-dvh bg-fondo text-ink md:flex">
       <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col gap-7 overflow-y-auto border-r border-line bg-surface px-4 pt-7 pb-5 md:flex">
         <div className="px-2">
           <Logo />
