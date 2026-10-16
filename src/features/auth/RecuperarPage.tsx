@@ -31,8 +31,9 @@ export function RecuperarPage() {
           <Check {...IC} />
         </div>
         <div className="text-[1.0625rem] leading-normal text-ink2">
-          Si <strong className="text-ink">{email}</strong> tiene una cuenta, te llega un link para crear una contraseña
-          nueva.
+          Si <strong className="text-ink">{email}</strong> tiene una cuenta, te llega un mail de honorapp con un link para
+          crear una contraseña nueva. Si no lo ves en unos minutos, fijate en Spam o Correo no deseado y marcalo como «No
+          es spam».
         </div>
         <Link to="/" className="flex h-14 items-center justify-center rounded-full bg-surface2 text-[1.0625rem] font-semibold hover:bg-line">
           Volver a ingresar

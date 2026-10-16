@@ -40,7 +40,7 @@ export function RegistroPage() {
         </div>
         <div className="text-[1.0625rem] leading-normal text-ink2">
           Te mandamos un mail a <strong className="text-ink">{email}</strong>. Abrilo y tocá «Confirmar mi cuenta» para
-          activarla. Si no lo ves en unos minutos, fijate en Spam o Correo no deseado.
+          activarla. Si no lo ves en unos minutos, fijate en Spam o Correo no deseado y marcalo como «No es spam».
         </div>
         <Link to="/" className="flex h-14 items-center justify-center rounded-full bg-surface2 text-[1.0625rem] font-semibold hover:bg-line">
           Volver a ingresar
