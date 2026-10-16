@@ -7,6 +7,7 @@ App publicada: **https://control-de-facturacion-eight.vercel.app**
 ## Qué hace
 
 - **Cuentas**: registro abierto con mail y contraseña o con Google. Cada cuenta ve solo sus datos.
+- **Para cualquier profesión con pacientes**: al entrar por primera vez se elige la profesión; según eso la app habla de «sesión» o «consulta» y la tarifa es por hora o por sesión/consulta (se cambia en Ajustes).
 - **Tutorial de bienvenida**: la primera vez que alguien entra, un recorrido paso a paso le muestra cada sección. Se puede repetir desde Ajustes → «Ver tutorial».
 - **Pacientes**: tarifa estándar (la de Ajustes) o personalizada, por hora; duración de la sesión; días fijos; activo o inactivo; buscador y filtros (Todos, Deben, Activos, Inactivos).
 - **Ficha del paciente**: saldo por moneda, historial mes a mes, editar y borrar sesiones y pagos, cargar de un toque las sesiones del mes según los días fijos, WhatsApp.
