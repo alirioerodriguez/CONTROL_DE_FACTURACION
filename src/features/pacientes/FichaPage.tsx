@@ -13,6 +13,7 @@ import {
   capitalizar, etiquetaDia, formatMonto, formatPeriodo, hoyAR, montoParaInput, nombreMes, NOMBRES_DIAS,
   numeroWhatsApp, periodoDe, plural, sumarMeses,
 } from '../../lib/formato'
+import { cobrables, estadoVisible } from '../../lib/estados'
 import { aFavorDe, deudaDe, saldosDe } from '../../lib/resumen'
 import { estadoSesion, fechasDelMes, pagadoPorSesion, tarifaVigente, type EstadoSesion } from '../../lib/saldos'
 import { mensajeError } from '../../lib/supabase'
@@ -41,7 +42,8 @@ export function FichaPage() {
     const ses = sesiones.filter((s) => s.patient_id === paciente.id)
     const pag = pagos.filter((p) => p.patient_id === paciente.id)
     const saldos = saldosDe(paciente.id, sesiones, pagos)
-    const cubierto = pagadoPorSesion(ses, pag)
+    // Solo las realizadas y las ausentes se cubren con pagos; las programadas y canceladas no deben nada.
+    const cubierto = pagadoPorSesion(cobrables(ses), pag)
     const movimientos: Movimiento[] = [
       ...ses.map((s) => ({ fecha: s.fecha, orden: 1, sesion: s })),
       ...pag.map((p) => ({ fecha: p.fecha, orden: 0, pago: p })),
@@ -53,7 +55,7 @@ export function FichaPage() {
       if (ultimo?.periodo === periodo) ultimo.items.push(m)
       else grupos.push({ periodo, items: [m] })
     }
-    const impagas = ses.filter((s) => estadoSesion(s.monto, cubierto.get(s.id) ?? 0) !== 'pagada').length
+    const impagas = cobrables(ses).filter((s) => estadoSesion(s.monto, cubierto.get(s.id) ?? 0) !== 'pagada').length
     return { ses, saldos, cubierto, grupos, deuda: deudaDe(saldos), aFavor: aFavorDe(saldos), impagas }
   }, [paciente, sesiones, pagos])
 
@@ -238,7 +240,13 @@ function GrupoMes({ periodo, items, cubierto }: { periodo: string; items: Movimi
         if (it.sesion) {
           const s = it.sesion
           const pagado = cubierto.get(s.id) ?? 0
-          const estado = CHIP_ESTADO[estadoSesion(s.monto, pagado)]
+          const visible = estadoVisible(s)
+          const estado =
+            visible === 'programada'
+              ? { tono: 'neutro' as Tono, texto: 'Programada' }
+              : visible === 'cancelada'
+                ? { tono: 'neutro' as Tono, texto: 'Cancelada' }
+                : CHIP_ESTADO[estadoSesion(s.monto, pagado)]
           return (
             <button
               key={s.id}
@@ -253,11 +261,16 @@ function GrupoMes({ periodo, items, cubierto }: { periodo: string; items: Movimi
                 <div className="text-base font-semibold">{pal.Sesion}{s.horas !== 1 ? ` · ${montoParaInput(s.horas)} h` : ''}</div>
                 <div className="mt-0.5 text-sm break-words text-ink2">
                   {etiquetaDia(s.fecha)}
+                  {visible === 'ausente' ? ' · ausente (se cobra)' : ''}
                   {pagado > 0 && pagado < s.monto ? ` · abonó ${formatMonto(pagado, s.moneda)}` : ''}
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1">
-                <div className="text-base font-semibold whitespace-nowrap tabular">{formatMonto(s.monto, s.moneda)}</div>
+                <div
+                  className={`text-base font-semibold whitespace-nowrap tabular ${visible === 'cancelada' ? 'text-ink2 line-through' : visible === 'programada' ? 'text-ink2' : ''}`}
+                >
+                  {formatMonto(s.monto, s.moneda)}
+                </div>
                 <Chip tono={estado.tono}>{estado.texto}</Chip>
               </div>
             </button>

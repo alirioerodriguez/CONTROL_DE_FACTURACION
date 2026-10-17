@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { CalendarDays, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Calendario } from '../../components/Calendario'
+import { AYUDA_ESTADO, type EstadoGuardado } from '../../lib/estados'
 import {
   Alerta, Avatar, Boton, Campo, CampoMonto, Confirmar, Hoja, IC, Pastilla, Segmentado, type Opcion,
 } from '../../components/ui'
@@ -88,6 +89,7 @@ export function RegistroHoja({
   const [fecha, setFecha] = useState(inicial.fecha)
   const [verCalendario, setVerCalendario] = useState(false)
   const [horas, setHoras] = useState(inicial.horas)
+  const [estado, setEstado] = useState<EstadoGuardado>(edSesion?.estado ?? 'normal')
   const [montoTxt, setMontoTxt] = useState(inicial.monto)
   const [montoTocado, setMontoTocado] = useState(false)
   const [moneda, setMoneda] = useState<Moneda>(inicial.moneda)
@@ -154,13 +156,13 @@ export function RegistroHoja({
     const nombre = paciente.nombre.split(' ')[0]
     try {
       if (esSesion) {
-        const fila = { patient_id: pid, fecha, horas, tarifa_hora: redondear2(monto / horas), moneda }
+        const fila = { patient_id: pid, fecha, horas, tarifa_hora: redondear2(monto / horas), moneda, estado }
         if (edSesion) {
           await guardar.mutateAsync([{ tipo: 'actualizar', tabla: 'sessions', id: edSesion.id, cambios: fila }])
           toast.success(`${pal.Sesion} actualizada`)
         } else {
           const [creadas] = await guardar.mutateAsync([{ tipo: 'insertar', tabla: 'sessions', filas: [fila] }])
-          if (pagado) {
+          if (pagado && estado !== 'cancelada') {
             guardarPreferencia('ultimoMedio', medio)
             await guardar.mutateAsync([
               {
@@ -369,7 +371,24 @@ export function RegistroHoja({
         </div>
       </div>
 
-      {esSesion && !editando && (
+      {esSesion && (
+        <div className="flex flex-col gap-2.5">
+          <div className="text-[0.9375rem] font-semibold">Estado</div>
+          <Segmentado
+            opciones={[
+              { v: 'normal' as EstadoGuardado, l: 'Normal' },
+              { v: 'ausente' as EstadoGuardado, l: 'Ausente' },
+              { v: 'cancelada' as EstadoGuardado, l: 'Cancelada' },
+            ]}
+            valor={estado}
+            onCambio={setEstado}
+            className="[&>button]:text-sm"
+          />
+          <div className="text-sm text-ink2">{AYUDA_ESTADO[estado]}</div>
+        </div>
+      )}
+
+      {esSesion && !editando && estado !== 'cancelada' && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-[0.9375rem] font-semibold">¿Ya la pagó?</div>
           <Segmentado

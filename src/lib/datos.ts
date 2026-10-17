@@ -3,6 +3,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CATEGORIAS, VIGENCIA_MONOTRIBUTO, type CategoriaPerfil, type CategoriaTope } from './monotributo'
+import type { EstadoGuardado } from './estados'
 import type { Moneda } from './formato'
 import type { ModoCobro, Termino } from './terminos'
 import { supabase } from './supabase'
@@ -60,6 +61,8 @@ export interface Sesion {
   monto: number
   moneda: Moneda
   observaciones: string | null
+  /** normal (programada o realizada según la fecha), ausente (se cobra) o cancelada (no se cobra). */
+  estado: EstadoGuardado
 }
 
 export interface Pago {

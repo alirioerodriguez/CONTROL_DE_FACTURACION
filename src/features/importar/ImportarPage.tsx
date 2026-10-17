@@ -14,6 +14,7 @@ import {
 } from '../../lib/importar/preparar'
 import { mensajeError, supabase } from '../../lib/supabase'
 import { usePalabras } from '../../components/usePalabras'
+import { ImportacionesRecientes } from './ImportacionesRecientes'
 
 type Paso = 1 | 2 | 3
 const LETRAS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -125,7 +126,7 @@ export function ImportarPage() {
         r.pagos && plural(r.pagos, 'pago', 'pagos'),
         r.pacientes && plural(r.pacientes, 'paciente nuevo', 'pacientes nuevos'),
       ].filter(Boolean)
-      toast.success(`Importamos ${partes.join(', ')}`)
+      toast.success(`Importamos ${partes.join(', ')}. Si te equivocaste, podés deshacerlo durante 7 días desde Importar.`)
       navegar('/pacientes')
     } catch (e) {
       toast.error(`No se importó nada: ${mensajeError(e)}`)
@@ -340,6 +341,7 @@ export function ImportarPage() {
           onCambiar={reiniciar}
         />
       )}
+      {paso === 1 && <ImportacionesRecientes />}
     </section>
   )
 }

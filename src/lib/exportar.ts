@@ -89,8 +89,10 @@ export async function exportarReporteMes(periodo: string, pacientes: Paciente[],
     r.filas.map((f) => [
       f.nombre,
       f.moneda,
-      f.sesiones.length,
-      f.sesiones.map((s) => formatFecha(s.fecha).slice(0, 5)).join(' '),
+      f.sesiones.filter((s) => s.estado !== 'programada' && s.estado !== 'cancelada').length,
+      f.sesiones
+        .map((s) => formatFecha(s.fecha).slice(0, 5) + (s.ausente ? ' (ausente)' : s.estado === 'programada' ? ' (programada)' : s.estado === 'cancelada' ? ' (cancelada)' : ''))
+        .join(' '),
       f.facturado,
       f.cobrado,
       f.pendiente,
@@ -345,6 +347,7 @@ export async function libroBackup(perfil: Perfil | undefined, pacientes: Pacient
       { titulo: 'Moneda', ancho: 9 },
       { titulo: 'Horas', ancho: 8, tipo: 'numero' },
       { titulo: 'Observaciones', ancho: 30 },
+      { titulo: 'Estado', ancho: 12 },
     ],
     sesiones.map((s) => [
       idSesion.get(s.id)!,
@@ -356,6 +359,7 @@ export async function libroBackup(perfil: Perfil | undefined, pacientes: Pacient
       s.moneda,
       s.horas,
       s.observaciones,
+      s.estado === 'ausente' ? 'Ausente' : s.estado === 'cancelada' ? 'Cancelada' : null,
     ]),
   )
 

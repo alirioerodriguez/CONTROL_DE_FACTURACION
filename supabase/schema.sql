@@ -147,6 +147,13 @@ create table if not exists public.sessions (
     references public.patients (id, user_id) on delete cascade
 );
 
+-- Estado guardado: 'normal' (la app la muestra como programada si la fecha es futura y realizada si ya
+-- pasó), 'ausente' (el paciente faltó: se cobra) o 'cancelada' (no se cobra).
+alter table public.sessions add column if not exists estado text not null default 'normal';
+do $$ begin
+  alter table public.sessions add constraint sessions_estado_check check (estado in ('normal','ausente','cancelada'));
+exception when duplicate_object then null; end $$;
+
 create index if not exists sessions_user_fecha_idx on public.sessions (user_id, fecha);
 create index if not exists sessions_patient_idx on public.sessions (patient_id, fecha);
 create index if not exists sessions_patient_user_idx on public.sessions (patient_id, user_id);
@@ -242,26 +249,76 @@ create policy payments_all on public.payments
 -- transacción. Corre con los permisos de quien llama (RLS aplica igual).
 -- Los pacientes y sesiones nuevos traen una "ref" para enlazarse entre sí.
 -- ---------------------------------------------------------------------
+-- ---------------------------------------------------------------------------
+-- Importaciones: cada importación queda registrada y lo que trajo se puede
+-- deshacer durante 7 días (deshacer_importacion).
+-- ---------------------------------------------------------------------------
+create table if not exists public.importaciones (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  pacientes   integer not null default 0,
+  sesiones    integer not null default 0,
+  pagos       integer not null default 0,
+  deshecha    boolean not null default false,
+  created_at  timestamptz not null default now(),
+  unique (id, user_id)
+);
+create index if not exists importaciones_user_idx on public.importaciones (user_id, created_at desc);
+alter table public.importaciones enable row level security;
+drop policy if exists "importaciones propias" on public.importaciones;
+create policy "importaciones propias" on public.importaciones
+  for select to authenticated using (user_id = (select auth.uid()));
+-- Se crean y se deshacen solo con las funciones de abajo.
+revoke insert, update, delete on public.importaciones from authenticated, anon;
+
+alter table public.patients add column if not exists importacion_id uuid;
+alter table public.sessions add column if not exists importacion_id uuid;
+alter table public.payments add column if not exists importacion_id uuid;
+do $$ begin
+  alter table public.patients add constraint patients_importacion_fk foreign key (importacion_id, user_id)
+    references public.importaciones (id, user_id) on delete set null (importacion_id);
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter table public.sessions add constraint sessions_importacion_fk foreign key (importacion_id, user_id)
+    references public.importaciones (id, user_id) on delete set null (importacion_id);
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter table public.payments add constraint payments_importacion_fk foreign key (importacion_id, user_id)
+    references public.importaciones (id, user_id) on delete set null (importacion_id);
+exception when duplicate_object then null; end $$;
+create index if not exists patients_importacion_idx on public.patients (importacion_id) where importacion_id is not null;
+create index if not exists sessions_importacion_idx on public.sessions (importacion_id) where importacion_id is not null;
+create index if not exists payments_importacion_idx on public.payments (importacion_id) where importacion_id is not null;
+
 create or replace function public.importar_datos(p_pacientes jsonb, p_sesiones jsonb, p_pagos jsonb)
 returns jsonb
 language plpgsql
-security invoker
+security definer
 set search_path = ''
 as $$
 declare
   r jsonb;
   nuevo uuid;
+  imp uuid;
+  yo uuid := auth.uid();
   refs_pac jsonb := '{}'::jsonb;
   refs_ses jsonb := '{}'::jsonb;
   n_pac int := 0;
   n_ses int := 0;
   n_pag int := 0;
 begin
+  if yo is null then
+    raise exception 'Sin sesión';
+  end if;
+  insert into public.importaciones (user_id) values (yo) returning id into imp;
+
   for r in select * from jsonb_array_elements(coalesce(p_pacientes, '[]'::jsonb)) loop
     insert into public.patients (
+      user_id, importacion_id,
       codigo, nombre, apellido, dni, cuil_cuit, condicion_iva, telefono, email, domicilio, frecuencia,
       tipo_tarifa, tarifa_personalizada, moneda, fecha_alta, activo, notas_admin
     ) values (
+      yo, imp,
       nullif(r->>'codigo', ''), r->>'nombre', nullif(r->>'apellido', ''), nullif(r->>'dni', ''),
       nullif(r->>'cuil_cuit', ''), nullif(r->>'condicion_iva', ''), nullif(r->>'telefono', ''),
       nullif(r->>'email', ''), nullif(r->>'domicilio', ''), nullif(r->>'frecuencia', ''),
@@ -275,12 +332,14 @@ begin
     n_pac := n_pac + 1;
   end loop;
 
+  -- Los pacientes existentes se validan con la FK compuesta (patient_id, user_id): no se puede apuntar a uno ajeno.
   for r in select * from jsonb_array_elements(coalesce(p_sesiones, '[]'::jsonb)) loop
-    insert into public.sessions (patient_id, fecha, horas, tarifa_hora, moneda, observaciones)
+    insert into public.sessions (user_id, importacion_id, patient_id, fecha, horas, tarifa_hora, moneda, observaciones, estado)
     values (
+      yo, imp,
       coalesce((r->>'patient_id')::uuid, (refs_pac->>(r->>'paciente_ref'))::uuid),
       (r->>'fecha')::date, coalesce((r->>'horas')::numeric, 1), (r->>'tarifa_hora')::numeric,
-      r->>'moneda', nullif(r->>'observaciones', '')
+      r->>'moneda', nullif(r->>'observaciones', ''), coalesce(nullif(r->>'estado', ''), 'normal')
     )
     returning id into nuevo;
     if r->>'ref' is not null then
@@ -291,8 +350,10 @@ begin
 
   for r in select * from jsonb_array_elements(coalesce(p_pagos, '[]'::jsonb)) loop
     insert into public.payments (
+      user_id, importacion_id,
       patient_id, fecha, periodo, monto, moneda, medio, comprobante, punto_venta, nro_factura, session_id, observaciones
     ) values (
+      yo, imp,
       coalesce((r->>'patient_id')::uuid, (refs_pac->>(r->>'paciente_ref'))::uuid),
       (r->>'fecha')::date, (r->>'periodo')::date, (r->>'monto')::numeric, r->>'moneda',
       coalesce(r->>'medio', 'transferencia'), coalesce(r->>'comprobante', 'sin_comprobante'),
@@ -302,12 +363,56 @@ begin
     n_pag := n_pag + 1;
   end loop;
 
-  return jsonb_build_object('pacientes', n_pac, 'sesiones', n_ses, 'pagos', n_pag);
+  update public.importaciones set pacientes = n_pac, sesiones = n_ses, pagos = n_pag where id = imp;
+  return jsonb_build_object('importacion', imp, 'pacientes', n_pac, 'sesiones', n_ses, 'pagos', n_pag);
 end;
 $$;
 
 revoke execute on function public.importar_datos(jsonb, jsonb, jsonb) from public, anon;
 grant execute on function public.importar_datos(jsonb, jsonb, jsonb) to authenticated;
+
+-- Borra lo que trajo una importación propia de los últimos 7 días. Los pacientes creados por la
+-- importación se borran con todo lo que tengan (también lo cargado después a mano).
+create or replace function public.deshacer_importacion(p_importacion uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  yo uuid := auth.uid();
+  imp public.importaciones;
+  n_pag int;
+  n_ses int;
+  n_pac int;
+begin
+  select * into imp from public.importaciones
+  where id = p_importacion and user_id = yo
+  for update;
+  if not found then
+    raise exception 'No encontré esa importación.';
+  end if;
+  if imp.deshecha then
+    raise exception 'Esa importación ya se deshizo.';
+  end if;
+  if imp.created_at < now() - interval '7 days' then
+    raise exception 'Pasaron más de 7 días: ya no se puede deshacer.';
+  end if;
+
+  delete from public.payments where importacion_id = imp.id and user_id = yo;
+  get diagnostics n_pag = row_count;
+  delete from public.sessions where importacion_id = imp.id and user_id = yo;
+  get diagnostics n_ses = row_count;
+  delete from public.patients where importacion_id = imp.id and user_id = yo;
+  get diagnostics n_pac = row_count;
+
+  update public.importaciones set deshecha = true where id = imp.id;
+  return jsonb_build_object('pacientes', n_pac, 'sesiones', n_ses, 'pagos', n_pag);
+end;
+$$;
+
+revoke execute on function public.deshacer_importacion(uuid) from public, anon;
+grant execute on function public.deshacer_importacion(uuid) to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Eliminar mi cuenta: borra el usuario de auth y, en cascada, perfil,

@@ -12,12 +12,21 @@ import { mensajeError } from '../../lib/supabase'
 import { usePalabras } from '../../components/usePalabras'
 import { useRegistro } from '../registro/RegistroContext'
 
-const PUNTO: Record<EstadoSesion, string> = {
+type EstadoPunto = EstadoSesion | 'programada' | 'cancelada'
+const PUNTO: Record<EstadoPunto, string> = {
   pagada: 'bg-acc-soft text-acc-strong',
   parcial: 'bg-warn-soft text-warn',
   pendiente: 'bg-bad-soft text-bad',
+  programada: 'border border-dashed border-line text-ink2',
+  cancelada: 'bg-surface2 text-ink2 line-through opacity-60',
 }
-const TEXTO_ESTADO: Record<EstadoSesion, string> = { pagada: 'Pagada', parcial: 'Parcial', pendiente: 'Pendiente' }
+const TEXTO_ESTADO: Record<EstadoPunto, string> = {
+  pagada: 'Pagada',
+  parcial: 'Parcial',
+  pendiente: 'Pendiente',
+  programada: 'Programada',
+  cancelada: 'Cancelada',
+}
 const COLUMNAS = 'grid-cols-[minmax(11.875rem,1.5fr)_minmax(13.75rem,2fr)_repeat(3,minmax(7.5rem,1fr))]'
 
 export function MesPage() {
@@ -130,8 +139,8 @@ export function MesPage() {
                       {f.sesiones.map((s) => (
                         <span
                           key={s.fecha}
-                          title={`${etiquetaDia(s.fecha)} · ${TEXTO_ESTADO[s.estado]}`}
-                          className={`grid size-[2.125rem] place-items-center rounded-full text-[0.8125rem] font-bold ${PUNTO[s.estado]}`}
+                          title={`${etiquetaDia(s.fecha)} · ${s.ausente ? 'Ausente · ' : ''}${TEXTO_ESTADO[s.estado]}`}
+                          className={`grid size-[2.125rem] place-items-center rounded-full text-[0.8125rem] font-bold ${PUNTO[s.estado]} ${s.ausente ? 'ring-2 ring-warn ring-offset-1 ring-offset-surface' : ''}`}
                         >
                           {Number(s.fecha.slice(8))}
                         </span>

@@ -6,7 +6,6 @@ import { IC } from './ui'
  * la app es una versión de prueba: solo datos inventados. En el proyecto de producción se apaga con
  * VITE_DATOS_REALES=si.
  */
-// eslint-disable-next-line react-refresh/only-export-components
 export const SOLO_DATOS_DE_PRUEBA = import.meta.env.VITE_DATOS_REALES !== 'si'
 
 export function AvisoPrueba({ className = '' }: { className?: string }) {

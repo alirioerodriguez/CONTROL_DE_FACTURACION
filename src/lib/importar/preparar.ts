@@ -33,6 +33,8 @@ export type SesionNueva = RefPaciente & {
   tarifa_hora: number
   moneda: Moneda
   observaciones: string | null
+  /** Solo lo trae el Excel de la app; si falta, la sesión es normal. */
+  estado?: 'ausente' | 'cancelada'
 }
 
 export type PagoNuevo = RefPaciente & {
@@ -413,6 +415,7 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
       moneda: columna(hs, 'Moneda'),
       horas: columna(hs, 'Horas'),
       obs: columna(hs, 'Observaciones'),
+      estado: columna(hs, 'Estado'),
     }
     for (const { numero, celdas } of hs.filas) {
       if (esFilaEjemplo(celdas)) continue
@@ -453,6 +456,7 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
         tarifa_hora: redondear2(monto / (horas > 0 ? horas : 1)),
         moneda,
         observaciones: texto(v(c.obs)),
+        ...estadoImportado(texto(v(c.estado))),
       })
     }
   }
@@ -523,4 +527,12 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
   }
 
   return res
+}
+
+/** Columna «Estado» del Excel de la app: Ausente o Cancelada. Cualquier otra cosa (o vacía) es normal. */
+export function estadoImportado(valor: string | null): { estado?: 'ausente' | 'cancelada' } {
+  const v = normalizar(valor ?? '')
+  if (v.startsWith('ausen')) return { estado: 'ausente' }
+  if (v.startsWith('cancel')) return { estado: 'cancelada' }
+  return {}
 }

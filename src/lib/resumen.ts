@@ -1,13 +1,15 @@
 // Cálculos por paciente a partir de los datos crudos (sin acceso a la base).
-import { formatMonto, type Moneda } from './formato'
+import { cobrables } from './estados'
+import { formatMonto, hoyAR, type Moneda } from './formato'
 import { calcularSaldos, type SaldoMoneda } from './saldos'
 import type { Pago, Sesion } from './datos'
 
 export type Deuda = Record<Moneda, number>
 
-export function saldosDe(pacienteId: string, sesiones: Sesion[], pagos: Pago[]): SaldoMoneda[] {
+/** Saldo del paciente. Solo cuentan las sesiones realizadas y las ausentes (ver estados.ts). */
+export function saldosDe(pacienteId: string, sesiones: Sesion[], pagos: Pago[], hoy: string = hoyAR()): SaldoMoneda[] {
   return calcularSaldos(
-    sesiones.filter((s) => s.patient_id === pacienteId),
+    cobrables(sesiones.filter((s) => s.patient_id === pacienteId), hoy),
     pagos.filter((p) => p.patient_id === pacienteId),
   )
 }

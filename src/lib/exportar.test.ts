@@ -15,9 +15,9 @@ const pacientes: Paciente[] = [
   { ...base, id: 'b', codigo: 'P001', nombre: 'Sofía Ruiz', tipo_tarifa: 'personalizada', tarifa_personalizada: 50, moneda: 'USD' },
 ]
 const sesiones: Sesion[] = [
-  { id: 's1', patient_id: 'a', fecha: '2026-10-05', horas: 1, tarifa_hora: 50000, monto: 50000, moneda: 'ARS', observaciones: null },
-  { id: 's2', patient_id: 'a', fecha: '2026-10-12', horas: 1.5, tarifa_hora: 50000, monto: 75000, moneda: 'ARS', observaciones: null },
-  { id: 's3', patient_id: 'b', fecha: '2026-10-07', horas: 1, tarifa_hora: 50, monto: 50, moneda: 'USD', observaciones: null },
+  { id: 's1', patient_id: 'a', fecha: '2026-10-05', horas: 1, tarifa_hora: 50000, monto: 50000, moneda: 'ARS', observaciones: null, estado: 'normal' },
+  { id: 's2', patient_id: 'a', fecha: '2026-10-12', horas: 1.5, tarifa_hora: 50000, monto: 75000, moneda: 'ARS', observaciones: null, estado: 'normal' },
+  { id: 's3', patient_id: 'b', fecha: '2026-10-07', horas: 1, tarifa_hora: 50, monto: 50, moneda: 'USD', observaciones: null, estado: 'normal' },
 ]
 const pagos: Pago[] = [
   {

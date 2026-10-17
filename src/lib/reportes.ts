@@ -1,6 +1,7 @@
 // Cálculos de los reportes (funciones puras).
 import { nombreCompleto, type Medio, type Paciente, type Pago, type Sesion } from './datos'
-import { periodoDe, redondear2, sumarMeses, type Moneda } from './formato'
+import { cobrables, estadoVisible, seCobra } from './estados'
+import { hoyAR, periodoDe, redondear2, sumarMeses, type Moneda } from './formato'
 import { estadoSesion, pagadoPorSesion, type EstadoSesion } from './saldos'
 
 const MONEDAS: Moneda[] = ['ARS', 'USD']
@@ -14,7 +15,8 @@ export interface FilaMes {
   paciente: Paciente
   nombre: string
   moneda: Moneda
-  sesiones: { fecha: string; monto: number; estado: EstadoSesion }[]
+  /** Todas las sesiones del mes. Las programadas y canceladas no suman a lo facturado. */
+  sesiones: { fecha: string; monto: number; estado: EstadoSesion | 'programada' | 'cancelada'; ausente: boolean }[]
   facturado: number
   cobrado: number
   pendiente: number
@@ -28,23 +30,32 @@ export interface TotalMes {
   pendiente: number
 }
 
-export function reporteMes(periodo: string, pacientes: Paciente[], sesiones: Sesion[], pagos: Pago[]) {
+export function reporteMes(periodo: string, pacientes: Paciente[], sesiones: Sesion[], pagos: Pago[], hoy: string = hoyAR()) {
   const filas: FilaMes[] = []
   for (const p of pacientes) {
     const ses = sesiones.filter((s) => s.patient_id === p.id)
     const delMes = ses.filter((s) => periodoDe(s.fecha) === periodo)
     if (!delMes.length) continue
-    const cubierto = pagadoPorSesion(ses, pagos.filter((x) => x.patient_id === p.id))
+    const cubierto = pagadoPorSesion(cobrables(ses, hoy), pagos.filter((x) => x.patient_id === p.id))
     for (const moneda of MONEDAS) {
       const lista = delMes.filter((s) => s.moneda === moneda).sort((a, b) => a.fecha.localeCompare(b.fecha))
       if (!lista.length) continue
-      const facturado = redondear2(lista.reduce((t, s) => t + s.monto, 0))
-      const cobrado = redondear2(lista.reduce((t, s) => t + (cubierto.get(s.id) ?? 0), 0))
+      const aCobrar = lista.filter((s) => seCobra(s, hoy))
+      const facturado = redondear2(aCobrar.reduce((t, s) => t + s.monto, 0))
+      const cobrado = redondear2(aCobrar.reduce((t, s) => t + (cubierto.get(s.id) ?? 0), 0))
       filas.push({
         paciente: p,
         nombre: nombreCompleto(p),
         moneda,
-        sesiones: lista.map((s) => ({ fecha: s.fecha, monto: s.monto, estado: estadoSesion(s.monto, cubierto.get(s.id) ?? 0) })),
+        sesiones: lista.map((s) => {
+          const visible = estadoVisible(s, hoy)
+          return {
+            fecha: s.fecha,
+            monto: s.monto,
+            estado: visible === 'programada' || visible === 'cancelada' ? visible : estadoSesion(s.monto, cubierto.get(s.id) ?? 0),
+            ausente: visible === 'ausente',
+          }
+        }),
         facturado,
         cobrado,
         pendiente: redondear2(facturado - cobrado),
@@ -57,7 +68,8 @@ export function reporteMes(periodo: string, pacientes: Paciente[], sesiones: Ses
     const f = filas.filter((x) => x.moneda === moneda)
     const facturado = redondear2(f.reduce((t, x) => t + x.facturado, 0))
     const cobrado = redondear2(f.reduce((t, x) => t + x.cobrado, 0))
-    return { moneda, sesiones: f.reduce((t, x) => t + x.sesiones.length, 0), facturado, cobrado, pendiente: redondear2(facturado - cobrado) }
+    const sesionesCobrables = f.reduce((t, x) => t + x.sesiones.filter((s) => s.estado !== 'programada' && s.estado !== 'cancelada').length, 0)
+    return { moneda, sesiones: sesionesCobrables, facturado, cobrado, pendiente: redondear2(facturado - cobrado) }
   }).filter((t) => t.sesiones > 0)
 
   return { filas, totales }

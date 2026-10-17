@@ -97,6 +97,15 @@ export function InicioPage() {
           <div className="text-sm text-ink2">
             {r.pendiente.USD > 0 ? `+ ${formatMonto(r.pendiente.USD, 'USD')} · ` : ''}{pal.sesiones} de {mes}
           </div>
+          {(r.programado.ARS > 0 || r.programado.USD > 0) && (
+            <div className="text-sm text-ink2">
+              Programado para lo que queda del mes:{' '}
+              {(['ARS', 'USD'] as const)
+                .filter((m) => r.programado[m] > 0)
+                .map((m) => formatMonto(r.programado[m], m))
+                .join(' + ')}
+            </div>
+          )}
         </div>
         <div className={tarjeta}>
           <div className={etiqueta}>Pacientes activos</div>
