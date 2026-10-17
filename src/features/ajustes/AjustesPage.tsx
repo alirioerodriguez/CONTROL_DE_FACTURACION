@@ -16,6 +16,7 @@ import { CamposProfesion } from '../tutorial/Bienvenida'
 import { MonotributoAjustes } from './MonotributoAjustes'
 import { CalendarioAjustes } from './CalendarioAjustes'
 import { OpcionesAjustes } from './OpcionesAjustes'
+import { OtraApp } from './OtraApp'
 import { useTutorial } from '../tutorial/Tutorial'
 import { etiquetaProfesion, palabras, PROFESIONES, type ModoCobro, type Termino } from '../../lib/terminos'
 
@@ -387,6 +388,8 @@ export function AjustesPage() {
           <ChevronRight {...IC} className="text-ink2" />
         </button>
       </Tarjeta>
+
+      <OtraApp />
 
       <Tarjeta className="px-[1.375rem] py-2">
         <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 text-base">
