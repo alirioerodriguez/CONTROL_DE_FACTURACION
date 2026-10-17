@@ -12,12 +12,15 @@ const json = (cuerpo: unknown, status = 200) =>
   new Response(JSON.stringify(cuerpo), { status, headers: { 'Content-Type': 'application/json' } })
 
 Deno.serve(async () => {
-  const clave = Deno.env.get('SMTP_PASS')
-  if (!clave) return json({ ok: false, mensaje: 'Falta el secreto SMTP_PASS.' }, 500)
-
-  const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
   const hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
   const periodo = `${hoy.slice(0, 7)}-01`
+  // La función es pública (la llama pg_cron sin credenciales): fuera de los primeros días del mes no hace nada,
+  // así nadie puede adelantar el resumen. Del 2 al 3 sirve para reintentar si el día 1 falló.
+  if (Number(hoy.slice(8)) > 3) return json({ ok: true, omitido: 'Solo se manda los primeros días del mes.' })
+
+  const clave = Deno.env.get('SMTP_PASS')
+  if (!clave) return json({ ok: false, mensaje: 'Falta el secreto SMTP_PASS.' }, 500)
+  const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
   const { data: filas, error } = await db.rpc('resumen_aviso_mensual', { p_hoy: hoy })
   if (error) return json({ ok: false, mensaje: error.message }, 500)

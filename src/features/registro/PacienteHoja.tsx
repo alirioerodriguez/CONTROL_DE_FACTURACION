@@ -131,6 +131,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
     <Hoja titulo={paciente ? 'Editar paciente' : 'Nuevo paciente'} onCerrar={onCerrar}>
       <Campo
         etiqueta="Nombre y apellido"
+        maxLength={120}
         autoFocus={!paciente}
         value={nombre}
         onChange={(e) => {
@@ -141,6 +142,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
       />
       <Campo
         etiqueta="Teléfono"
+        maxLength={40}
         type="tel"
         value={telefono}
         onChange={(e) => setTelefono(e.target.value)}

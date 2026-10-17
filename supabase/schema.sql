@@ -696,7 +696,8 @@ as $$
       and g.fecha < date_trunc('month', p_hoy)::date
     group by 1
   )
-  select pr.id, coalesce(pr.email, u.email), pr.nombre, pr.termino,
+  -- Siempre el mail verificado de la cuenta (profiles.email lo puede editar la usuaria).
+  select pr.id, u.email::text, pr.nombre, pr.termino,
          coalesce(d.ars, 0), coalesce(d.usd, 0), coalesce(d.deben, 0)::integer,
          coalesce(c.ars, 0), coalesce(c.usd, 0)
   from public.profiles pr
@@ -730,6 +731,55 @@ alter table public.patients add column if not exists nro_afiliado text
   check (nro_afiliado is null or char_length(nro_afiliado) <= 40);
 alter table public.payments add column if not exists pagador text not null default 'paciente'
   check (pagador in ('paciente', 'obra_social'));
+
+-- ---------------------------------------------------------------------------
+-- Límites de largo en todos los textos libres (evita que alguien llene la base con textos gigantes).
+-- Son amplios: ningún uso normal llega. Se agregan solo si no existen.
+-- ---------------------------------------------------------------------------
+do $$
+declare
+  r record;
+begin
+  for r in
+    select * from (values
+      ('patients', 'nombre', 'char_length(nombre) <= 120'),
+      ('patients', 'apellido', 'char_length(apellido) <= 120'),
+      ('patients', 'codigo', 'char_length(codigo) <= 30'),
+      ('patients', 'condicion_iva', 'char_length(condicion_iva) <= 60'),
+      ('patients', 'cuil_cuit', 'char_length(cuil_cuit) <= 20'),
+      ('patients', 'dni', 'char_length(dni) <= 20'),
+      ('patients', 'domicilio', 'char_length(domicilio) <= 200'),
+      ('patients', 'email', 'char_length(email) <= 200'),
+      ('patients', 'frecuencia', 'char_length(frecuencia) <= 40'),
+      ('patients', 'telefono', 'char_length(telefono) <= 40'),
+      ('patients', 'dias_semana', 'cardinality(dias_semana) <= 7'),
+      ('payments', 'nro_factura', 'char_length(nro_factura) <= 40'),
+      ('payments', 'punto_venta', 'char_length(punto_venta) <= 10'),
+      ('profiles', 'nombre', 'char_length(nombre) <= 120'),
+      ('profiles', 'email', 'char_length(email) <= 320'),
+      ('profiles', 'telefono', 'char_length(telefono) <= 40'),
+      ('profiles', 'dni', 'char_length(dni) <= 20'),
+      ('profiles', 'cuit', 'char_length(cuit) <= 20'),
+      ('profiles', 'condicion_iva', 'char_length(condicion_iva) <= 60'),
+      ('profiles', 'categoria_monotributo', 'char_length(categoria_monotributo) <= 10'),
+      ('profiles', 'actividad', 'char_length(actividad) <= 120'),
+      ('profiles', 'domicilio_fiscal', 'char_length(domicilio_fiscal) <= 200'),
+      ('profiles', 'punto_venta', 'char_length(punto_venta) <= 10'),
+      ('profiles', 'contadora_nombre', 'char_length(contadora_nombre) <= 120'),
+      ('profiles', 'contadora_email', 'char_length(contadora_email) <= 200'),
+      ('profiles', 'plantilla_whatsapp', 'char_length(plantilla_whatsapp) <= 1000'),
+      ('profiles', 'profesion', 'char_length(profesion) <= 80'),
+      ('pruebas', 'nombre', 'char_length(nombre) <= 120'),
+      ('pruebas', 'dispositivo', 'char_length(dispositivo) <= 300'),
+      ('pruebas', 'ejercicios', 'pg_column_size(ejercicios) <= 100000'),
+      ('pruebas', 'encuesta', 'pg_column_size(encuesta) <= 20000')
+    ) as v(tabla, columna, regla)
+  loop
+    if not exists (select 1 from pg_constraint where conname = r.tabla || '_' || r.columna || '_largo') then
+      execute format('alter table public.%I add constraint %I check (%s)', r.tabla, r.tabla || '_' || r.columna || '_largo', r.regla);
+    end if;
+  end loop;
+end $$;
 
 -- ---------------------------------------------------------------------------
 create or replace function public.user_id_inmutable()

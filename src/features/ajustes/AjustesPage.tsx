@@ -284,7 +284,7 @@ export function AjustesPage() {
             className="max-w-[17.5rem]"
           />
         </div>
-        <Campo etiqueta="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Lic. Ana Martínez" />
+        <Campo etiqueta="Tu nombre" maxLength={120} value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Lic. Ana Martínez" />
         <Campo
           etiqueta="Matrícula"
           opcional
