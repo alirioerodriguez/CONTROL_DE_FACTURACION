@@ -13,10 +13,11 @@ import { usePalabras } from '../../components/usePalabras'
 import { useRegistro } from '../registro/RegistroContext'
 
 type EstadoPunto = EstadoSesion | 'programada' | 'cancelada'
+// Además del color, la forma: llena = pagada, mitad = parcial, vacía = pendiente (para quien no distingue colores).
 const PUNTO: Record<EstadoPunto, string> = {
-  pagada: 'bg-acc-soft text-acc-strong',
-  parcial: 'bg-warn-soft text-warn',
-  pendiente: 'bg-bad-soft text-bad',
+  pagada: 'bg-acc text-on-acc',
+  parcial: 'border-2 border-warn bg-[linear-gradient(90deg,var(--warn-soft)_50%,transparent_50%)] text-warn',
+  pendiente: 'border-2 border-bad text-bad',
   programada: 'border border-dashed border-line text-ink2',
   cancelada: 'bg-surface2 text-ink2 line-through opacity-60',
 }
@@ -182,8 +183,12 @@ export function MesPage() {
             {(['pagada', 'parcial', 'pendiente'] as const).map((e) => (
               <span key={e} className="flex items-center gap-2">
                 <span
-                  className={`size-3 rounded-full border-2 ${
-                    e === 'pagada' ? 'border-acc bg-acc-soft' : e === 'parcial' ? 'border-warn bg-warn-soft' : 'border-bad bg-bad-soft'
+                  className={`size-3.5 rounded-full ${
+                    e === 'pagada'
+                      ? 'bg-acc'
+                      : e === 'parcial'
+                        ? 'border-2 border-warn bg-[linear-gradient(90deg,var(--warn)_50%,transparent_50%)]'
+                        : 'border-2 border-bad'
                   }`}
                 />
                 {TEXTO_ESTADO[e]}

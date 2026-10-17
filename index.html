@@ -27,6 +27,8 @@
           document.documentElement.style.fontSize = l
           document.documentElement.dataset.letra = localStorage.getItem('letra')
         }
+        // Colores para daltonismo (Ajustes).
+        if (localStorage.getItem('colores') === 'daltonismo') document.documentElement.dataset.colores = 'daltonismo'
       } catch (e) {}
     </script>
   </head>

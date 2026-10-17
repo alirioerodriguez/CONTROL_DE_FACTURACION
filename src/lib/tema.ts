@@ -34,6 +34,17 @@ export function cambiarLetra(n: number) {
   guardarPreferencia('letra', String(t.n))
 }
 
+/** Colores para daltonismo: azul y naranja en lugar de verde y rojo (ver index.css). */
+export function coloresDaltonismo(): boolean {
+  return document.documentElement.dataset.colores === 'daltonismo'
+}
+
+export function cambiarColoresDaltonismo(prendido: boolean) {
+  if (prendido) document.documentElement.dataset.colores = 'daltonismo'
+  else delete document.documentElement.dataset.colores
+  guardarPreferencia('colores', prendido ? 'daltonismo' : 'normal')
+}
+
 /** Lee y guarda una preferencia chica del navegador (por ej. el último medio de pago). */
 export function preferencia<T extends string>(clave: string, porDefecto: T): T {
   try {

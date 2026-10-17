@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, ClipboardList, FileSpreadsheet, LogOut, Moon, Sparkles, Trash2, Upload } from 'lucide-react'
+import { ChevronRight, ClipboardList, Eye, FileSpreadsheet, LogOut, Moon, Sparkles, Trash2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { DescargarExcel } from '../../components/DescargarExcel'
 import { FotoUsuario } from '../../components/FotoUsuario'
@@ -10,7 +10,9 @@ import {
   completarPlantilla, formatMonto, montoParaInput, parseMontoAR, PLANTILLA_WHATSAPP_DEFECTO, type Moneda,
 } from '../../lib/formato'
 import { mensajeError, supabase } from '../../lib/supabase'
-import { cambiarLetra, cambiarTema, letraActual, TAMANOS_LETRA, temaActual, type Tema } from '../../lib/tema'
+import {
+  cambiarColoresDaltonismo, cambiarLetra, cambiarTema, coloresDaltonismo, letraActual, TAMANOS_LETRA, temaActual, type Tema,
+} from '../../lib/tema'
 import { useAuth } from '../auth/AuthProvider'
 import { CamposProfesion } from '../tutorial/Bienvenida'
 import { MonotributoAjustes } from './MonotributoAjustes'
@@ -36,6 +38,7 @@ export function AjustesPage() {
   const [matricula, setMatricula] = useState('')
   const [mailContadora, setMailContadora] = useState('')
   const [tema, setTema] = useState<Tema>(temaActual())
+  const [daltonismo, setDaltonismo] = useState(coloresDaltonismo())
   const [profesion, setProfesion] = useState('')
   const [otra, setOtra] = useState('')
   const [termino, setTermino] = useState<Termino>('sesion')
@@ -130,6 +133,13 @@ export function AjustesPage() {
     } catch (e) {
       toast.error(`No se pudo guardar: ${mensajeError(e)}`)
     }
+  }
+
+  function alternarDaltonismo() {
+    const nuevo = !daltonismo
+    cambiarColoresDaltonismo(nuevo)
+    setDaltonismo(nuevo)
+    toast.success(nuevo ? 'Listo: colores para daltonismo (azul y naranja)' : 'Listo: volvieron los colores de siempre')
   }
 
   function alternarTema() {
@@ -339,6 +349,28 @@ export function AjustesPage() {
           <span
             className={`flex h-8 w-[3.25rem] rounded-full p-[0.1875rem] transition-colors ${
               tema === 'dark' ? 'justify-end bg-acc' : 'justify-start bg-line'
+            }`}
+          >
+            <span className="size-[1.625rem] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,.25)]" />
+          </span>
+        </button>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={daltonismo}
+          onClick={alternarDaltonismo}
+          className="flex min-h-16 w-full items-center justify-between gap-3 border-t border-line bg-transparent px-0 py-3 text-left text-base font-semibold"
+        >
+          <span className="flex items-center gap-3">
+            <Eye {...IC} className="shrink-0" />
+            <span>
+              Colores para daltonismo
+              <span className="block text-sm font-normal text-ink2">Azul y naranja en lugar de verde y rojo.</span>
+            </span>
+          </span>
+          <span
+            className={`flex h-8 w-[3.25rem] shrink-0 rounded-full p-[0.1875rem] transition-colors ${
+              daltonismo ? 'justify-end bg-acc' : 'justify-start bg-line'
             }`}
           >
             <span className="size-[1.625rem] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,.25)]" />

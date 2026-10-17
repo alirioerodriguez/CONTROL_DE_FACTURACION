@@ -44,6 +44,28 @@ html[data-theme='dark'] {
   --wa-soft: #1b3326;
 }
 
+/* Colores para daltonismo (Ajustes): azul en lugar de verde y naranja en lugar de rojo,
+   que se distinguen con los tipos de daltonismo más comunes (paleta de Okabe e Ito). */
+html[data-colores='daltonismo'] {
+  --acc: #1f6fb2;
+  --acc-strong: #17578c;
+  --acc-soft: #dde9f5;
+  --warn: #7a5d00;
+  --warn-soft: #f6edc4;
+  --bad: #c2410c;
+  --bad-soft: #fbe3d3;
+}
+html[data-colores='daltonismo'][data-theme='dark'] {
+  --acc: #7fb3e6;
+  --acc-strong: #a3c8ef;
+  --acc-soft: #1c2a38;
+  --on-acc: #0b1724;
+  --warn: #e8c65a;
+  --warn-soft: #3a321a;
+  --bad: #f0965a;
+  --bad-soft: #3d2617;
+}
+
 @theme inline {
   --color-page: var(--page);
   --color-fondo: var(--bg);
