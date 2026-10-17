@@ -14,6 +14,7 @@ import { cambiarLetra, cambiarTema, letraActual, TAMANOS_LETRA, temaActual, type
 import { useAuth } from '../auth/AuthProvider'
 import { CamposProfesion } from '../tutorial/Bienvenida'
 import { MonotributoAjustes } from './MonotributoAjustes'
+import { CalendarioAjustes } from './CalendarioAjustes'
 import { OpcionesAjustes } from './OpcionesAjustes'
 import { useTutorial } from '../tutorial/Tutorial'
 import { etiquetaProfesion, palabras, PROFESIONES, type ModoCobro, type Termino } from '../../lib/terminos'
@@ -325,6 +326,8 @@ export function AjustesPage() {
       {perfil.data && <MonotributoAjustes perfil={perfil.data} />}
 
       {perfil.data && <OpcionesAjustes perfil={perfil.data} />}
+
+      {perfil.data && <CalendarioAjustes perfil={perfil.data} />}
 
       <Tarjeta className="px-[1.375rem] py-2">
         <button type="button" role="switch" aria-checked={tema === 'dark'} onClick={alternarTema} className={fila}>

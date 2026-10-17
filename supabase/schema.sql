@@ -610,6 +610,14 @@ alter table public.patients add column if not exists abono_mensual numeric(14,2)
   check (abono_mensual is null or abono_mensual >= 0);
 
 -- ---------------------------------------------------------------------------
+-- Calendario privado (.ics) para suscribirse desde Google Calendar: función supabase/functions/calendario.
+-- El token es el «secreto» del link; null = apagado. Se cambia desde Ajustes.
+-- ---------------------------------------------------------------------------
+alter table public.profiles add column if not exists calendario_token uuid;
+create unique index if not exists profiles_calendario_token_idx on public.profiles (calendario_token)
+  where calendario_token is not null;
+
+-- ---------------------------------------------------------------------------
 create or replace function public.user_id_inmutable()
 returns trigger
 language plpgsql

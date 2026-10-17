@@ -36,6 +36,8 @@ export interface Perfil {
   tipo_cambio_usd: number | null
   /** Muestra la pantalla Recordatorios (función opcional). */
   ver_recordatorios: boolean
+  /** Código del link privado del calendario (null = apagado). */
+  calendario_token: string | null
   /** Ve los resultados de las pruebas con usuarias. Solo se cambia por SQL. */
   es_admin?: boolean
 }
