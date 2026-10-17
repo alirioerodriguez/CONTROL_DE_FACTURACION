@@ -21,6 +21,10 @@ values ('00000000-0000-4000-a000-00000000000a', '00000000-0000-4000-b000-0000000
 insert into public.pruebas (user_id, nombre) values ('00000000-0000-4000-a000-00000000000a', 'Prueba de A');
 insert into public.importaciones (id, user_id)
 values ('00000000-0000-4000-c000-00000000000a', '00000000-0000-4000-a000-00000000000a');
+insert into public.recordatorios (user_id, patient_id, periodo)
+values ('00000000-0000-4000-a000-00000000000a', '00000000-0000-4000-b000-00000000000a', '2026-10-01');
+insert into public.avisos_enviados (user_id, periodo) values ('00000000-0000-4000-a000-00000000000a', '2026-10-01');
+update public.profiles set calendario_token = '00000000-0000-4000-d000-00000000000a' where id = '00000000-0000-4000-a000-00000000000a';
 
 -- ===================== Como B =====================
 set local role authenticated;
@@ -39,6 +43,9 @@ begin
   if (select count(*) from public.importaciones) <> 0 then raise exception 'B ve importaciones de A'; end if;
   if (select count(*) from public.profiles) <> 1 then raise exception 'B ve perfiles ajenos'; end if;
   if (select count(*) from public.monotributo_revisiones) <> 0 then raise exception 'B ve las revisiones de ARCA'; end if;
+  if (select count(*) from public.recordatorios) <> 0 then raise exception 'B ve recordatorios de A'; end if;
+  if (select count(*) from public.avisos_enviados) <> 0 then raise exception 'B ve los avisos mandados'; end if;
+  if exists (select 1 from public.profiles where calendario_token is not null) then raise exception 'B ve el link del calendario de A'; end if;
 
   -- Escritura sobre filas de A: no afecta nada.
   update public.patients set nombre = 'cambiado' where id = a_pac;
@@ -61,6 +68,13 @@ begin
   begin
     insert into public.payments (patient_id, fecha, periodo, monto, moneda) values (a_pac, '2026-10-03', '2026-10-01', 1, 'ARS');
     raise exception 'FALLA: B pudo cargar un pago a un paciente de A';
+  exception when others then
+    if sqlerrm like 'FALLA:%' then raise; end if;
+  end;
+
+  begin
+    insert into public.recordatorios (patient_id, periodo) values (a_pac, '2026-11-01');
+    raise exception 'FALLA: B pudo marcar un recordatorio de un paciente de A';
   exception when others then
     if sqlerrm like 'FALLA:%' then raise; end if;
   end;
@@ -91,6 +105,13 @@ begin
   begin
     perform public.resultados_pruebas();
     raise exception 'FALLA: B (sin ser admin) vio los resultados de las pruebas';
+  exception when others then
+    if sqlerrm like 'FALLA:%' then raise; end if;
+  end;
+
+  begin
+    perform public.resumen_aviso_mensual('2026-10-17');
+    raise exception 'FALLA: B pudo leer el resumen de todas las cuentas';
   exception when others then
     if sqlerrm like 'FALLA:%' then raise; end if;
   end;
