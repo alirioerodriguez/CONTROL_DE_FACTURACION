@@ -64,6 +64,7 @@ function activa(ruta: string, movil: boolean): string {
   if (ruta.startsWith('/pacientes')) return '/pacientes'
   if (movil && ruta.startsWith('/importar')) return '/ajustes'
   if (movil && ruta.startsWith('/contadora')) return '/mes'
+  if (ruta.startsWith('/facturar')) return movil ? '/mes' : '/contadora'
   if (movil && ruta.startsWith('/recordatorios')) return '/'
   const s = SECCIONES.find((x) => x.to !== '/' && ruta.startsWith(x.to))
   return s ? s.to : '/'

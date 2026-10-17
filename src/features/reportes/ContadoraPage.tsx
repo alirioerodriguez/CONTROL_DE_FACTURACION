@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Download, FileText } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, FileText, ReceiptText } from 'lucide-react'
 import { toast } from 'sonner'
 import { AjustarAncho, Alerta, Boton, EstadoError, Esqueleto, IC, MontoGrande, Pastilla, Tarjeta, Titulo } from '../../components/ui'
 import { ETIQUETA_MEDIO, useDatos } from '../../lib/datos'
 import { capitalizar, formatFecha, formatMonto, formatPeriodo, hoyAR, partesMonto, periodoDe, plural, sumarMeses, type Moneda } from '../../lib/formato'
+import { pagosParaFacturar } from '../../lib/facturar'
 import { MEDIOS, mesesEntre, reporteContadora } from '../../lib/reportes'
 import { mensajeError } from '../../lib/supabase'
 import { guardarPreferencia, preferencia } from '../../lib/tema'
@@ -28,6 +29,11 @@ export function ContadoraPage() {
   const r = useMemo(
     () => (rangoMalo ? null : reporteContadora(desde, hasta, hoyAR(), pacientes, pagos)),
     [rangoMalo, desde, hasta, pacientes, pagos],
+  )
+
+  const sinFactura = useMemo(
+    () => pagosParaFacturar(pagos, pacientes, sumarMeses(actual, -2)).reduce((n, m) => n + m.items.length, 0),
+    [pagos, pacientes, actual],
   )
 
   if (cargando) return <Esqueleto que="el reporte para contadora" tarjetas />
@@ -139,6 +145,23 @@ export function ContadoraPage() {
         </div>
         {rangoMalo && <Alerta>El mes “Desde” es posterior a “Hasta”. Cambiá alguno de los dos.</Alerta>}
       </Tarjeta>
+
+      {sinFactura > 0 && (
+        <button
+          type="button"
+          onClick={() => navegar('/facturar')}
+          className="flex items-center gap-3 rounded-[1.375rem] border border-line bg-surface px-[1.375rem] py-4 text-left hover:bg-surface2"
+        >
+          <span className="grid size-11 shrink-0 place-items-center rounded-[0.875rem] bg-warn-soft text-warn">
+            <ReceiptText {...IC} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[1.0625rem] font-semibold">{plural(sinFactura, 'pago sin factura', 'pagos sin factura')}</span>
+            <span className="block text-[0.9375rem] text-ink2">En los últimos 3 meses. Mirá los datos listos para cargar en ARCA.</span>
+          </span>
+          <ChevronRight {...IC} className="shrink-0 text-ink2" />
+        </button>
+      )}
 
       {r && (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18.125rem),1fr))] gap-3">

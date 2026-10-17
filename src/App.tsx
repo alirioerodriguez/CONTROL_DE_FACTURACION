@@ -4,6 +4,7 @@ import { Layout } from './components/Layout'
 import { Spinner } from './components/ui'
 import { AjustesPage } from './features/ajustes/AjustesPage'
 import { RecordatoriosPage } from './features/recordatorios/RecordatoriosPage'
+import { FacturarPage } from './features/reportes/FacturarPage'
 import { useAuth } from './features/auth/AuthProvider'
 import { LoginPage } from './features/auth/LoginPage'
 import { NuevaClavePage } from './features/auth/NuevaClavePage'
@@ -77,6 +78,7 @@ export default function App() {
           <Route path="pacientes/:id" element={<FichaPage />} />
           <Route path="mes" element={<MesPage />} />
           <Route path="contadora" element={<ContadoraPage />} />
+          <Route path="facturar" element={<FacturarPage />} />
           <Route path="importar" element={<ImportarPage />} />
           <Route path="recordatorios" element={<RecordatoriosPage />} />
           <Route path="ajustes" element={<AjustesPage />} />
