@@ -5,7 +5,7 @@ import { useGuardar, type Perfil } from '../../lib/datos'
 import { mensajeError } from '../../lib/supabase'
 
 /** Funciones que no todas usan: arrancan apagadas y se prenden acá. */
-type Opcion = 'ver_recordatorios'
+type Opcion = 'ver_recordatorios' | 'aviso_mensual'
 
 const OPCIONES: { clave: Opcion; titulo: string; ayuda: ReactNode; prendida: string; apagada: string }[] = [
   {
@@ -14,6 +14,13 @@ const OPCIONES: { clave: Opcion; titulo: string; ayuda: ReactNode; prendida: str
     ayuda: 'Una pantalla con quién te debe, para mandarle el recordatorio por WhatsApp y llevar la cuenta de a quién ya le escribiste.',
     prendida: 'Listo: tenés la pantalla Recordatorios en el menú',
     apagada: 'Listo: se sacó Recordatorios del menú',
+  },
+  {
+    clave: 'aviso_mensual',
+    titulo: 'Resumen mensual por mail',
+    ayuda: 'El día 1 de cada mes te llega un mail con cuánto te deben y cuánto cobraste el mes anterior.',
+    prendida: 'Listo: el día 1 te llega el resumen por mail',
+    apagada: 'Listo: ya no te llega el resumen por mail',
   },
 ]
 

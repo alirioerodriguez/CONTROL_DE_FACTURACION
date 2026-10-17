@@ -618,6 +618,109 @@ create unique index if not exists profiles_calendario_token_idx on public.profil
   where calendario_token is not null;
 
 -- ---------------------------------------------------------------------------
+-- Mail mensual a la profesional (opcional, se prende en Ajustes): el día 1 de cada mes le llega
+-- cuánto le deben y cuánto cobró el mes anterior. Lo manda la función supabase/functions/aviso-mensual
+-- desde honorapp.ar@gmail.com (necesita el secreto SMTP_PASS en las funciones de Supabase).
+-- ---------------------------------------------------------------------------
+alter table public.profiles add column if not exists aviso_mensual boolean not null default false;
+
+-- Un mail por mes y por usuaria como máximo, aunque la función se llame varias veces.
+create table if not exists public.avisos_enviados (
+  user_id  uuid not null references auth.users (id) on delete cascade,
+  periodo  date not null,
+  enviado  timestamptz not null default now(),
+  primary key (user_id, periodo)
+);
+alter table public.avisos_enviados enable row level security;
+-- Sin políticas: solo la función (service_role) la usa.
+
+-- Lo que debe cada paciente hoy, con la misma regla que la app (src/lib/estados.ts, saldos.ts y abono.ts):
+-- cuentan las sesiones realizadas y ausentes hasta hoy; con abono, el mes vale el abono repartido entre
+-- sus sesiones no canceladas. Devuelve una fila por usuaria con el aviso prendido.
+create or replace function public.resumen_aviso_mensual(p_hoy date)
+returns table (
+  user_id uuid, email text, nombre text, termino text,
+  deuda_ars numeric, deuda_usd numeric, pacientes_deben integer,
+  cobrado_ars numeric, cobrado_usd numeric
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  with ses as (
+    select s.user_id, s.patient_id, s.moneda, s.monto, s.fecha, s.estado,
+           p.abono_mensual, p.moneda as moneda_paciente,
+           (s.estado <> 'cancelada' and s.fecha <= p_hoy) as cobrable,
+           date_trunc('month', s.fecha)::date as mes
+    from public.sessions s
+    join public.patients p on p.id = s.patient_id and p.user_id = s.user_id
+    join public.profiles pr on pr.id = s.user_id and pr.aviso_mensual
+    where s.estado <> 'cancelada'
+  ),
+  cargos as (
+    -- Sin abono (o en otra moneda): el monto de cada sesión cobrable.
+    select user_id, patient_id, moneda, sum(monto) as cargo
+    from ses
+    where cobrable and not (coalesce(abono_mensual, 0) > 0 and moneda = moneda_paciente)
+    group by 1, 2, 3
+    union all
+    -- Con abono: por mes, la parte del abono de las sesiones que ya pasaron (la última se lleva el resto).
+    select user_id, patient_id, moneda,
+           case when count(*) filter (where cobrable) = count(*) then max(abono_mensual)
+                else count(*) filter (where cobrable) * floor(max(abono_mensual) * 100 / count(*)) / 100 end
+    from ses
+    where coalesce(abono_mensual, 0) > 0 and moneda = moneda_paciente
+    group by user_id, patient_id, moneda, mes
+  ),
+  saldos as (
+    select c.user_id, c.patient_id, c.moneda,
+           sum(c.cargo) - coalesce((select sum(g.monto) from public.payments g
+                                     where g.patient_id = c.patient_id and g.user_id = c.user_id and g.moneda = c.moneda), 0) as saldo
+    from cargos c
+    group by 1, 2, 3
+  ),
+  deudas as (
+    select user_id,
+           sum(greatest(saldo, 0)) filter (where moneda = 'ARS') as ars,
+           sum(greatest(saldo, 0)) filter (where moneda = 'USD') as usd,
+           count(distinct patient_id) filter (where saldo > 0) as deben
+    from saldos group by 1
+  ),
+  cobros as (
+    select g.user_id,
+           sum(g.monto) filter (where g.moneda = 'ARS') as ars,
+           sum(g.monto) filter (where g.moneda = 'USD') as usd
+    from public.payments g
+    where g.fecha >= (date_trunc('month', p_hoy) - interval '1 month')::date
+      and g.fecha < date_trunc('month', p_hoy)::date
+    group by 1
+  )
+  select pr.id, coalesce(pr.email, u.email), pr.nombre, pr.termino,
+         coalesce(d.ars, 0), coalesce(d.usd, 0), coalesce(d.deben, 0)::integer,
+         coalesce(c.ars, 0), coalesce(c.usd, 0)
+  from public.profiles pr
+  join auth.users u on u.id = pr.id
+  left join deudas d on d.user_id = pr.id
+  left join cobros c on c.user_id = pr.id
+  where pr.aviso_mensual;
+$$;
+revoke all on function public.resumen_aviso_mensual(date) from public, anon, authenticated;
+grant execute on function public.resumen_aviso_mensual(date) to service_role;
+
+select cron.unschedule('aviso-mensual')
+where exists (select 1 from cron.job where jobname = 'aviso-mensual');
+select cron.schedule(
+  'aviso-mensual',
+  '0 12 1 * *',
+  $$select net.http_post(
+      url := 'https://uxcpfnupwetwtpqhoqvd.supabase.co/functions/v1/aviso-mensual',
+      headers := '{"Content-Type": "application/json"}'::jsonb,
+      body := '{}'::jsonb
+    )$$
+);
+
+-- ---------------------------------------------------------------------------
 create or replace function public.user_id_inmutable()
 returns trigger
 language plpgsql
