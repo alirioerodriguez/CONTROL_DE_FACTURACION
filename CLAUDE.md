@@ -29,6 +29,8 @@ Registro abierto: cualquier colega puede crearse una cuenta y ve solo sus datos.
 - Diseño: seguir el prototipo de Claude Design (verde salvia, esquinas redondeadas, títulos en serif). Referencia en `docs/diseno/`.
 - Marca: "honorapp", siempre en minúscula. Logo "h con tilde de cobro" (componente `Logo` en `src/components/Layout.tsx`, especificación en `docs/diseno/logo/README.md`).
 - La importación acepta la estructura de `public/plantilla-cobros.xlsx` (se descarga desde la pantalla Importar) (hojas Pacientes, Sesiones, Pagos; mismos nombres de columna).
+- Después de cambiar `supabase/schema.sql`, correr `supabase/tests/aislamiento.sql` en la base: tiene que devolver «Aislamiento OK».
+- Mientras no exista el proyecto de producción, la app es versión de prueba: solo datos inventados (`VITE_DATOS_REALES`, ver `src/components/AvisoPrueba.tsx`).
 - Antes de cada commit: `npm run build`, `npm run lint` y `npm test` tienen que pasar. Commits chicos, en castellano.
 
 ## Fases

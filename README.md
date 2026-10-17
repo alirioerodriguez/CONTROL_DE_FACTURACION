@@ -66,6 +66,9 @@ Abrir la app → «¿No tenés cuenta? Creá una» (o «Continuar con Google»).
 - **Protección contra contraseñas filtradas**: Supabase la ofrece en el plan Pro (Authentication → Attack Protection).
 - **Ingreso con Apple**: requiere una cuenta de Apple Developer (USD 99 por año).
 
+## Tests de la base (aislamiento entre cuentas)
+`supabase/tests/aislamiento.sql` crea dos cuentas ficticias dentro de una transacción y comprueba que una no pueda ver, cambiar, borrar ni apuntar a nada de la otra (tablas, FK compuestas, funciones, `user_id` inmutable, `es_admin`). Al final deshace todo. Correrlo en Supabase → SQL Editor después de cada cambio en `schema.sql`: tiene que devolver «Aislamiento OK».
+
 ## Desarrollo local
 
 ```bash

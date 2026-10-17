@@ -569,6 +569,34 @@ select cron.schedule(
     )$$
 );
 
+-- ---------------------------------------------------------------------------
+-- El dueño de un dato no cambia nunca (además de lo que ya impide RLS).
+-- ---------------------------------------------------------------------------
+create or replace function public.user_id_inmutable()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.user_id is distinct from old.user_id then
+    raise exception 'No se puede cambiar el dueño de un dato.';
+  end if;
+  return new;
+end;
+$$;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['patients', 'sessions', 'payments', 'pruebas', 'importaciones'] loop
+    execute format('drop trigger if exists %I on public.%I', t || '_user_id_inmutable', t);
+    execute format(
+      'create trigger %I before update of user_id on public.%I for each row execute function public.user_id_inmutable()',
+      t || '_user_id_inmutable', t
+    );
+  end loop;
+end $$;
+
 -- Perfiles para usuarias que ya existían antes de correr este script.
 insert into public.profiles (id, email)
 select id, email from auth.users
