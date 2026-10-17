@@ -143,6 +143,13 @@ function titulosRango(desde: string, hasta: string) {
 export interface OpcionesExport {
   /** Iniciales en lugar del nombre completo de cada paciente. */
   iniciales?: boolean
+  /** Si la profesional eligió no incluir a algunos pacientes, el reporte lo dice. */
+  parcial?: { incluidos: number; total: number }
+}
+
+/** «Incluye 10 de 12 pacientes con cobros en el período.» */
+export function textoParcial(p: OpcionesExport['parcial']): string | null {
+  return p && p.incluidos < p.total ? `Incluye ${p.incluidos} de ${p.total} pacientes con cobros en el período.` : null
 }
 
 export async function exportarContadoraXlsx(
@@ -181,6 +188,11 @@ export async function exportarContadoraXlsx(
     filas,
     totales,
   )
+  const aviso = textoParcial(opciones.parcial)
+  if (aviso) {
+    resumen.addRow([])
+    resumen.addRow([aviso]).font = { italic: true }
+  }
   resumen.addRow([])
   resumen.addRow([`Últimos 12 meses (${formatPeriodo(r.rango12.desde)} – ${formatPeriodo(r.rango12.hasta)})`]).font = { bold: true }
   for (const m of ['ARS', 'USD'] as Moneda[]) {
@@ -223,6 +235,7 @@ export async function exportarContadoraXlsx(
     ['Profesional', perfil?.nombre ?? ''],
     ['Mail', perfil?.email ?? ''],
     ['Período', titulosRango(desde, hasta)],
+    ['Pacientes', textoParcial(opciones.parcial) ?? 'Todos los pacientes con cobros en el período'],
     ['Generado', formatFecha(hoyAR())],
   ].forEach((f) => datos.addRow(f.map(celdaSegura)))
 
@@ -387,8 +400,9 @@ export async function pdfContadora(
   const total = doc.getNumberOfPages()
   for (let i = 1; i <= total; i++) {
     doc.setPage(i)
+    const base = textoParcial(opciones.parcial) ?? 'Montos cobrados según registros de la profesional.'
     pie(p, [
-      total > 1 ? `Montos cobrados según registros de la profesional · Hoja ${i} de ${total}` : 'Montos cobrados según registros de la profesional.',
+      total > 1 ? `${base.replace(/.$/, '')} · Hoja ${i} de ${total}` : base,
       `Generado con honorapp el ${formatFecha(hoy)}`,
     ], 62, 863)
   }

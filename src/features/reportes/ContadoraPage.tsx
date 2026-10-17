@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Download, FileText, ReceiptText, Send } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Download, FileText, ReceiptText, Send, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { AjustarAncho, Alerta, Boton, EstadoError, Esqueleto, IC, MontoGrande, Pastilla, Tarjeta, Titulo } from '../../components/ui'
-import { ETIQUETA_MEDIO, useDatos } from '../../lib/datos'
+import { ETIQUETA_MEDIO, nombreCompleto, useDatos, type Paciente } from '../../lib/datos'
 import { capitalizar, formatFecha, formatMonto, formatPeriodo, hoyAR, partesMonto, periodoDe, plural, sumarMeses, type Moneda } from '../../lib/formato'
 import { pagosParaFacturar } from '../../lib/facturar'
 import { MEDIOS, mesesEntre, reporteContadora } from '../../lib/reportes'
@@ -24,11 +24,26 @@ export function ContadoraPage() {
   // Se recuerda en este dispositivo: quien prefiere iniciales suele querer siempre lo mismo.
   const [iniciales, setIniciales] = useState(preferencia<string>('exportar-iniciales', 'no') === 'si')
 
+  // Pacientes que la profesional eligió no incluir en el reporte (se recuerda en este dispositivo).
+  const [excluidos, setExcluidos] = useState<Set<string>>(() => new Set(leerExcluidos()))
+  const cambiarExcluidos = (nuevo: Set<string>) => {
+    setExcluidos(nuevo)
+    guardarPreferencia('contadora-excluidos', JSON.stringify([...nuevo]))
+  }
+
   const opcionesMes = useMemo(() => mesesEntre(sumarMeses(actual, -35), actual).reverse(), [actual])
   const rangoMalo = desde > hasta
+  // Pacientes con cobros en el período elegido (son los que se pueden incluir o no).
+  const conCobros = useMemo(() => {
+    const ids = new Set(pagos.filter((p) => periodoDe(p.fecha) >= desde && periodoDe(p.fecha) <= hasta).map((p) => p.patient_id))
+    return pacientes.filter((p) => ids.has(p.id)).sort((a, b) => nombreCompleto(a).localeCompare(nombreCompleto(b)))
+  }, [pagos, pacientes, desde, hasta])
+  const pagosIncluidos = useMemo(() => pagos.filter((p) => !excluidos.has(p.patient_id)), [pagos, excluidos])
+  const incluidos = conCobros.filter((p) => !excluidos.has(p.id)).length
+  const parcial = { incluidos, total: conCobros.length }
   const r = useMemo(
-    () => (rangoMalo ? null : reporteContadora(desde, hasta, hoyAR(), pacientes, pagos)),
-    [rangoMalo, desde, hasta, pacientes, pagos],
+    () => (rangoMalo ? null : reporteContadora(desde, hasta, hoyAR(), pacientes, pagosIncluidos)),
+    [rangoMalo, desde, hasta, pacientes, pagosIncluidos],
   )
 
   const sinFactura = useMemo(
@@ -52,8 +67,8 @@ export function ContadoraPage() {
     setExportando(tipo)
     try {
       const m = await import('../../lib/exportar')
-      if (tipo === 'xlsx') await m.exportarContadoraXlsx(desde, hasta, perfil, pacientes, pagos, { iniciales })
-      else await m.exportarContadoraPdf(desde, hasta, perfil, pacientes, pagos, { iniciales })
+      if (tipo === 'xlsx') await m.exportarContadoraXlsx(desde, hasta, perfil, pacientes, pagosIncluidos, { iniciales, parcial })
+      else await m.exportarContadoraPdf(desde, hasta, perfil, pacientes, pagosIncluidos, { iniciales, parcial })
       toast.success(`Reporte para contadora exportado en ${tipo === 'xlsx' ? 'Excel' : 'PDF'}`)
     } catch (e) {
       toast.error(`No se pudo exportar: ${mensajeError(e)}`)
@@ -67,10 +82,10 @@ export function ContadoraPage() {
     setExportando('enviar')
     try {
       const m = await import('../../lib/exportar')
-      const res = await m.compartirContadoraPdf(desde, hasta, perfil, pacientes, pagos, { iniciales })
+      const res = await m.compartirContadoraPdf(desde, hasta, perfil, pacientes, pagosIncluidos, { iniciales, parcial })
       if (res === 'compartido') toast.success('Reporte enviado')
       if (res === 'sin-soporte') {
-        await m.exportarContadoraPdf(desde, hasta, perfil, pacientes, pagos, { iniciales })
+        await m.exportarContadoraPdf(desde, hasta, perfil, pacientes, pagosIncluidos, { iniciales, parcial })
         const { linkMail } = await import('../../lib/compartir')
         const t = m.mensajeContadora(desde, hasta, perfil)
         window.open(linkMail(perfil?.contadora_email, t.asunto, `${t.cuerpo}\n\n(El reporte va adjunto en PDF.)`), '_blank', 'noopener')
@@ -175,6 +190,7 @@ export function ContadoraPage() {
           )}
         </div>
         {rangoMalo && <Alerta>El mes “Desde” es posterior a “Hasta”. Cambiá alguno de los dos.</Alerta>}
+        {conCobros.length > 0 && <ElegirPacientes pacientes={conCobros} excluidos={excluidos} onCambio={cambiarExcluidos} />}
       </Tarjeta>
 
       {sinFactura > 0 && (
@@ -362,5 +378,91 @@ export function ContadoraPage() {
         </Tarjeta>
       )}
     </section>
+  )
+}
+
+function leerExcluidos(): string[] {
+  try {
+    const v = JSON.parse(preferencia<string>('contadora-excluidos', '[]'))
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+/** Elegir qué pacientes entran en el reporte. Arranca con todos; el reporte dice cuántos incluye. */
+function ElegirPacientes({
+  pacientes,
+  excluidos,
+  onCambio,
+}: {
+  pacientes: Paciente[]
+  excluidos: Set<string>
+  onCambio: (nuevo: Set<string>) => void
+}) {
+  const [abierto, setAbierto] = useState(false)
+  const incluidos = pacientes.filter((p) => !excluidos.has(p.id)).length
+  const todos = incluidos === pacientes.length
+
+  const alternar = (id: string) => {
+    const nuevo = new Set(excluidos)
+    if (nuevo.has(id)) nuevo.delete(id)
+    else nuevo.add(id)
+    onCambio(nuevo)
+  }
+  const marcarTodos = (incluir: boolean) => {
+    const nuevo = new Set(excluidos)
+    for (const p of pacientes) {
+      if (incluir) nuevo.delete(p.id)
+      else nuevo.add(p.id)
+    }
+    onCambio(nuevo)
+  }
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-line pt-4">
+      <button
+        type="button"
+        onClick={() => setAbierto(!abierto)}
+        aria-expanded={abierto}
+        className="flex items-center gap-3 bg-transparent p-0 text-left"
+      >
+        <Users {...IC} className="shrink-0 text-ink2" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-base font-semibold">Pacientes del reporte</span>
+          <span className={`block text-[0.9375rem] ${todos ? 'text-ink2' : 'font-semibold text-warn'}`}>
+            {todos ? `Todos (${pacientes.length})` : `${incluidos} de ${pacientes.length} · el reporte lo aclara`}
+          </span>
+        </span>
+        <ChevronDown {...IC} className={`shrink-0 text-ink2 transition-transform ${abierto ? 'rotate-180' : ''}`} />
+      </button>
+      {abierto && (
+        <div className="flex flex-col gap-1">
+          <div className="flex gap-2 pb-1">
+            <Pastilla activa={todos} onClick={() => marcarTodos(true)}>
+              Todos
+            </Pastilla>
+            <Pastilla activa={incluidos === 0} onClick={() => marcarTodos(false)}>
+              Ninguno
+            </Pastilla>
+          </div>
+          {pacientes.map((p) => (
+            <label key={p.id} className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-2 text-base hover:bg-surface2">
+              <input
+                type="checkbox"
+                checked={!excluidos.has(p.id)}
+                onChange={() => alternar(p.id)}
+                className="size-5 shrink-0 accent-[var(--acc)]"
+              />
+              {nombreCompleto(p)}
+            </label>
+          ))}
+          <p className="m-0 pt-1 text-sm leading-snug text-ink2">
+            Los que desmarques no aparecen en el Excel ni en el PDF, y el reporte indica cuántos pacientes incluye. El control del
+            monotributo de Inicio sigue sumando todos tus cobros.
+          </p>
+        </div>
+      )}
+    </div>
   )
 }

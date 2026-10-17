@@ -8,6 +8,7 @@ import {
 import { nombreCompleto, useDatos } from '../../lib/datos'
 import { formatMonto, normalizar, plural } from '../../lib/formato'
 import { debeAlgo, deudaDe, saldosDe, textoDeuda } from '../../lib/resumen'
+import { tieneAbono } from '../../lib/abono'
 import { tarifaVigente } from '../../lib/saldos'
 import { usePalabras } from '../../components/usePalabras'
 import { useRegistro } from '../registro/RegistroContext'
@@ -129,7 +130,11 @@ export function PacientesPage() {
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-[1.0625rem] font-semibold">{nombre}</div>
                       <div className="mt-[0.1875rem] truncate text-sm text-ink2">
-                        {tarifa > 0 ? `${formatMonto(tarifa, p.moneda)}${pal.sufijo}` : 'Sin tarifa'}
+                        {tieneAbono(p)
+                          ? `Abono ${formatMonto(p.abono_mensual ?? 0, p.moneda)}/mes`
+                          : tarifa > 0
+                            ? `${formatMonto(tarifa, p.moneda)}${pal.sufijo}`
+                            : 'Sin tarifa'}
                         {p.tipo_tarifa === 'personalizada' ? ' · personalizada' : ''}
                         {p.frecuencia ? ` · ${p.frecuencia}` : ''}
                         {p.activo ? '' : ' · Inactivo'}

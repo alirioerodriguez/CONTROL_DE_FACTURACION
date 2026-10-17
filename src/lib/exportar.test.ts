@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Paciente, Pago, Perfil, Sesion } from './datos'
-import { celdaSegura, libroBackup, pdfContadora, soloIniciales } from './exportar'
+import { celdaSegura, libroBackup, pdfContadora, soloIniciales, textoParcial } from './exportar'
 import { leerXlsx } from './importar/leer'
 import { esPlantilla, prepararPlantilla } from './importar/preparar'
 
@@ -72,6 +72,14 @@ describe('PDF para contadora', () => {
     expect(doc.getNumberOfPages()).toBe(1)
     // Tipografías del diseño incrustadas (por eso el texto no se puede buscar en el PDF).
     expect(Object.keys(doc.getFontList())).toEqual(expect.arrayContaining(['Figtree', 'InstrumentSerif']))
+  })
+
+  it('reporte parcial: lo aclara solo si faltan pacientes', async () => {
+    expect(textoParcial({ incluidos: 10, total: 12 })).toBe('Incluye 10 de 12 pacientes con cobros en el período.')
+    expect(textoParcial({ incluidos: 12, total: 12 })).toBeNull()
+    expect(textoParcial(undefined)).toBeNull()
+    const doc = await pdfContadora('2026-10-01', '2026-11-01', perfil, pacientes, pagos, { parcial: { incluidos: 1, total: 2 } })
+    expect(doc.getNumberOfPages()).toBe(1)
   })
 
   it('con muchos pagos sigue en varias hojas', async () => {
