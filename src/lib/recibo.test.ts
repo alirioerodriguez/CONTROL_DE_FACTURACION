@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Paciente, Pago, Perfil } from './datos'
-import { enLetras, montoEnLetras, numeroRecibo, pdfRecibo } from './recibo'
+import { enLetras, linkMailRecibo, linkWhatsAppRecibo, mensajeRecibo, montoEnLetras, numeroRecibo, pdfRecibo } from './recibo'
 
 describe('enLetras', () => {
   it('números chicos y casos especiales', () => {
@@ -58,5 +58,18 @@ describe('pdfRecibo', () => {
     // Con las tipografías del diseño incrustadas (Figtree e Instrument Serif).
     expect(Object.keys(doc.getFontList())).toEqual(expect.arrayContaining(['Figtree', 'InstrumentSerif']))
     expect(doc.output().length).toBeGreaterThan(20000)
+  })
+
+  it('mensaje y links para compartir', () => {
+    const perfil = { nombre: 'Lic. Ana Martínez' } as Perfil
+    const con = { ...paciente, telefono: '11 5423-8812', email: 'lucia@x.com' } as Paciente
+    expect(mensajeRecibo(pago, con, perfil)).toBe(
+      'Hola Lucía, te paso el recibo del pago de $ 50.000,00 (honorarios de octubre 2026). ¡Gracias!\nLic. Ana Martínez',
+    )
+    expect(linkWhatsAppRecibo(pago, con, perfil)).toMatch(/^https:\/\/wa\.me\/5491154238812\?text=Hola%20Luc/)
+    expect(linkWhatsAppRecibo(pago, { ...paciente, telefono: null } as Paciente, perfil)).toMatch(/^https:\/\/wa\.me\/\?text=/)
+    const mail = linkMailRecibo(pago, con, perfil)
+    expect(mail).toMatch(/^mailto:lucia%40x\.com\?subject=Recibo%20de%20pago/)
+    expect(decodeURIComponent(mail)).toContain('El recibo va adjunto en PDF')
   })
 })

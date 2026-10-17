@@ -1,6 +1,6 @@
 // Recibo de pago para el paciente (PDF). No es un comprobante fiscal: lo dice el propio documento.
 import { ETIQUETA_MEDIO, nombreCompleto, type Paciente, type Pago, type Perfil } from './datos'
-import { formatFecha, formatPeriodo, hoyAR } from './formato'
+import { formatFecha, formatMonto, formatPeriodo, hoyAR, numeroWhatsApp } from './formato'
 import { C, caja, etiqueta, franja, linea, montoGrande, nuevoPdf, pie, texto } from './pdfEstilo'
 import { etiquetaProfesion } from './terminos'
 
@@ -111,4 +111,46 @@ export async function pdfRecibo(pago: Pago, paciente: Paciente, perfil: Perfil |
 export async function descargarRecibo(pago: Pago, paciente: Paciente, perfil: Perfil | undefined, unidad: string) {
   const doc = await pdfRecibo(pago, paciente, perfil, unidad)
   doc.save(`recibo-${numeroRecibo(pago)}.pdf`)
+}
+
+/** Texto que acompaña al recibo cuando se comparte. */
+export function mensajeRecibo(pago: Pago, paciente: Paciente, perfil: Perfil | undefined): string {
+  const firma = perfil?.nombre ? `\n${perfil.nombre}` : ''
+  return `Hola ${paciente.nombre}, te paso el recibo del pago de ${formatMonto(pago.monto, pago.moneda)} (honorarios de ${formatPeriodo(pago.periodo)}). ¡Gracias!${firma}`
+}
+
+/** Link para abrir WhatsApp con el mensaje (al número del paciente si lo tiene). */
+export function linkWhatsAppRecibo(pago: Pago, paciente: Paciente, perfil: Perfil | undefined): string {
+  const numero = numeroWhatsApp(paciente.telefono)
+  return `https://wa.me/${numero ?? ''}?text=${encodeURIComponent(mensajeRecibo(pago, paciente, perfil))}`
+}
+
+/** Link mailto con asunto y cuerpo (al mail del paciente si lo tiene). */
+export function linkMailRecibo(pago: Pago, paciente: Paciente, perfil: Perfil | undefined): string {
+  const asunto = `Recibo de pago · ${formatPeriodo(pago.periodo)}`
+  const cuerpo = `${mensajeRecibo(pago, paciente, perfil)}\n\n(El recibo va adjunto en PDF.)`
+  return `mailto:${encodeURIComponent(paciente.email ?? '')}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`
+}
+
+/**
+ * Comparte el PDF con el menú del celular (WhatsApp, mail, etc.).
+ * Devuelve 'sin-soporte' si el navegador no puede compartir archivos (la mayoría de las computadoras).
+ */
+export async function compartirRecibo(
+  pago: Pago,
+  paciente: Paciente,
+  perfil: Perfil | undefined,
+  unidad: string,
+): Promise<'compartido' | 'cancelado' | 'sin-soporte'> {
+  if (typeof navigator === 'undefined' || !navigator.canShare) return 'sin-soporte'
+  const doc = await pdfRecibo(pago, paciente, perfil, unidad)
+  const archivo = new File([doc.output('blob')], `recibo-${numeroRecibo(pago)}.pdf`, { type: 'application/pdf' })
+  if (!navigator.canShare({ files: [archivo] })) return 'sin-soporte'
+  try {
+    await navigator.share({ files: [archivo], title: 'Recibo de pago', text: mensajeRecibo(pago, paciente, perfil) })
+    return 'compartido'
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') return 'cancelado'
+    throw e
+  }
 }

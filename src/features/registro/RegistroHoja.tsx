@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, FileText, Search, Trash2 } from 'lucide-react'
+import { CalendarDays, FileText, Mail, MessageCircle, Search, Share2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Calendario } from '../../components/Calendario'
 import { AYUDA_ESTADO, type EstadoGuardado } from '../../lib/estados'
@@ -7,7 +7,7 @@ import {
   Alerta, Avatar, Boton, Campo, CampoMonto, Confirmar, Hoja, IC, Pastilla, Segmentado, type Opcion,
 } from '../../components/ui'
 import {
-  ETIQUETA_MEDIO, nombreCompleto, useDatos, useGuardar, type Medio, type Paciente,
+  ETIQUETA_MEDIO, nombreCompleto, useDatos, useGuardar, type Medio, type Paciente, type Pago, type Perfil,
 } from '../../lib/datos'
 import {
   capitalizar, etiquetaDia, formatMonto, formatPeriodo, hoyAR, montoParaInput, normalizar, parseMontoAR, periodoDe,
@@ -442,28 +442,76 @@ export function RegistroHoja({
       <Boton alto="h-[3.625rem]" className="shrink-0 text-[1.0625rem]" cargando={guardar.isPending} onClick={guardarTodo}>
         {guardar.isPending ? 'Guardando…' : textoBoton}
       </Boton>
-      {edPago && paciente && (
-        <Boton
-          variante="borde"
-          icono={FileText}
-          onClick={async () => {
-            try {
-              const { descargarRecibo } = await import('../../lib/recibo')
-              await descargarRecibo(edPago, paciente, perfil, pal.sesiones)
-              toast.success('Recibo descargado')
-            } catch (e) {
-              toast.error(`No se pudo armar el recibo: ${mensajeError(e)}`)
-            }
-          }}
-        >
-          Descargar recibo
-        </Boton>
-      )}
+      {edPago && paciente && <AccionesRecibo pago={edPago} paciente={paciente} perfil={perfil} unidad={pal.sesiones} />}
       {editando && (
         <Boton variante="texto" icono={Trash2} className="text-bad hover:bg-bad-soft" onClick={() => setConfirmarBorrado(true)}>
           {edSesion ? `Eliminar ${pal.sesion}` : 'Eliminar pago'}
         </Boton>
       )}
     </Hoja>
+  )
+}
+
+/** Descargar o compartir el recibo de un pago ya guardado. */
+function AccionesRecibo({ pago, paciente, perfil, unidad }: { pago: Pago; paciente: Paciente; perfil: Perfil | undefined; unidad: string }) {
+  const [elegir, setElegir] = useState(false)
+  const [ocupado, setOcupado] = useState(false)
+
+  const conRecibo = async (accion: (r: typeof import('../../lib/recibo')) => Promise<void>) => {
+    setOcupado(true)
+    try {
+      await accion(await import('../../lib/recibo'))
+    } catch (e) {
+      toast.error(`No se pudo armar el recibo: ${mensajeError(e)}`)
+    } finally {
+      setOcupado(false)
+    }
+  }
+
+  const compartir = () =>
+    conRecibo(async (r) => {
+      const res = await r.compartirRecibo(pago, paciente, perfil, unidad)
+      if (res === 'compartido') toast.success('Recibo compartido')
+      if (res === 'sin-soporte') setElegir(true)
+    })
+
+  // En la computadora no se puede adjuntar solo: se descarga y se abre el mensaje para adjuntarlo.
+  const porLink = (link: (r: typeof import('../../lib/recibo')) => string) =>
+    conRecibo(async (r) => {
+      await r.descargarRecibo(pago, paciente, perfil, unidad)
+      window.open(link(r), '_blank', 'noopener')
+      toast.success('Recibo descargado. Adjuntalo en el mensaje que se abrió.')
+    })
+
+  return (
+    <div className="flex shrink-0 flex-col gap-2">
+      <div className="grid grid-cols-2 gap-2">
+        <Boton variante="borde" icono={Share2} cargando={ocupado} onClick={compartir}>
+          Compartir recibo
+        </Boton>
+        <Boton
+          variante="borde"
+          icono={FileText}
+          onClick={() =>
+            conRecibo(async (r) => {
+              await r.descargarRecibo(pago, paciente, perfil, unidad)
+              toast.success('Recibo descargado')
+            })
+          }
+        >
+          Descargar
+        </Boton>
+      </div>
+      {elegir && (
+        <div className="grid grid-cols-2 gap-2">
+          <Boton variante="texto" icono={MessageCircle} onClick={() => porLink((r) => r.linkWhatsAppRecibo(pago, paciente, perfil))}>
+            Por WhatsApp
+          </Boton>
+          <Boton variante="texto" icono={Mail} onClick={() => porLink((r) => r.linkMailRecibo(pago, paciente, perfil))}>
+            Por mail
+          </Boton>
+        </div>
+      )}
+    </div>
   )
 }
