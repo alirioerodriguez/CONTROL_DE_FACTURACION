@@ -28,7 +28,7 @@ Se probó como lo haría un atacante: sin cuenta (solo con la clave pública que
 2. **Resumen mensual**: solo actúa los días 1 a 3 (nadie puede adelantarlo) y manda siempre al mail verificado de la cuenta, no al que se puede editar en el perfil (evita usar honorapp para mandar mails a terceros).
 3. **Límites de largo** en todos los textos libres de la base (31 reglas): nadie puede llenar la base con textos gigantes.
 
-## Pendiente (lo hace la dueña de la cuenta de Supabase)
+## Pendiente (desde el panel de Supabase)
 
 - **Contraseña mínima de 8 caracteres**: en Supabase → Authentication, en la configuración del proveedor Email (*Minimum password length*).
 - **Protección contra contraseñas filtradas**: requiere el plan Pro de Supabase.
