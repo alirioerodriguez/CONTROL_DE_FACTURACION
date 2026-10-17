@@ -75,6 +75,14 @@ describe('formatCompacto y plantilla', () => {
     ).toBe('Hola Lucía, debés $ 50.000,00 de octubre. Lucía')
     expect(completarPlantilla('', { nombre: 'Ana', mes: 'mayo', monto: '$ 1' })).toContain('Hola Ana')
   })
+
+  it('suma los datos de pago: donde dice {pago} o, si no está, al final', () => {
+    const v = { nombre: 'Ana', mes: 'mayo', monto: '$ 1', pago: 'alias ana.consultorio' }
+    expect(completarPlantilla('Pagame a {pago}. Gracias {nombre}', v)).toBe('Pagame a alias ana.consultorio. Gracias Ana')
+    expect(completarPlantilla('Hola {nombre}', v)).toBe('Hola Ana\n\nDatos para el pago: alias ana.consultorio')
+    expect(completarPlantilla('Hola {nombre}', { ...v, pago: '' })).toBe('Hola Ana')
+    expect(completarPlantilla('Hola {nombre}. {pago}', { ...v, pago: null })).toBe('Hola Ana.')
+  })
 })
 
 describe('numeroWhatsApp', () => {

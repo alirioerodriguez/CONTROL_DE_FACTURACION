@@ -18,6 +18,8 @@ export interface Perfil {
   tarifa_estandar: number
   moneda_default: Moneda
   plantilla_whatsapp: string
+  /** Alias, CBU o link de pago que se suma al recordatorio de WhatsApp. */
+  datos_pago: string | null
   tutorial_visto: boolean
   profesion: string | null
   termino: Termino

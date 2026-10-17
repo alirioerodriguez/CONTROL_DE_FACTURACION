@@ -51,6 +51,7 @@ export function InicioPage() {
       nombre: p.nombre.split(' ')[0],
       mes: nombreMes(periodoDe(s.sesion.fecha)),
       monto: formatMonto(deuda || s.debe, s.sesion.moneda),
+      pago: perfil?.datos_pago,
     })
     return `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`
   }

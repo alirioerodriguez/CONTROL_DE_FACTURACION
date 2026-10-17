@@ -227,15 +227,23 @@ export function formatCompacto(monto: number, moneda: Moneda): string {
 export const PLANTILLA_WHATSAPP_DEFECTO =
   'Hola {nombre}, ¿cómo estás? Te escribo para recordarte el pago de {mes}: {monto}. ¡Gracias!'
 
-/** Completa la plantilla del recordatorio: {nombre}, {mes} y {monto}. */
+/**
+ * Completa la plantilla del recordatorio: {nombre}, {mes}, {monto} y {pago} (alias, CBU o link de pago).
+ * Si hay datos de pago y la plantilla no usa {pago}, se agregan al final para que no haya que acordarse.
+ */
 export function completarPlantilla(
   plantilla: string,
-  valores: { nombre: string; mes: string; monto: string },
+  valores: { nombre: string; mes: string; monto: string; pago?: string | null },
 ): string {
-  return (plantilla || PLANTILLA_WHATSAPP_DEFECTO)
+  const base = plantilla || PLANTILLA_WHATSAPP_DEFECTO
+  const pago = valores.pago?.trim() ?? ''
+  const conPago = /\{pago\}/i.test(base) ? base.replace(/\{pago\}/gi, pago) : pago ? `${base}\n\nDatos para el pago: ${pago}` : base
+  return conPago
     .replace(/\{nombre\}/gi, valores.nombre)
     .replace(/\{mes\}/gi, valores.mes)
     .replace(/\{monto\}/gi, valores.monto)
+    .replace(/[ \t]+\n/g, '\n')
+    .trim()
 }
 
 /** Suma (o resta) meses a un periodo 'AAAA-MM-01'. */

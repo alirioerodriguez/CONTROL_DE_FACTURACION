@@ -48,6 +48,11 @@ exception when duplicate_object then null; end $$;
 do $$ begin
   alter table public.profiles add constraint profiles_modo_cobro_check check (modo_cobro in ('hora','sesion'));
 exception when duplicate_object then null; end $$;
+-- Datos de pago para el recordatorio de WhatsApp: alias, CBU o link de Mercado Pago.
+alter table public.profiles add column if not exists datos_pago text;
+do $$ begin
+  alter table public.profiles add constraint profiles_datos_pago_check check (length(datos_pago) <= 300);
+exception when duplicate_object then null; end $$;
 -- Monotributo: categoría A a K, 'no' si no usa monotributo, null si todavía no eligió.
 -- Tipo de cambio para sumar los dólares al control del tope (la app no convierte sola).
 alter table public.profiles add column if not exists monotributo_categoria text;

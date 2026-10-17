@@ -29,6 +29,7 @@ export function AjustesPage() {
   const [tarifaTxt, setTarifaTxt] = useState('')
   const [moneda, setMoneda] = useState<Moneda>('ARS')
   const [plantilla, setPlantilla] = useState('')
+  const [datosPago, setDatosPago] = useState('')
   const [tema, setTema] = useState<Tema>(temaActual())
   const [profesion, setProfesion] = useState('')
   const [otra, setOtra] = useState('')
@@ -57,6 +58,7 @@ export function AjustesPage() {
     setTarifaTxt(perfil.data.tarifa_estandar ? montoParaInput(perfil.data.tarifa_estandar) : '')
     setMoneda(perfil.data.moneda_default)
     setPlantilla(perfil.data.plantilla_whatsapp || PLANTILLA_WHATSAPP_DEFECTO)
+    setDatosPago(perfil.data.datos_pago ?? '')
     cargarProfesion()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [perfil.data])
@@ -85,6 +87,7 @@ export function AjustesPage() {
             tarifa_estandar: tarifa,
             moneda_default: moneda,
             plantilla_whatsapp: plantilla.trim() || PLANTILLA_WHATSAPP_DEFECTO,
+            datos_pago: datosPago.trim() || null,
           },
         },
       ])
@@ -258,6 +261,15 @@ export function AjustesPage() {
           />
         </div>
         <Campo etiqueta="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Lic. Ana Martínez" />
+        <Campo
+          etiqueta="Datos para el pago"
+          opcional
+          id="datos-pago"
+          value={datosPago}
+          maxLength={300}
+          onChange={(e) => setDatosPago(e.target.value)}
+          placeholder="Alias, CBU o link de Mercado Pago"
+        />
         <label className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
           Mensaje de recordatorio por WhatsApp
           <textarea
@@ -267,9 +279,9 @@ export function AjustesPage() {
             onChange={(e) => setPlantilla(e.target.value)}
             className="rounded-[0.875rem] border border-line bg-fondo px-4 py-3 text-base font-normal outline-none focus:border-acc"
           />
-          <span className="text-sm font-normal text-ink2">
-            Usá {'{nombre}'}, {'{mes}'} y {'{monto}'}. Así queda: “
-            {completarPlantilla(plantilla, { nombre: 'Lucía', mes: 'octubre', monto: '$ 50.000,00' })}”
+          <span className="text-sm font-normal whitespace-pre-line text-ink2">
+            Usá {'{nombre}'}, {'{mes}'}, {'{monto}'} y {'{pago}'} (tus datos para el pago; si no lo ponés, van al final). Así queda: “
+            {completarPlantilla(plantilla, { nombre: 'Lucía', mes: 'octubre', monto: '$ 50.000,00', pago: datosPago })}”
           </span>
         </label>
         <Boton alto="h-[3.125rem]" className="self-start" cargando={guardar.isPending} onClick={guardarCobros}>
