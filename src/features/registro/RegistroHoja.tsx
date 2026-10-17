@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, Search, Trash2 } from 'lucide-react'
+import { CalendarDays, FileText, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Calendario } from '../../components/Calendario'
 import { AYUDA_ESTADO, type EstadoGuardado } from '../../lib/estados'
@@ -442,6 +442,23 @@ export function RegistroHoja({
       <Boton alto="h-[3.625rem]" className="shrink-0 text-[1.0625rem]" cargando={guardar.isPending} onClick={guardarTodo}>
         {guardar.isPending ? 'Guardando…' : textoBoton}
       </Boton>
+      {edPago && paciente && (
+        <Boton
+          variante="borde"
+          icono={FileText}
+          onClick={async () => {
+            try {
+              const { descargarRecibo } = await import('../../lib/recibo')
+              await descargarRecibo(edPago, paciente, perfil, pal.sesiones)
+              toast.success('Recibo descargado')
+            } catch (e) {
+              toast.error(`No se pudo armar el recibo: ${mensajeError(e)}`)
+            }
+          }}
+        >
+          Descargar recibo
+        </Boton>
+      )}
       {editando && (
         <Boton variante="texto" icono={Trash2} className="text-bad hover:bg-bad-soft" onClick={() => setConfirmarBorrado(true)}>
           {edSesion ? `Eliminar ${pal.sesion}` : 'Eliminar pago'}
