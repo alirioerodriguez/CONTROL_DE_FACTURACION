@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { Banknote, CalendarDays, Check, FileSpreadsheet, MessageCircle, ShieldCheck, Users, type LucideIcon } from 'lucide-react'
-import { AvisoPrueba } from '../../components/AvisoPrueba'
 import { Logo } from '../../components/Layout'
 import { IC } from '../../components/ui'
 
@@ -48,7 +47,6 @@ export function PortadaPage() {
       </header>
 
       <main className="mx-auto flex max-w-[70rem] flex-col gap-16 px-5 pt-4 pb-16 md:px-12 md:pt-10">
-        <AvisoPrueba />
 
         <section className="grid items-center gap-10 md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <div className="flex flex-col gap-6">

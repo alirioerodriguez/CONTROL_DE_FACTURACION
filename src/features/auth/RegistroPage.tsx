@@ -4,7 +4,6 @@ import { Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { Alerta, Boton, IC } from '../../components/ui'
 import { mensajeError, supabase } from '../../lib/supabase'
-import { AvisoPrueba } from '../../components/AvisoPrueba'
 import { AuthLayout, CampoAuth, claseBotonAuth, claseLinkAuth, IngresoGoogle } from './AuthLayout'
 
 export function RegistroPage() {
@@ -52,7 +51,6 @@ export function RegistroPage() {
 
   return (
     <AuthLayout titulo="Creá tu cuenta" sub="Gratis. Tus datos son privados: ninguna otra cuenta puede verlos." presentacion>
-      <AvisoPrueba />
       <IngresoGoogle onError={setError} />
       <form onSubmit={registrar} noValidate className="flex flex-col gap-5">
         <CampoAuth etiqueta="Tu nombre" autoComplete="name" placeholder="Ej. Lic. Ana Martínez" ayuda="Aparece en el saludo y en el reporte para tu contadora." value={nombre} onChange={(e) => setNombre(e.target.value)} />
