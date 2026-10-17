@@ -48,7 +48,7 @@ async function libroNuevo() {
 export function celdaSegura<T>(valor: T): T | string {
   if (typeof valor !== 'string' || !/^[=+\-@\t\r]/.test(valor)) return valor
   // Un teléfono (+54 9 11 …) o un número negativo escrito como texto no pueden ser una fórmula.
-  if (/^[+\-][\d\s().-]*$/.test(valor)) return valor
+  if (/^[+-][\d\s().-]*$/.test(valor)) return valor
   return `'${valor}`
 }
 

@@ -35,7 +35,7 @@ export function RecuperarPage() {
           crear una contraseña nueva. Si no lo ves en unos minutos, fijate en Spam o Correo no deseado y marcalo como «No
           es spam».
         </div>
-        <Link to="/" className="flex h-14 items-center justify-center rounded-full bg-surface2 text-[1.0625rem] font-semibold hover:bg-line">
+        <Link to="/ingresar" className="flex h-14 items-center justify-center rounded-full bg-surface2 text-[1.0625rem] font-semibold hover:bg-line">
           Volver a ingresar
         </Link>
       </AuthLayout>
@@ -51,7 +51,7 @@ export function RecuperarPage() {
           {cargando ? 'Enviando…' : 'Enviar link'}
         </Boton>
       </form>
-      <Link to="/" className={`${claseLinkAuth} text-ink2`}>
+      <Link to="/ingresar" className={`${claseLinkAuth} text-ink2`}>
         Volver a ingresar
       </Link>
     </AuthLayout>

@@ -15,6 +15,8 @@ import { TutorialProvider } from './features/tutorial/Tutorial'
 import { RegistroProvider } from './features/registro/RegistroContext'
 import { PruebaProvider } from './features/pruebas/PruebaContext'
 import { PruebasPage } from './features/pruebas/PruebasPage'
+import { PortadaPage } from './features/portada/PortadaPage'
+import { errorDeRedireccion } from './features/auth/AuthLayout'
 import { supabaseConfigurado } from './lib/supabase'
 
 const ImportarPage = lazy(() => import('./features/importar/ImportarPage').then((m) => ({ default: m.ImportarPage })))
@@ -54,6 +56,9 @@ export default function App() {
       <Routes>
         <Route path="/registro" element={<RegistroPage />} />
         <Route path="/recuperar" element={<RecuperarPage />} />
+        <Route path="/ingresar" element={<LoginPage />} />
+        {/* Si volvió de Google con un error, se muestra el ingreso con el aviso. */}
+        <Route path="/" element={errorDeRedireccion() ? <LoginPage /> : <PortadaPage />} />
         <Route path="*" element={<LoginPage />} />
       </Routes>
     )

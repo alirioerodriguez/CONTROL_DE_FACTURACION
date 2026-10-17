@@ -43,7 +43,7 @@ export function RegistroPage() {
           Te mandamos un mail a <strong className="text-ink">{email}</strong>. Abrilo y tocá «Confirmar mi cuenta» para
           activarla. Si no lo ves en unos minutos, fijate en Spam o Correo no deseado y marcalo como «No es spam».
         </div>
-        <Link to="/" className="flex h-14 items-center justify-center rounded-full bg-surface2 text-[1.0625rem] font-semibold hover:bg-line">
+        <Link to="/ingresar" className="flex h-14 items-center justify-center rounded-full bg-surface2 text-[1.0625rem] font-semibold hover:bg-line">
           Volver a ingresar
         </Link>
       </AuthLayout>
@@ -75,7 +75,7 @@ export function RegistroPage() {
           la <Link to="/privacidad" className="underline">Política de privacidad</Link>.
         </p>
       </form>
-      <Link to="/" className={`${claseLinkAuth} text-ink2`}>
+      <Link to="/ingresar" className={`${claseLinkAuth} text-ink2`}>
         Ya tengo cuenta
       </Link>
     </AuthLayout>
