@@ -21,6 +21,12 @@ App publicada: **https://control-de-facturacion-eight.vercel.app**
 - **PWA**: se instala en el celular, se actualiza sola y, sin internet, avisa y no deja cargar nada.
 - **Modo oscuro**, **tamaño de letra** (5 opciones en Ajustes; toda la app escala) y diseño responsive (celular y computadora).
 - **Control del tope del monotributo**: la categoría se elige en Ajustes; Inicio muestra lo cobrado en los últimos 12 meses contra el tope, avisa desde el 80 % y sugiere categoría. Los dólares se suman solo si se carga el tipo de cambio. Es orientativo.
+- **Recibos**: desde un pago se descarga el recibo en PDF o se comparte por WhatsApp o mail (en el celular con el menú de compartir; en la computadora se descarga y se abre el mensaje).
+- **Abono mensual**: un paciente puede pagar un monto fijo por mes; se reparte entre las sesiones del mes (`src/lib/abono.ts`) y los meses sin sesiones no se cobran.
+- **Para facturar** (`/facturar`, desde Contadora): pagos sin Factura C con los datos que pide ARCA para copiar, y «Ya la hice» para anotar el número.
+- **Enviar a mi contadora**: manda el PDF del reporte; el mail de la contadora es opcional (Ajustes).
+- **Calendario en Google**: link privado (Ajustes) que muestra las sesiones con solo las iniciales. Lo sirve la función `calendario`.
+- **Funciones opcionales** (Ajustes, apagadas de entrada): pantalla Recordatorios (quién debe, WhatsApp y marca de enviado por mes), resumen mensual por mail y obras sociales/prepagas (obra social y afiliado del paciente, quién pagó cada pago).
 - **Pruebas con usuarias** (`/pruebas`): 13 tareas guiadas con reloj y tiempo por pantalla, más una encuesta. Las cuentas con `profiles.es_admin` ven el tablero en `/pruebas/resultados` (se activa solo por SQL).
 
 ### Topes del monotributo (se actualizan solos)
@@ -62,7 +68,11 @@ La función de Supabase `actualizar-monotributo` (`supabase/functions/actualizar
 ### 5. Cuenta de la profesional
 Abrir la app → «¿No tenés cuenta? Creá una» (o «Continuar con Google»). Las colegas pueden hacer lo mismo.
 
+### Resumen mensual por mail
+La función `aviso-mensual` corre el día 1 a las 9 (pg_cron) y manda a quienes lo prendieron cuánto les deben y cuánto cobraron el mes anterior (cálculo en SQL: `resumen_aviso_mensual`, igual al de la app). Manda desde honorapp.ar@gmail.com y **necesita el secreto `SMTP_PASS`** (contraseña de aplicación de Gmail) en Supabase → Edge Functions → Secrets. Un mail por mes y por cuenta como máximo (`avisos_enviados`).
+
 ## Recomendado a futuro
+- Ver también `docs/ideas.md` (aumento de honorarios en lote, doble factor, facturación desde la app).
 - **Protección contra contraseñas filtradas**: Supabase la ofrece en el plan Pro (Authentication → Attack Protection).
 - **Ingreso con Apple**: requiere una cuenta de Apple Developer (USD 99 por año).
 
