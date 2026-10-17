@@ -30,6 +30,8 @@ export interface Perfil {
   monotributo_categoria: CategoriaPerfil
   /** Pesos por dólar para sumar los cobros en USD al control del tope. */
   tipo_cambio_usd: number | null
+  /** Muestra la pantalla Recordatorios (función opcional). */
+  ver_recordatorios: boolean
   /** Ve los resultados de las pruebas con usuarias. Solo se cambia por SQL. */
   es_admin?: boolean
 }

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Check, MessageCircle, Plus } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { BellRing, Check, MessageCircle, Plus } from 'lucide-react'
 import { useUsuario } from '../../components/FotoUsuario'
 import { SelectorMes, useMesSeleccionado } from '../../components/SelectorMes'
 import {
@@ -127,6 +127,15 @@ export function InicioPage() {
             <h2 className="m-0 text-xl font-semibold">{pal.Sesiones} sin abonar</h2>
             <div className="text-[0.9375rem] text-ink2">{r.impagas.length ? plural(r.impagas.length, pal.sesion, pal.sesiones) : ''}</div>
           </div>
+          {perfil?.ver_recordatorios && r.impagas.length > 0 && (
+            <Link
+              to="/recordatorios"
+              className="mx-3.5 mb-2 flex items-center gap-2 rounded-xl bg-acc-soft px-3.5 py-2.5 text-[0.9375rem] font-semibold text-acc-strong hover:brightness-95"
+            >
+              <BellRing {...IC} />
+              Mandar los recordatorios del mes
+            </Link>
+          )}
           {r.impagas.length > 0 ? (
             r.impagas.map((i) => {
               const p = porId.get(i.sesion.patient_id)

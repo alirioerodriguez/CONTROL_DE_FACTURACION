@@ -582,6 +582,28 @@ select cron.schedule(
 -- ---------------------------------------------------------------------------
 -- El dueño de un dato no cambia nunca (además de lo que ya impide RLS).
 -- ---------------------------------------------------------------------------
+-- Recordatorios del mes (pantalla opcional, se activa en Ajustes).
+-- Guarda a quién ya se le mandó el recordatorio de cada mes.
+-- ---------------------------------------------------------------------------
+alter table public.profiles add column if not exists ver_recordatorios boolean not null default false;
+
+create table if not exists public.recordatorios (
+  user_id     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  patient_id  uuid not null,
+  periodo     date not null check (extract(day from periodo) = 1),
+  enviado_en  timestamptz not null default now(),
+  primary key (user_id, patient_id, periodo),
+  foreign key (patient_id, user_id) references public.patients (id, user_id) on delete cascade
+);
+create index if not exists recordatorios_patient_idx on public.recordatorios (patient_id, user_id);
+alter table public.recordatorios enable row level security;
+drop policy if exists "recordatorios propios" on public.recordatorios;
+create policy "recordatorios propios" on public.recordatorios
+  for all to authenticated
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+
+-- ---------------------------------------------------------------------------
 create or replace function public.user_id_inmutable()
 returns trigger
 language plpgsql
@@ -598,7 +620,7 @@ $$;
 do $$
 declare t text;
 begin
-  foreach t in array array['patients', 'sessions', 'payments', 'pruebas', 'importaciones'] loop
+  foreach t in array array['patients', 'sessions', 'payments', 'pruebas', 'importaciones', 'recordatorios'] loop
     execute format('drop trigger if exists %I on public.%I', t || '_user_id_inmutable', t);
     execute format(
       'create trigger %I before update of user_id on public.%I for each row execute function public.user_id_inmutable()',

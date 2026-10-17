@@ -1,10 +1,11 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { ChartColumn, FileSpreadsheet, House, Plus, SlidersHorizontal, Upload, Users, type LucideIcon } from 'lucide-react'
+import { BellRing, ChartColumn, FileSpreadsheet, House, Plus, SlidersHorizontal, Upload, Users, type LucideIcon } from 'lucide-react'
 import { useRegistro } from '../features/registro/RegistroContext'
 import { FotoUsuario, useUsuario } from './FotoUsuario'
 import { AvisoPrueba } from './AvisoPrueba'
 import { IC } from './ui'
+import { usePerfil } from '../lib/datos'
 
 interface Seccion {
   to: string
@@ -12,12 +13,15 @@ interface Seccion {
   corta?: string
   icono: LucideIcon
   enMovil: boolean
+  /** Solo si la profesional prendió la función en Ajustes. */
+  opcional?: 'ver_recordatorios'
 }
 
 const SECCIONES: Seccion[] = [
   { to: '/', etiqueta: 'Inicio', icono: House, enMovil: true },
   { to: '/pacientes', etiqueta: 'Pacientes', icono: Users, enMovil: true },
   { to: '/mes', etiqueta: 'Mes y reportes', corta: 'Mes', icono: ChartColumn, enMovil: true },
+  { to: '/recordatorios', etiqueta: 'Recordatorios', icono: BellRing, enMovil: false, opcional: 'ver_recordatorios' },
   { to: '/contadora', etiqueta: 'Contadora', icono: FileSpreadsheet, enMovil: false },
   { to: '/importar', etiqueta: 'Importar', icono: Upload, enMovil: false },
   { to: '/ajustes', etiqueta: 'Ajustes', icono: SlidersHorizontal, enMovil: true },
@@ -60,6 +64,7 @@ function activa(ruta: string, movil: boolean): string {
   if (ruta.startsWith('/pacientes')) return '/pacientes'
   if (movil && ruta.startsWith('/importar')) return '/ajustes'
   if (movil && ruta.startsWith('/contadora')) return '/mes'
+  if (movil && ruta.startsWith('/recordatorios')) return '/'
   const s = SECCIONES.find((x) => x.to !== '/' && ruta.startsWith(x.to))
   return s ? s.to : '/'
 }
@@ -68,6 +73,8 @@ export function Layout() {
   const { pathname } = useLocation()
   const { abrir, abierto } = useRegistro()
   const { nombre, email } = useUsuario()
+  const { data: perfil } = usePerfil()
+  const secciones = SECCIONES.filter((s) => !s.opcional || perfil?.[s.opcional])
   // Cada pantalla arranca desde arriba.
   // Con llaves: en Chrome nuevo scrollTo devuelve una promesa y React la tomaría como limpieza.
   useEffect(() => {
@@ -92,7 +99,7 @@ export function Layout() {
           Registrar
         </button>
         <nav className="flex flex-col gap-1">
-          {SECCIONES.map((s) => {
+          {secciones.map((s) => {
             const on = activa(pathname, false) === s.to
             return (
               <NavLink
