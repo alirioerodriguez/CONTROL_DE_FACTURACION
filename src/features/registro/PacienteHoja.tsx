@@ -29,9 +29,15 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
 
   const [nombre, setNombre] = useState(paciente ? nombreCompleto(paciente) : '')
   const [telefono, setTelefono] = useState(paciente?.telefono ?? '')
-  const [tipo, setTipo] = useState<'estandar' | 'personalizada'>(paciente?.tipo_tarifa ?? 'estandar')
+  const [tipo, setTipo] = useState<'estandar' | 'personalizada' | 'abono'>(
+    paciente?.abono_mensual ? 'abono' : (paciente?.tipo_tarifa ?? 'estandar'),
+  )
   const [tarifaTxt, setTarifaTxt] = useState(
-    paciente?.tarifa_personalizada != null ? montoParaInput(paciente.tarifa_personalizada) : '',
+    paciente?.abono_mensual
+      ? montoParaInput(paciente.abono_mensual)
+      : paciente?.tarifa_personalizada != null
+        ? montoParaInput(paciente.tarifa_personalizada)
+        : '',
   )
   const [moneda, setMoneda] = useState<Moneda>(paciente?.moneda ?? monedaEstandar)
   const [horas, setHoras] = useState(paciente?.horas_por_sesion ?? 1)
@@ -51,13 +57,16 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
     if (!limpio) return setError('Escribí el nombre del paciente.')
     const tarifa = parseMontoAR(tarifaTxt)
     if (tipo === 'personalizada' && !(tarifa != null && tarifa > 0)) return setError(`Ingresá la tarifa ${pal.porUnidad}.`)
+    if (tipo === 'abono' && !(tarifa != null && tarifa > 0)) return setError('Ingresá el monto del abono mensual.')
     setError('')
     const fila = {
       nombre: limpio,
       apellido: null,
       telefono: telefono.trim() || null,
-      tipo_tarifa: tipo,
+      // Con abono las sesiones guardan la tarifa estándar como referencia; lo que se cobra es el abono (ver abono.ts).
+      tipo_tarifa: tipo === 'personalizada' ? 'personalizada' : 'estandar',
       tarifa_personalizada: tipo === 'personalizada' ? tarifa : null,
+      abono_mensual: tipo === 'abono' ? tarifa : null,
       // Con tarifa estándar el paciente usa la moneda de la tarifa estándar.
       moneda: tipo === 'estandar' ? monedaEstandar : moneda,
       horas_por_sesion: pal.porHora ? horas : 1,
@@ -134,11 +143,12 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
       />
 
       <div className="flex flex-col gap-2.5">
-        <div className="text-[0.9375rem] font-semibold">Honorario {pal.porUnidad}</div>
+        <div className="text-[0.9375rem] font-semibold">Honorario</div>
         <Segmentado
           opciones={[
-            { v: 'estandar', l: 'Tarifa estándar' },
+            { v: 'estandar', l: 'Estándar' },
             { v: 'personalizada', l: 'Personalizada' },
+            { v: 'abono', l: 'Abono mensual' },
           ]}
           valor={tipo}
           onCambio={setTipo}
@@ -152,7 +162,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
         ) : (
           <div className="flex gap-2.5">
             <CampoMonto
-              etiqueta={`Tarifa ${pal.porUnidad}`}
+              etiqueta={tipo === 'abono' ? 'Monto por mes' : `Tarifa ${pal.porUnidad}`}
               simbolo={moneda === 'USD' ? 'US$' : '$'}
               valor={tarifaTxt}
               onCambio={(v) => {
@@ -171,6 +181,11 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
               alto="h-full"
               redondeo="rounded-xl"
             />
+          </div>
+        )}
+        {tipo === 'abono' && (
+          <div className="text-[0.9375rem] leading-snug text-ink2">
+            Paga lo mismo cada mes, sin importar cuántas {pal.sesiones} haga. Los meses sin {pal.sesiones} no se cobran.
           </div>
         )}
       </div>

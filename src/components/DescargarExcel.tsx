@@ -27,7 +27,7 @@ export function DescargarExcel({
   alto?: string
   'data-tour'?: string
 }) {
-  const { perfil, pacientes, sesiones, pagos } = useDatos()
+  const { perfil, pacientes, sesionesGuardadas: sesiones, pagos } = useDatos()
   const [cargando, setCargando] = useState(false)
 
   async function descargar() {

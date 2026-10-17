@@ -13,6 +13,7 @@ import {
   capitalizar, etiquetaDia, formatMonto, formatPeriodo, hoyAR, montoParaInput, normalizar, parseMontoAR, periodoDe,
   redondear2, sumarDias, sumarMeses, type Moneda,
 } from '../../lib/formato'
+import { tieneAbono } from '../../lib/abono'
 import { deudaDe, debeAlgo, saldosDe, textoDeuda } from '../../lib/resumen'
 import { periodoSugerido, tarifaVigente } from '../../lib/saldos'
 import { mensajeError } from '../../lib/supabase'
@@ -144,13 +145,17 @@ export function RegistroHoja({
     ? (() => {
         const d = deudaDe(saldosDe(paciente.id, sesiones, pagos))
         const tarifa = tarifaVigente(paciente, tarifaEstandar)
-        return `${debeAlgo(d) ? `Debe ${textoDeuda(d)}` : 'Al día'} · ${formatMonto(tarifa, paciente.moneda)}${pal.sufijo}`
+        const honorario = tieneAbono(paciente)
+          ? `abono de ${formatMonto(paciente.abono_mensual ?? 0, paciente.moneda)} por mes`
+          : `${formatMonto(tarifa, paciente.moneda)}${pal.sufijo}`
+        return `${debeAlgo(d) ? `Debe ${textoDeuda(d)}` : 'Al día'} · ${honorario}`
       })()
     : ''
 
   async function guardarTodo() {
     if (!pid || !paciente) return setError('Elegí un paciente.')
-    if (!(monto > 0)) return setError('Ingresá un monto mayor a 0.')
+    // Con abono el monto de la sesión es solo de referencia: puede quedar en 0.
+    if (!(monto > 0) && !(esSesion && tieneAbono(paciente))) return setError('Ingresá un monto mayor a 0.')
     if (!fecha) return setError('Elegí una fecha.')
     setError('')
     const nombre = paciente.nombre.split(' ')[0]

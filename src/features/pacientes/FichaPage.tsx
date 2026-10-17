@@ -14,6 +14,7 @@ import {
   numeroWhatsApp, periodoDe, plural, sumarMeses,
 } from '../../lib/formato'
 import { cobrables, estadoVisible } from '../../lib/estados'
+import { tieneAbono } from '../../lib/abono'
 import { aFavorDe, deudaDe, saldosDe } from '../../lib/resumen'
 import { estadoSesion, fechasDelMes, pagadoPorSesion, tarifaVigente, type EstadoSesion } from '../../lib/saldos'
 import { mensajeError } from '../../lib/supabase'
@@ -83,7 +84,11 @@ export function FichaPage() {
     { k: 'Teléfono', v: paciente.telefono || '—' },
     {
       k: 'Honorario',
-      v: tarifa > 0 ? `${formatMonto(tarifa, paciente.moneda)}${pal.sufijo} · ${paciente.tipo_tarifa === 'estandar' ? 'estándar' : 'personalizado'}` : 'Sin tarifa',
+      v: tieneAbono(paciente)
+        ? `Abono · ${formatMonto(paciente.abono_mensual ?? 0, paciente.moneda)} por mes`
+        : tarifa > 0
+          ? `${formatMonto(tarifa, paciente.moneda)}${pal.sufijo} · ${paciente.tipo_tarifa === 'estandar' ? 'estándar' : 'personalizado'}`
+          : 'Sin tarifa',
     },
     { k: 'Moneda', v: paciente.moneda === 'ARS' ? 'Pesos (ARS)' : 'Dólares (USD)' },
     {
@@ -315,7 +320,8 @@ function GenerarSesiones({ paciente, tarifa, onCerrar }: { paciente: Paciente; t
 
   const yaCargadas = new Set(sesiones.filter((s) => s.patient_id === paciente.id).map((s) => s.fecha))
   const fechas = fechasDelMes(periodo, paciente.dias_semana)
-  const nuevas = tarifa > 0 ? fechas.filter((f) => !yaCargadas.has(f)) : []
+  const abono = tieneAbono(paciente)
+  const nuevas = tarifa > 0 || abono ? fechas.filter((f) => !yaCargadas.has(f)) : []
   const total = tarifa * horas * nuevas.length
 
   async function cargar() {
@@ -355,7 +361,7 @@ function GenerarSesiones({ paciente, tarifa, onCerrar }: { paciente: Paciente; t
           valor={periodo}
           onCambio={setPeriodo}
         />
-        {tarifa <= 0 ? (
+        {tarifa <= 0 && !abono ? (
           <span>Primero cargá la tarifa: la estándar en Ajustes, o una personalizada en los datos del paciente.</span>
         ) : fechas.length === 0 ? (
           <span>No hay días fijos en este mes.</span>
@@ -375,7 +381,7 @@ function GenerarSesiones({ paciente, tarifa, onCerrar }: { paciente: Paciente; t
             </div>
             <span>
               {nuevas.length
-                ? `${plural(nuevas.length, `${pal.sesion} nueva`, `${pal.sesiones} nuevas`)} · ${formatMonto(total, paciente.moneda)} en total.`
+                ? `${plural(nuevas.length, `${pal.sesion} nueva`, `${pal.sesiones} nuevas`)} · ${abono ? `el mes se cobra con el abono de ${formatMonto(paciente.abono_mensual ?? 0, paciente.moneda)}` : `${formatMonto(total, paciente.moneda)} en total`}.`
                 : 'Ya están todas cargadas.'}
               {nuevas.length < fechas.length && nuevas.length > 0 ? ' Las tachadas ya estaban.' : ''}
             </span>

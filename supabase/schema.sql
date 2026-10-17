@@ -604,6 +604,12 @@ create policy "recordatorios propios" on public.recordatorios
   with check (user_id = (select auth.uid()));
 
 -- ---------------------------------------------------------------------------
+-- Abono mensual fijo: si tiene, se cobra ese monto en cada mes con sesiones (ver src/lib/abono.ts).
+-- ---------------------------------------------------------------------------
+alter table public.patients add column if not exists abono_mensual numeric(14,2)
+  check (abono_mensual is null or abono_mensual >= 0);
+
+-- ---------------------------------------------------------------------------
 create or replace function public.user_id_inmutable()
 returns trigger
 language plpgsql

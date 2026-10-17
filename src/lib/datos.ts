@@ -1,7 +1,9 @@
 // Acceso a Supabase con TanStack Query. Cada usuaria trae todos sus
 // pacientes, sesiones y pagos (son pocos datos) y la app calcula el resto.
 
+import { useMemo } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { aplicarAbono } from './abono'
 import { CATEGORIAS, VIGENCIA_MONOTRIBUTO, type CategoriaPerfil, type CategoriaTope } from './monotributo'
 import type { EstadoGuardado } from './estados'
 import type { Moneda } from './formato'
@@ -52,6 +54,8 @@ export interface Paciente {
   horas_por_sesion: number
   tipo_tarifa: 'estandar' | 'personalizada'
   tarifa_personalizada: number | null
+  /** Cobro mensual fijo (abono). Si tiene, reemplaza la tarifa en los meses con sesiones. */
+  abono_mensual: number | null
   moneda: Moneda
   fecha_alta: string
   activo: boolean
@@ -137,6 +141,7 @@ export function usePacientes() {
         ...p,
         horas_por_sesion: n(p.horas_por_sesion),
         tarifa_personalizada: p.tarifa_personalizada == null ? null : n(p.tarifa_personalizada),
+        abono_mensual: p.abono_mensual == null ? null : n(p.abono_mensual),
       })),
   })
 }
@@ -188,10 +193,14 @@ export function useDatos() {
   const sesiones = useSesiones()
   const pagos = usePagos()
   const consultas = [perfil, pacientes, sesiones, pagos]
+  // Con abono mensual, el monto de cada sesión es su parte del abono (ver abono.ts).
+  const conAbono = useMemo(() => aplicarAbono(sesiones.data ?? [], pacientes.data ?? []), [sesiones.data, pacientes.data])
   return {
     perfil: perfil.data,
     pacientes: pacientes.data ?? [],
-    sesiones: sesiones.data ?? [],
+    sesiones: conAbono,
+    /** Tal como están guardadas (para el Excel de backup). */
+    sesionesGuardadas: sesiones.data ?? [],
     pagos: pagos.data ?? [],
     cargando: consultas.some((c) => c.isPending),
     error: consultas.find((c) => c.error)?.error ?? null,

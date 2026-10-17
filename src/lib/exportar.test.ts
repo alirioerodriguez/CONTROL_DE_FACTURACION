@@ -8,7 +8,7 @@ const perfil = { id: 'u', nombre: 'Ana', email: 'ana@x.com', tarifa_estandar: 50
 
 const base = {
   apellido: null, dni: null, cuil_cuit: null, condicion_iva: null, telefono: null, email: null, domicilio: null,
-  frecuencia: 'Semanal', dias_semana: [1], horas_por_sesion: 1, fecha_alta: '2026-03-01', activo: true, notas_admin: null,
+  frecuencia: 'Semanal', dias_semana: [1], horas_por_sesion: 1, fecha_alta: '2026-03-01', activo: true, notas_admin: null, abono_mensual: null,
 }
 const pacientes: Paciente[] = [
   { ...base, id: 'a', codigo: null, nombre: 'Lucía Fernández', tipo_tarifa: 'estandar', tarifa_personalizada: null, moneda: 'ARS' },
