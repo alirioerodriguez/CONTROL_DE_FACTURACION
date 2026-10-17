@@ -16,7 +16,7 @@ type EstadoPunto = EstadoSesion | 'programada' | 'cancelada'
 // Además del color, la forma: llena = pagada, mitad = parcial, vacía = pendiente (para quien no distingue colores).
 const PUNTO: Record<EstadoPunto, string> = {
   pagada: 'bg-acc text-on-acc',
-  parcial: 'border-2 border-warn bg-[linear-gradient(90deg,var(--warn-soft)_50%,transparent_50%)] text-warn',
+  parcial: 'border-2 border-warn bg-[linear-gradient(90deg,color-mix(in_srgb,var(--warn)_40%,transparent)_50%,transparent_50%)] text-warn',
   pendiente: 'border-2 border-bad text-bad',
   programada: 'border border-dashed border-line text-ink2',
   cancelada: 'bg-surface2 text-ink2 line-through opacity-60',
