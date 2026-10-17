@@ -1,7 +1,8 @@
 // Exportación a Excel (.xlsx) y PDF. Las librerías se cargan recién al exportar.
 import type { Worksheet } from 'exceljs'
 import { ETIQUETA_MEDIO, nombreCompleto, type Paciente, type Pago, type Perfil, type Sesion } from './datos'
-import { capitalizar, formatFecha, formatMonto, formatPeriodo, hoyAR, periodoDe, type Moneda } from './formato'
+import { capitalizar, formatFecha, formatMonto, formatPeriodo, hoyAR, mesCorto, nombreMes, periodoDe, type Moneda } from './formato'
+import { C, caja, etiqueta, franja, montoGrande, nuevoPdf, pie, texto } from './pdfEstilo'
 import { MEDIOS, reporteContadora, reporteMes } from './reportes'
 import { tarifaVigente } from './saldos'
 
@@ -227,7 +228,7 @@ export async function exportarContadoraXlsx(
   await guardarLibro(libro, `contadora-${mesArchivo(desde)}-a-${mesArchivo(hasta)}.xlsx`)
 }
 
-/** Arma el PDF para la contadora (separado de la descarga para poder probarlo). */
+/** Arma el PDF para la contadora (separado de la descarga para poder probarlo). Diseño: docs/diseno/pdf/Reporte Contadora HonorApp.pdf */
 export async function pdfContadora(
   desde: string,
   hasta: string,
@@ -238,69 +239,158 @@ export async function pdfContadora(
 ) {
   const r = reporteContadora(desde, hasta, hoyAR(), pacientes, pagos)
   const nombrePaciente = (n: string) => (opciones.iniciales ? soloIniciales(n) : n)
-  const [{ jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')])
-  const doc = new jsPDF({ unit: 'pt', format: 'a4' })
-  const verde: [number, number, number] = [85, 127, 105]
-  let y = 48
+  const { default: autoTable } = await import('jspdf-autotable')
+  const p = await nuevoPdf()
+  const { doc, k } = p
+  const hoy = hoyAR()
 
-  doc.setFont('helvetica', 'bold').setFontSize(18).text('Reporte de cobros', 40, y)
-  y += 20
-  doc.setFont('helvetica', 'normal').setFontSize(10).setTextColor(93, 102, 96)
-  const linea = [perfil?.nombre, titulosRango(desde, hasta), `Generado el ${formatFecha(hoyAR())}`].filter(Boolean).join(' · ')
-  doc.text(linea, 40, y)
-  y += 16
-  doc.text(
-    `Últimos 12 meses (${formatPeriodo(r.rango12.desde)} – ${formatPeriodo(r.rango12.hasta)}): ${formatMonto(r.ultimos12.ARS.total, 'ARS')} · ${formatMonto(r.ultimos12.USD.total, 'USD')}`,
-    40,
-    y,
-  )
-  doc.setTextColor(30, 36, 32)
+  // Encabezado (solo en la primera hoja)
+  franja(p)
+  etiqueta(p, 'Reporte para contadora', 62, 78)
+  texto(p, 'Reporte de cobros', 62, 128, { t: 54, serif: true })
+  const rangoTexto =
+    desde === hasta
+      ? capitalizar(formatPeriodo(desde))
+      : desde.slice(0, 4) === hasta.slice(0, 4)
+        ? `${capitalizar(nombreMes(desde))} a ${formatPeriodo(hasta)}`
+        : `${capitalizar(formatPeriodo(desde))} a ${formatPeriodo(hasta)}`
+  texto(p, [perfil?.nombre, rangoTexto].filter(Boolean).join(' · '), 62, 160, { t: 16, color: C.gris })
+  const [ah, mh] = hasta.split('-').map(Number)
+  const ultimoDia = new Date(Date.UTC(ah, mh, 0)).getUTCDate()
+  texto(p, 'Período', 677, 82, { t: 14.5, color: C.gris, alinear: 'right' })
+  texto(p, `${formatFecha(desde)} – ${String(ultimoDia).padStart(2, '0')}/${String(mh).padStart(2, '0')}/${ah}`, 863, 82, {
+    t: 14.5,
+    peso: 'semibold',
+    alinear: 'right',
+  })
+  texto(p, 'Generado', 677, 105, { t: 14.5, color: C.gris, alinear: 'right' })
+  texto(p, formatFecha(hoy), 863, 105, { t: 14.5, peso: 'semibold', alinear: 'right' })
 
+  // Tarjetas de totales
+  const tarjeta = (x: number, titulo: string, moneda: Moneda) => {
+    const t = r.totales[moneda]
+    caja(p, x, 194, 254, 134, C.fondoVerde)
+    etiqueta(p, titulo, x + 22, 228, C.gris, 12)
+    montoGrande(p, t.total, moneda, x + 22, 268, 33)
+    texto(p, t.cantidad ? `${t.conFactura} de ${t.cantidad} ${t.cantidad === 1 ? 'pago facturado' : 'pagos facturados'}` : 'Sin pagos', x + 22, 292, {
+      t: 13,
+      color: C.gris,
+    })
+  }
+  tarjeta(62, 'Total pesos', 'ARS')
+  tarjeta(335, 'Total dólares', 'USD')
+  caja(p, 608, 194, 255, 134, C.fondoNeutro)
+  etiqueta(p, 'Últimos 12 meses', 630, 228, C.gris, 12)
+  texto(p, formatMonto(r.ultimos12.ARS.total, 'ARS'), 630, 256, { t: 19, peso: 'semibold' })
+  texto(p, formatMonto(r.ultimos12.USD.total, 'USD'), 630, 280, { t: 19, peso: 'semibold' })
+  const mesAnio = (per: string) => `${capitalizar(mesCorto(per))} ${per.slice(0, 4)}`
+  texto(p, `${mesAnio(r.rango12.desde)} – ${mesCorto(r.rango12.hasta)} ${r.rango12.hasta.slice(0, 4)}`, 630, 306, { t: 13, color: C.gris })
+
+  // Estilo de las tablas
+  const tamTabla = 14 * k
+  const comunes = {
+    theme: 'plain' as const,
+    margin: { left: 62 * k, right: (923 - 863) * k, top: 60 * k, bottom: 130 * k },
+    styles: { font: p.sans, fontStyle: 'normal' as const, fontSize: tamTabla, textColor: C.tinta, cellPadding: { top: 9 * k, bottom: 9 * k, left: 0, right: 4 * k } },
+    headStyles: {
+      fontStyle: (p.conFuentes ? 'semibold' : 'bold') as 'bold',
+      fontSize: 11 * k,
+      textColor: C.gris,
+      lineWidth: { bottom: 1.6 * k },
+      lineColor: C.verde,
+    },
+    bodyStyles: { lineWidth: { bottom: 0.9 * k }, lineColor: C.linea },
+    footStyles: { fontStyle: 'bold' as const, fillColor: C.fondoVerde, textColor: C.tinta },
+    didDrawPage: () => {
+      if (doc.getNumberOfPages() > 1 && doc.getCurrentPageInfo().pageNumber > 1) franja(p)
+    },
+  }
+  const guion = '—'
+  const celdaMonto = (n: number, m: Moneda) => (n ? formatMonto(n, m) : guion)
+
+  // Por mes y medio de pago
+  texto(p, 'Por mes y medio de pago', 62, 380, { t: 18.5, peso: 'semibold' })
   const cuerpo: string[][] = []
   for (const m of r.meses) {
     for (const moneda of ['ARS', 'USD'] as Moneda[]) {
       const a = m.porMoneda[moneda]
       if (!a.cantidad) continue
-      cuerpo.push([capitalizar(formatPeriodo(m.periodo)), moneda, ...MEDIOS.map((x) => formatMonto(a.medios[x], moneda)), formatMonto(a.total, moneda), `${a.conFactura}/${a.cantidad}`])
+      cuerpo.push([capitalizar(formatPeriodo(m.periodo)), moneda, ...MEDIOS.map((x) => celdaMonto(a.medios[x], moneda)), formatMonto(a.total, moneda), `${a.conFactura}/${a.cantidad}`])
     }
   }
-  const pie = (['ARS', 'USD'] as Moneda[])
+  const pieTabla = (['ARS', 'USD'] as Moneda[])
     .filter((m) => r.totales[m].cantidad)
-    .map((m) => ['Total', m, ...MEDIOS.map((x) => formatMonto(r.totales[m].medios[x], m)), formatMonto(r.totales[m].total, m), `${r.totales[m].conFactura}/${r.totales[m].cantidad}`])
-
+    .map((m) => ['Total', m, ...MEDIOS.map((x) => celdaMonto(r.totales[m].medios[x], m)), formatMonto(r.totales[m].total, m), `${r.totales[m].conFactura}/${r.totales[m].cantidad}`])
+  const derecha = { halign: 'right' as const }
   autoTable(doc, {
-    startY: y + 18,
-    head: [['Mes', 'Moneda', ...MEDIOS.map((x) => ETIQUETA_MEDIO[x]), 'Total', 'Fact.']],
+    ...comunes,
+    startY: 398 * k,
+    head: [['MES', 'MONEDA', ...MEDIOS.map((x) => ETIQUETA_MEDIO[x].toUpperCase()), 'TOTAL', 'FACT.']],
     body: cuerpo,
-    foot: pie,
-    theme: 'grid',
-    styles: { fontSize: 8, cellPadding: 4 },
-    headStyles: { fillColor: verde },
-    footStyles: { fillColor: [238, 237, 231], textColor: [30, 36, 32] },
-    columnStyles: { 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { halign: 'right' }, 6: { halign: 'right' } },
+    foot: pieTabla,
+    showFoot: 'lastPage',
+    columnStyles: {
+      0: { cellWidth: 150 * k },
+      1: { cellWidth: 70 * k, textColor: C.gris },
+      2: derecha,
+      3: derecha,
+      4: derecha,
+      5: derecha,
+      6: { ...derecha, fontStyle: 'bold' },
+      7: { ...derecha, cellWidth: 52 * k, textColor: C.gris },
+    },
+    didParseCell: (d) => {
+      if ((d.section === 'head' || d.section === 'foot') && d.column.index >= 2) d.cell.styles.halign = 'right'
+      if (d.section === 'foot' && d.column.index === 0) d.cell.styles.cellPadding = { top: 11 * k, bottom: 11 * k, left: 10 * k, right: 4 * k }
+      if (d.section !== 'head' && d.cell.raw === guion) d.cell.styles.textColor = C.grisClaro
+    },
   })
 
-  const finTabla = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
-  doc.setFont('helvetica', 'bold').setFontSize(12).text('Detalle de pagos', 40, finTabla + 30)
+  // Detalle de pagos
+  let y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY / k + 58
+  if (y > 1060) {
+    doc.addPage()
+    franja(p)
+    y = 90
+  }
+  texto(p, 'Detalle de pagos', 62, y, { t: 18.5, peso: 'semibold' })
   autoTable(doc, {
-    startY: finTabla + 40,
-    head: [['Fecha', 'Paciente', 'Medio', 'Comprobante', 'Nº de factura', 'Monto']],
+    ...comunes,
+    startY: (y + 18) * k,
+    head: [['FECHA', 'PACIENTE', 'MEDIO', 'COMPROBANTE', 'N.º DE FACTURA', 'MONTO']],
     body: r.meses.flatMap((m) =>
-      m.pagos.map(({ pago: p, paciente }) => [
-        formatFecha(p.fecha),
+      m.pagos.map(({ pago: x, paciente }) => [
+        formatFecha(x.fecha),
         nombrePaciente(paciente),
-        ETIQUETA_MEDIO[p.medio],
-        COMPROBANTE[p.comprobante],
-        [p.punto_venta, p.nro_factura].filter(Boolean).join('-') || '—',
-        formatMonto(p.monto, p.moneda),
+        ETIQUETA_MEDIO[x.medio],
+        COMPROBANTE[x.comprobante],
+        [x.punto_venta, x.nro_factura].filter(Boolean).join('-') || guion,
+        formatMonto(x.monto, x.moneda),
       ]),
     ),
-    theme: 'striped',
-    styles: { fontSize: 8, cellPadding: 4 },
-    headStyles: { fillColor: verde },
-    columnStyles: { 5: { halign: 'right' } },
+    columnStyles: {
+      0: { cellWidth: 111 * k, textColor: C.gris },
+      1: { cellWidth: 148 * k, fontStyle: (p.conFuentes ? 'semibold' : 'normal') as 'normal' },
+      2: { cellWidth: 136 * k },
+      3: { cellWidth: 136 * k },
+      5: { halign: 'right', fontStyle: 'bold' },
+    },
+    didParseCell: (d) => {
+      if (d.section === 'head' && d.column.index === 5) d.cell.styles.halign = 'right'
+      if (d.section === 'body' && d.column.index === 3 && d.cell.raw === COMPROBANTE.sin_comprobante) d.cell.styles.textColor = C.aviso
+      if (d.section === 'body' && d.cell.raw === guion) d.cell.styles.textColor = C.grisClaro
+    },
   })
 
+  // Pie en todas las hojas
+  const total = doc.getNumberOfPages()
+  for (let i = 1; i <= total; i++) {
+    doc.setPage(i)
+    pie(p, [
+      total > 1 ? `Montos cobrados según registros de la profesional · Hoja ${i} de ${total}` : 'Montos cobrados según registros de la profesional.',
+      `Generado con honorapp el ${formatFecha(hoy)}`,
+    ], 62, 863)
+  }
   return doc
 }
 

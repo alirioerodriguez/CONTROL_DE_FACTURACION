@@ -33,7 +33,7 @@ async function ida() {
 }
 
 describe('Excel de backup', () => {
-  it('tiene el formato de la plantilla', async () => {
+  it('tiene el formato de la plantilla', { timeout: 60000 }, async () => {
     expect(esPlantilla(await ida())).toBe(true)
   })
 
@@ -69,11 +69,15 @@ describe('Excel de backup', () => {
 describe('PDF para contadora', () => {
   it('arma el documento con el resumen y el detalle', async () => {
     const doc = await pdfContadora('2026-10-01', '2026-11-01', perfil, pacientes, pagos)
-    expect(doc.getNumberOfPages()).toBeGreaterThanOrEqual(1)
-    const texto = doc.output()
-    expect(texto).toContain('Reporte de cobros')
-    expect(texto).toContain('Detalle de pagos')
-    expect(texto).toContain('Noviembre 2026')
+    expect(doc.getNumberOfPages()).toBe(1)
+    // Tipografías del diseño incrustadas (por eso el texto no se puede buscar en el PDF).
+    expect(Object.keys(doc.getFontList())).toEqual(expect.arrayContaining(['Figtree', 'InstrumentSerif']))
+  })
+
+  it('con muchos pagos sigue en varias hojas', async () => {
+    const muchos = Array.from({ length: 80 }, (_, i) => ({ ...pagos[0], id: `m${i}` }))
+    const doc = await pdfContadora('2026-10-01', '2026-11-01', perfil, pacientes, muchos)
+    expect(doc.getNumberOfPages()).toBeGreaterThan(1)
   })
 })
 

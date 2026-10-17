@@ -54,9 +54,9 @@ describe('pdfRecibo', () => {
 
   it('arma el PDF con los datos', async () => {
     const doc = await pdfRecibo(pago, paciente, { nombre: 'Lic. Ana Martínez' } as Perfil, 'sesiones')
-    const texto = doc.output()
     expect(doc.getNumberOfPages()).toBe(1)
-    expect(texto).toContain('Recibo de pago')
-    expect(texto).toContain('No v')
+    // Con las tipografías del diseño incrustadas (Figtree e Instrument Serif).
+    expect(Object.keys(doc.getFontList())).toEqual(expect.arrayContaining(['Figtree', 'InstrumentSerif']))
+    expect(doc.output().length).toBeGreaterThan(20000)
   })
 })

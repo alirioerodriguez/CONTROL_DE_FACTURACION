@@ -30,6 +30,7 @@ export function AjustesPage() {
   const [moneda, setMoneda] = useState<Moneda>('ARS')
   const [plantilla, setPlantilla] = useState('')
   const [datosPago, setDatosPago] = useState('')
+  const [matricula, setMatricula] = useState('')
   const [tema, setTema] = useState<Tema>(temaActual())
   const [profesion, setProfesion] = useState('')
   const [otra, setOtra] = useState('')
@@ -59,6 +60,7 @@ export function AjustesPage() {
     setMoneda(perfil.data.moneda_default)
     setPlantilla(perfil.data.plantilla_whatsapp || PLANTILLA_WHATSAPP_DEFECTO)
     setDatosPago(perfil.data.datos_pago ?? '')
+    setMatricula(perfil.data.matricula ?? '')
     cargarProfesion()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [perfil.data])
@@ -88,6 +90,7 @@ export function AjustesPage() {
             moneda_default: moneda,
             plantilla_whatsapp: plantilla.trim() || PLANTILLA_WHATSAPP_DEFECTO,
             datos_pago: datosPago.trim() || null,
+            matricula: matricula.trim() || null,
           },
         },
       ])
@@ -261,6 +264,15 @@ export function AjustesPage() {
           />
         </div>
         <Campo etiqueta="Tu nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Lic. Ana Martínez" />
+        <Campo
+          etiqueta="Matrícula"
+          opcional
+          id="matricula"
+          value={matricula}
+          maxLength={60}
+          onChange={(e) => setMatricula(e.target.value)}
+          placeholder="Ej. M.P. 12345 (aparece en el recibo)"
+        />
         <Campo
           etiqueta="Datos para el pago"
           opcional

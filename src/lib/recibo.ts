@@ -1,6 +1,8 @@
 // Recibo de pago para el paciente (PDF). No es un comprobante fiscal: lo dice el propio documento.
 import { ETIQUETA_MEDIO, nombreCompleto, type Paciente, type Pago, type Perfil } from './datos'
-import { capitalizar, formatFecha, formatMonto, formatPeriodo, hoyAR } from './formato'
+import { formatFecha, formatPeriodo, hoyAR } from './formato'
+import { C, caja, etiqueta, franja, linea, montoGrande, nuevoPdf, pie, texto } from './pdfEstilo'
+import { etiquetaProfesion } from './terminos'
 
 const UNIDADES = ['', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve']
 const DIEZ_A_VEINTINUEVE = [
@@ -61,51 +63,49 @@ export function numeroRecibo(pago: Pago): string {
 }
 
 export async function pdfRecibo(pago: Pago, paciente: Paciente, perfil: Perfil | undefined, unidad: string) {
-  const { jsPDF } = await import('jspdf')
-  const doc = new jsPDF({ unit: 'pt', format: 'a5' })
-  const ancho = doc.internal.pageSize.getWidth()
-  const verde: [number, number, number] = [85, 127, 105]
-  const gris: [number, number, number] = [93, 102, 96]
-  const tinta: [number, number, number] = [30, 36, 32]
-  let y = 44
+  const p = await nuevoPdf()
 
-  doc.setFillColor(...verde).rect(0, 0, ancho, 8, 'F')
-  doc.setFont('helvetica', 'bold').setFontSize(20).setTextColor(...tinta).text('Recibo de pago', 32, y)
-  doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(...gris)
-  doc.text(`Nº ${numeroRecibo(pago)}`, ancho - 32, y - 8, { align: 'right' })
-  doc.text(`Fecha: ${formatFecha(pago.fecha)}`, ancho - 32, y + 4, { align: 'right' })
+  franja(p)
+  etiqueta(p, 'Comprobante de pago', 62, 78)
+  texto(p, 'Recibo de pago', 62, 128, { t: 54, serif: true })
+  texto(p, [perfil?.nombre, `Honorarios de ${formatPeriodo(pago.periodo)}`].filter(Boolean).join(' · '), 62, 160, { t: 16, color: C.gris })
+  texto(p, 'N.º', 677, 82, { t: 14.5, color: C.gris, alinear: 'right' })
+  texto(p, numeroRecibo(pago), 863, 82, { t: 14.5, peso: 'semibold', alinear: 'right' })
+  texto(p, 'Fecha', 677, 105, { t: 14.5, color: C.gris, alinear: 'right' })
+  texto(p, formatFecha(pago.fecha), 863, 105, { t: 14.5, peso: 'semibold', alinear: 'right' })
+  linea(p, 62, 200, 863)
 
-  y += 28
-  doc.setFontSize(10).setTextColor(...gris).text('Recibí de', 32, y)
-  doc.setFont('helvetica', 'bold').setFontSize(13).setTextColor(...tinta).text(nombreCompleto(paciente), 32, y + 16)
+  texto(p, 'Recibí de', 62, 262, { t: 16, color: C.gris })
+  texto(p, nombreCompleto(paciente), 62, 300, { t: 25, peso: 'bold', ancho: 380 })
+  texto(p, 'Profesional', 481, 262, { t: 16, color: C.gris })
+  texto(p, perfil?.nombre || 'Profesional', 481, 298, { t: 22, peso: 'semibold', ancho: 373 })
+  const detalle = [etiquetaProfesion(perfil?.profesion), perfil?.matricula].filter(Boolean).join(' · ')
+  if (detalle) texto(p, detalle, 481, 329, { t: 16, color: C.gris, ancho: 373 })
 
-  y += 46
-  doc.setFillColor(238, 237, 231).roundedRect(32, y, ancho - 64, 62, 8, 8, 'F')
-  doc.setFont('helvetica', 'bold').setFontSize(22).setTextColor(...tinta).text(formatMonto(pago.monto, pago.moneda), 46, y + 28)
-  doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(...gris)
-  doc.text(doc.splitTextToSize(montoEnLetras(pago.monto, pago.moneda), ancho - 92), 46, y + 46)
+  caja(p, 62, 380, 801, 204, C.fondoVerde)
+  etiqueta(p, 'Importe recibido', 99, 434, C.verdeEtiqueta, 15)
+  montoGrande(p, pago.monto, pago.moneda, 99, 509, 64)
+  texto(p, montoEnLetras(pago.monto, pago.moneda), 99, 548, { t: 17, color: C.gris, ancho: 727 })
 
-  y += 86
   const filas: [string, string][] = [
-    ['Concepto', `Honorarios por ${unidad} de ${capitalizar(formatPeriodo(pago.periodo))}`],
+    ['Concepto', `Honorarios por ${unidad} de ${formatPeriodo(pago.periodo)}`],
     ['Medio de pago', ETIQUETA_MEDIO[pago.medio]],
   ]
   if (pago.nro_factura) filas.push(['Factura', [pago.punto_venta, pago.nro_factura].filter(Boolean).join('-')])
+  let y = 664
   for (const [k, v] of filas) {
-    doc.setFontSize(10).setTextColor(...gris).text(k, 32, y)
-    doc.setTextColor(...tinta).text(doc.splitTextToSize(v, ancho - 160), 128, y)
-    y += 20
+    texto(p, k, 62, y, { t: 19, color: C.gris })
+    texto(p, v, 281, y, { t: 19, ancho: 573 })
+    linea(p, 62, y + 29, 863)
+    y += 59
   }
 
-  y += 30
-  doc.setDrawColor(200, 200, 195).line(ancho - 200, y, ancho - 32, y)
-  doc.setFontSize(10).setTextColor(...tinta).text(perfil?.nombre || 'Profesional', ancho - 32, y + 14, { align: 'right' })
+  linea(p, 493, 1106, 863, [200, 200, 195])
+  texto(p, perfil?.nombre || 'Profesional', 493, 1138, { t: 19, peso: 'semibold', ancho: 361 })
+  texto(p, 'Firma y aclaración', 493, 1170, { t: 15, color: C.gris })
 
-  const pie = doc.internal.pageSize.getHeight() - 28
-  doc.setFontSize(7.5).setTextColor(...gris)
-  doc.text('Comprobante de pago. No válido como factura.', 32, pie)
-  doc.text(`Generado con honorapp el ${formatFecha(hoyAR())}`, ancho - 32, pie, { align: 'right' })
-  return doc
+  pie(p, ['Comprobante de pago. No válido como factura.', `Generado con honorapp el ${formatFecha(hoyAR())}`], 62, 863)
+  return p.doc
 }
 
 export async function descargarRecibo(pago: Pago, paciente: Paciente, perfil: Perfil | undefined, unidad: string) {

@@ -48,6 +48,11 @@ exception when duplicate_object then null; end $$;
 do $$ begin
   alter table public.profiles add constraint profiles_modo_cobro_check check (modo_cobro in ('hora','sesion'));
 exception when duplicate_object then null; end $$;
+-- Matrícula profesional (opcional): aparece en el recibo para el paciente.
+alter table public.profiles add column if not exists matricula text;
+do $$ begin
+  alter table public.profiles add constraint profiles_matricula_check check (length(matricula) <= 60);
+exception when duplicate_object then null; end $$;
 -- Datos de pago para el recordatorio de WhatsApp: alias, CBU o link de Mercado Pago.
 alter table public.profiles add column if not exists datos_pago text;
 do $$ begin
