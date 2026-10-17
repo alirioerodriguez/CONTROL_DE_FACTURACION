@@ -102,8 +102,12 @@ export function InicioPage() {
               Programado para lo que queda del mes:{' '}
               {(['ARS', 'USD'] as const)
                 .filter((m) => r.programado[m] > 0)
-                .map((m) => formatMonto(r.programado[m], m))
-                .join(' + ')}
+                .map((m, i) => (
+                  <span key={m} className="whitespace-nowrap">
+                    {i > 0 && ' + '}
+                    {formatMonto(r.programado[m], m)}
+                  </span>
+                ))}
             </div>
           )}
         </div>
