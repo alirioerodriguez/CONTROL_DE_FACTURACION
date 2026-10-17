@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Paciente, Pago, Perfil, Sesion } from './datos'
-import { libroBackup, pdfContadora } from './exportar'
+import { celdaSegura, libroBackup, pdfContadora, soloIniciales } from './exportar'
 import { leerXlsx } from './importar/leer'
 import { esPlantilla, prepararPlantilla } from './importar/preparar'
 
@@ -74,5 +74,30 @@ describe('PDF para contadora', () => {
     expect(texto).toContain('Reporte de cobros')
     expect(texto).toContain('Detalle de pagos')
     expect(texto).toContain('Noviembre 2026')
+  })
+})
+
+describe('exportes seguros', () => {
+  it('protege los textos que se abrirían como fórmula', () => {
+    expect(celdaSegura('=HYPERLINK("http://x","clic")')).toBe('\'=HYPERLINK("http://x","clic")')
+    expect(celdaSegura('@SUMA(A1)')).toBe("'@SUMA(A1)")
+    expect(celdaSegura('-2+3')).toBe("'-2+3")
+  })
+  it('no toca números, fechas, teléfonos ni textos comunes', () => {
+    expect(celdaSegura(50000)).toBe(50000)
+    expect(celdaSegura('+54 9 11 5555-1234')).toBe('+54 9 11 5555-1234')
+    expect(celdaSegura('Lucía')).toBe('Lucía')
+    expect(celdaSegura(null)).toBeNull()
+  })
+  it('iniciales', () => {
+    expect(soloIniciales('Lucía Fernández')).toBe('L. F.')
+    expect(soloIniciales('  maría  de los ángeles ')).toBe('M. D. L. Á.')
+  })
+  it('un texto protegido vuelve igual al importar el Excel de la app', async () => {
+    const conFormula = [{ ...sesiones[0], observaciones: '=1+1' }, ...sesiones.slice(1)]
+    const libro = await libroBackup(perfil, pacientes, conFormula, pagos)
+    const hojas = await leerXlsx((await libro.xlsx.writeBuffer()) as ArrayBuffer)
+    const r = prepararPlantilla(hojas, { pacientes: [], sesiones: [], pagos: [], monedaDefecto: 'ARS', tarifaEstandar: 50000 })
+    expect(r.sesiones[0].observaciones).toBe('=1+1')
   })
 })

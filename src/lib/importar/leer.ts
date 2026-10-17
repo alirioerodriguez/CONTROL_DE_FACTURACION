@@ -16,7 +16,13 @@ export const TAMANO_MAXIMO = 5 * 1024 * 1024
 export function normalizarCelda(valor: unknown): Celda {
   if (valor == null) return null
   if (valor instanceof Date) return valor
-  if (typeof valor === 'string') return valor.trim() === '' ? null : valor.trim()
+  if (typeof valor === 'string') {
+    const t = valor.trim()
+    if (t === '') return null
+    // Los Excel de la app protegen con un apóstrofo los textos que empiezan con = + - @ (para que no se
+    // ejecuten como fórmula). Al volver a importarlos se saca.
+    return /^'[=+\-@]/.test(t) ? t.slice(1) : t
+  }
   if (typeof valor === 'number' || typeof valor === 'boolean') return valor
   if (typeof valor === 'object') {
     const o = valor as Record<string, unknown>

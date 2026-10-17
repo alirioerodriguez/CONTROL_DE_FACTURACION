@@ -7,6 +7,7 @@ import { ETIQUETA_MEDIO, useDatos } from '../../lib/datos'
 import { capitalizar, formatFecha, formatMonto, formatPeriodo, hoyAR, partesMonto, periodoDe, plural, sumarMeses, type Moneda } from '../../lib/formato'
 import { MEDIOS, mesesEntre, reporteContadora } from '../../lib/reportes'
 import { mensajeError } from '../../lib/supabase'
+import { guardarPreferencia, preferencia } from '../../lib/tema'
 
 const MONEDAS: Moneda[] = ['ARS', 'USD']
 const COLUMNAS = 'grid-cols-[minmax(7.5rem,1.2fr)_4rem_repeat(5,minmax(7.25rem,1fr))_5.25rem]'
@@ -19,6 +20,8 @@ export function ContadoraPage() {
   const [hasta, setHasta] = useState(actual)
   const [abierto, setAbierto] = useState<string | null>(actual)
   const [exportando, setExportando] = useState<'xlsx' | 'pdf' | null>(null)
+  // Se recuerda en este dispositivo: quien prefiere iniciales suele querer siempre lo mismo.
+  const [iniciales, setIniciales] = useState(preferencia<string>('exportar-iniciales', 'no') === 'si')
 
   const opcionesMes = useMemo(() => mesesEntre(sumarMeses(actual, -35), actual).reverse(), [actual])
   const rangoMalo = desde > hasta
@@ -43,8 +46,8 @@ export function ContadoraPage() {
     setExportando(tipo)
     try {
       const m = await import('../../lib/exportar')
-      if (tipo === 'xlsx') await m.exportarContadoraXlsx(desde, hasta, perfil, pacientes, pagos)
-      else await m.exportarContadoraPdf(desde, hasta, perfil, pacientes, pagos)
+      if (tipo === 'xlsx') await m.exportarContadoraXlsx(desde, hasta, perfil, pacientes, pagos, { iniciales })
+      else await m.exportarContadoraPdf(desde, hasta, perfil, pacientes, pagos, { iniciales })
       toast.success(`Reporte para contadora exportado en ${tipo === 'xlsx' ? 'Excel' : 'PDF'}`)
     } catch (e) {
       toast.error(`No se pudo exportar: ${mensajeError(e)}`)
@@ -75,6 +78,19 @@ export function ContadoraPage() {
           <Boton icono={FileText} disabled={!hayPagos} cargando={exportando === 'pdf'} onClick={() => exportar('pdf')}>
             Descargar PDF
           </Boton>
+          <label className="flex basis-full cursor-pointer items-center gap-2.5 text-[0.9375rem] text-ink2">
+            <input
+              id="exportar-iniciales"
+              type="checkbox"
+              checked={iniciales}
+              onChange={(e) => {
+                setIniciales(e.target.checked)
+                guardarPreferencia('exportar-iniciales', e.target.checked ? 'si' : 'no')
+              }}
+              className="size-5 accent-[var(--acc)]"
+            />
+            Usar iniciales en lugar de los nombres de los pacientes
+          </label>
         </div>
       </div>
 

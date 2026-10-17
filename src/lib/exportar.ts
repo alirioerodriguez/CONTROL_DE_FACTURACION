@@ -41,15 +41,35 @@ async function libroNuevo() {
   return libro
 }
 
+/**
+ * Un texto que empieza con = + - @ (o tabulación) se abre como fórmula en Excel y otras planillas: se le
+ * antepone un apóstrofo para que quede como texto. Los números y las fechas no se tocan.
+ */
+export function celdaSegura<T>(valor: T): T | string {
+  if (typeof valor !== 'string' || !/^[=+\-@\t\r]/.test(valor)) return valor
+  // Un teléfono (+54 9 11 …) o un número negativo escrito como texto no pueden ser una fórmula.
+  if (/^[+\-][\d\s().-]*$/.test(valor)) return valor
+  return `'${valor}`
+}
+
+/** 'Lucía Fernández' → 'L. F.' (para exportar sin nombres completos). */
+export function soloIniciales(nombre: string): string {
+  return nombre
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((p) => `${p[0].toUpperCase()}.`)
+    .join(' ')
+}
+
 function tabla(hoja: Worksheet, columnas: Columna[], filas: Fila[], filasTotal: Fila[] = []) {
   hoja.columns = columnas.map((c) => ({ header: c.titulo, width: c.ancho ?? 16 }))
   const enc = hoja.getRow(1)
   enc.font = { bold: true, color: { argb: 'FFFFFFFF' } }
   enc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF557F69' } }
   hoja.views = [{ state: 'frozen', ySplit: 1 }]
-  for (const f of filas) hoja.addRow(f)
+  for (const f of filas) hoja.addRow(f.map(celdaSegura))
   for (const f of filasTotal) {
-    const r = hoja.addRow(f)
+    const r = hoja.addRow(f.map(celdaSegura))
     r.font = { bold: true }
     r.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEEEDE7' } }
   }
@@ -118,8 +138,21 @@ function titulosRango(desde: string, hasta: string) {
     : `${capitalizar(formatPeriodo(desde))} a ${formatPeriodo(hasta)}`
 }
 
-export async function exportarContadoraXlsx(desde: string, hasta: string, perfil: Perfil | undefined, pacientes: Paciente[], pagos: Pago[]) {
+export interface OpcionesExport {
+  /** Iniciales en lugar del nombre completo de cada paciente. */
+  iniciales?: boolean
+}
+
+export async function exportarContadoraXlsx(
+  desde: string,
+  hasta: string,
+  perfil: Perfil | undefined,
+  pacientes: Paciente[],
+  pagos: Pago[],
+  opciones: OpcionesExport = {},
+) {
   const r = reporteContadora(desde, hasta, hoyAR(), pacientes, pagos)
+  const nombrePaciente = (n: string) => (opciones.iniciales ? soloIniciales(n) : n)
   const libro = await libroNuevo()
 
   const resumen = libro.addWorksheet('Por mes')
@@ -171,7 +204,7 @@ export async function exportarContadoraXlsx(desde: string, hasta: string, perfil
       m.pagos.map(({ pago: p, paciente }) => [
         fechaExcel(p.fecha),
         capitalizar(formatPeriodo(p.periodo)),
-        paciente,
+        nombrePaciente(paciente),
         p.moneda,
         ETIQUETA_MEDIO[p.medio],
         COMPROBANTE[p.comprobante],
@@ -189,14 +222,22 @@ export async function exportarContadoraXlsx(desde: string, hasta: string, perfil
     ['Mail', perfil?.email ?? ''],
     ['Período', titulosRango(desde, hasta)],
     ['Generado', formatFecha(hoyAR())],
-  ].forEach((f) => datos.addRow(f))
+  ].forEach((f) => datos.addRow(f.map(celdaSegura)))
 
   await guardarLibro(libro, `contadora-${mesArchivo(desde)}-a-${mesArchivo(hasta)}.xlsx`)
 }
 
 /** Arma el PDF para la contadora (separado de la descarga para poder probarlo). */
-export async function pdfContadora(desde: string, hasta: string, perfil: Perfil | undefined, pacientes: Paciente[], pagos: Pago[]) {
+export async function pdfContadora(
+  desde: string,
+  hasta: string,
+  perfil: Perfil | undefined,
+  pacientes: Paciente[],
+  pagos: Pago[],
+  opciones: OpcionesExport = {},
+) {
   const r = reporteContadora(desde, hasta, hoyAR(), pacientes, pagos)
+  const nombrePaciente = (n: string) => (opciones.iniciales ? soloIniciales(n) : n)
   const [{ jsPDF }, { default: autoTable }] = await Promise.all([import('jspdf'), import('jspdf-autotable')])
   const doc = new jsPDF({ unit: 'pt', format: 'a4' })
   const verde: [number, number, number] = [85, 127, 105]
@@ -247,7 +288,7 @@ export async function pdfContadora(desde: string, hasta: string, perfil: Perfil 
     body: r.meses.flatMap((m) =>
       m.pagos.map(({ pago: p, paciente }) => [
         formatFecha(p.fecha),
-        paciente,
+        nombrePaciente(paciente),
         ETIQUETA_MEDIO[p.medio],
         COMPROBANTE[p.comprobante],
         [p.punto_venta, p.nro_factura].filter(Boolean).join('-') || '—',
@@ -263,8 +304,15 @@ export async function pdfContadora(desde: string, hasta: string, perfil: Perfil 
   return doc
 }
 
-export async function exportarContadoraPdf(desde: string, hasta: string, perfil: Perfil | undefined, pacientes: Paciente[], pagos: Pago[]) {
-  const doc = await pdfContadora(desde, hasta, perfil, pacientes, pagos)
+export async function exportarContadoraPdf(
+  desde: string,
+  hasta: string,
+  perfil: Perfil | undefined,
+  pacientes: Paciente[],
+  pagos: Pago[],
+  opciones: OpcionesExport = {},
+) {
+  const doc = await pdfContadora(desde, hasta, perfil, pacientes, pagos, opciones)
   doc.save(`contadora-${mesArchivo(desde)}-a-${mesArchivo(hasta)}.pdf`)
 }
 
