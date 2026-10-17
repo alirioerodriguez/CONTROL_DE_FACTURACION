@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Download, FileText, ReceiptText } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, FileText, ReceiptText, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { AjustarAncho, Alerta, Boton, EstadoError, Esqueleto, IC, MontoGrande, Pastilla, Tarjeta, Titulo } from '../../components/ui'
 import { ETIQUETA_MEDIO, useDatos } from '../../lib/datos'
@@ -20,7 +20,7 @@ export function ContadoraPage() {
   const [desde, setDesde] = useState(sumarMeses(actual, -5))
   const [hasta, setHasta] = useState(actual)
   const [abierto, setAbierto] = useState<string | null>(actual)
-  const [exportando, setExportando] = useState<'xlsx' | 'pdf' | null>(null)
+  const [exportando, setExportando] = useState<'xlsx' | 'pdf' | 'enviar' | null>(null)
   // Se recuerda en este dispositivo: quien prefiere iniciales suele querer siempre lo mismo.
   const [iniciales, setIniciales] = useState(preferencia<string>('exportar-iniciales', 'no') === 'si')
 
@@ -62,6 +62,27 @@ export function ContadoraPage() {
     }
   }
 
+  /** En el celular abre el menú para compartir con el PDF; en la computadora lo descarga y abre el mail. */
+  async function enviar() {
+    setExportando('enviar')
+    try {
+      const m = await import('../../lib/exportar')
+      const res = await m.compartirContadoraPdf(desde, hasta, perfil, pacientes, pagos, { iniciales })
+      if (res === 'compartido') toast.success('Reporte enviado')
+      if (res === 'sin-soporte') {
+        await m.exportarContadoraPdf(desde, hasta, perfil, pacientes, pagos, { iniciales })
+        const { linkMail } = await import('../../lib/compartir')
+        const t = m.mensajeContadora(desde, hasta, perfil)
+        window.open(linkMail(perfil?.contadora_email, t.asunto, `${t.cuerpo}\n\n(El reporte va adjunto en PDF.)`), '_blank', 'noopener')
+        toast.success('Reporte descargado. Adjuntalo en el mail que se abrió.')
+      }
+    } catch (e) {
+      toast.error(`No se pudo enviar: ${mensajeError(e)}`)
+    } finally {
+      setExportando(null)
+    }
+  }
+
   const etiquetaMes = (p: string) => capitalizar(formatPeriodo(p))
   const guion = (n: number, m: Moneda) => (n ? formatMonto(n, m) : '—')
 
@@ -83,6 +104,16 @@ export function ContadoraPage() {
           </Boton>
           <Boton icono={FileText} disabled={!hayPagos} cargando={exportando === 'pdf'} onClick={() => exportar('pdf')}>
             Descargar PDF
+          </Boton>
+          <Boton
+            variante="borde"
+            icono={Send}
+            disabled={!hayPagos}
+            cargando={exportando === 'enviar'}
+            onClick={enviar}
+            title={perfil?.contadora_email ? `Se manda a ${perfil.contadora_email}` : 'Podés guardar el mail de tu contadora en Ajustes'}
+          >
+            Enviar a mi contadora
           </Boton>
           <label className="flex basis-full cursor-pointer items-center gap-2.5 text-[0.9375rem] text-ink2">
             <input

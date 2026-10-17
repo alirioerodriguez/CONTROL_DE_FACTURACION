@@ -32,6 +32,7 @@ export function AjustesPage() {
   const [plantilla, setPlantilla] = useState('')
   const [datosPago, setDatosPago] = useState('')
   const [matricula, setMatricula] = useState('')
+  const [mailContadora, setMailContadora] = useState('')
   const [tema, setTema] = useState<Tema>(temaActual())
   const [profesion, setProfesion] = useState('')
   const [otra, setOtra] = useState('')
@@ -62,6 +63,7 @@ export function AjustesPage() {
     setPlantilla(perfil.data.plantilla_whatsapp || PLANTILLA_WHATSAPP_DEFECTO)
     setDatosPago(perfil.data.datos_pago ?? '')
     setMatricula(perfil.data.matricula ?? '')
+    setMailContadora(perfil.data.contadora_email ?? '')
     cargarProfesion()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [perfil.data])
@@ -74,6 +76,11 @@ export function AjustesPage() {
   const conEstandar = pacientes.filter((p) => p.tipo_tarifa === 'estandar').length
 
   async function guardarCobros() {
+    const mail = mailContadora.trim()
+    if (mail && !/^[^s@]+@[^s@]+.[^s@]+$/.test(mail)) {
+      toast.error('Revisá el mail de tu contadora: tiene que ser como nombre@ejemplo.com')
+      return
+    }
     const tarifa = parseMontoAR(tarifaTxt || '0')
     if (tarifa == null || tarifa < 0) {
       toast.error('Revisá la tarifa: tiene que ser un número, por ejemplo 50.000')
@@ -92,6 +99,7 @@ export function AjustesPage() {
             plantilla_whatsapp: plantilla.trim() || PLANTILLA_WHATSAPP_DEFECTO,
             datos_pago: datosPago.trim() || null,
             matricula: matricula.trim() || null,
+            contadora_email: mail || null,
           },
         },
       ])
@@ -282,6 +290,18 @@ export function AjustesPage() {
           maxLength={300}
           onChange={(e) => setDatosPago(e.target.value)}
           placeholder="Alias, CBU o link de Mercado Pago"
+        />
+        <Campo
+          etiqueta="Mail de tu contadora"
+          opcional
+          id="mail-contadora"
+          type="email"
+          inputMode="email"
+          autoComplete="off"
+          value={mailContadora}
+          maxLength={200}
+          onChange={(e) => setMailContadora(e.target.value)}
+          placeholder="Para mandarle el reporte desde la pantalla Contadora"
         />
         <label className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
           Mensaje de recordatorio por WhatsApp

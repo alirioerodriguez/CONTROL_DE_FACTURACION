@@ -2,6 +2,7 @@
 import type { Worksheet } from 'exceljs'
 import { ETIQUETA_MEDIO, nombreCompleto, type Paciente, type Pago, type Perfil, type Sesion } from './datos'
 import { capitalizar, formatFecha, formatMonto, formatPeriodo, hoyAR, mesCorto, nombreMes, periodoDe, type Moneda } from './formato'
+import { compartirPdf, type ResultadoCompartir } from './compartir'
 import { C, caja, etiqueta, franja, montoGrande, nuevoPdf, pie, texto } from './pdfEstilo'
 import { MEDIOS, reporteContadora, reporteMes } from './reportes'
 import { tarifaVigente } from './saldos'
@@ -394,6 +395,32 @@ export async function pdfContadora(
   return doc
 }
 
+/** Texto del mail o mensaje con que se manda el reporte a la contadora. */
+export function mensajeContadora(desde: string, hasta: string, perfil: Perfil | undefined): { asunto: string; cuerpo: string } {
+  const rango = desde === hasta ? formatPeriodo(desde) : `${formatPeriodo(desde)} a ${formatPeriodo(hasta)}`
+  return {
+    asunto: `Reporte de cobros · ${rango}`,
+    cuerpo: `Hola, te paso el reporte de cobros de ${rango}.${perfil?.nombre ? `\n\n${perfil.nombre}` : ''}`,
+  }
+}
+
+const nombreArchivoContadora = (desde: string, hasta: string) => `contadora-${mesArchivo(desde)}-a-${mesArchivo(hasta)}.pdf`
+
+/** Comparte el PDF con el menú del celular. 'sin-soporte' en la mayoría de las computadoras. */
+export async function compartirContadoraPdf(
+  desde: string,
+  hasta: string,
+  perfil: Perfil | undefined,
+  pacientes: Paciente[],
+  pagos: Pago[],
+  opciones: OpcionesExport = {},
+): Promise<ResultadoCompartir> {
+  if (typeof navigator === 'undefined' || !navigator.canShare) return 'sin-soporte'
+  const doc = await pdfContadora(desde, hasta, perfil, pacientes, pagos, opciones)
+  const m = mensajeContadora(desde, hasta, perfil)
+  return compartirPdf(doc.output('blob'), nombreArchivoContadora(desde, hasta), m.asunto, m.cuerpo)
+}
+
 export async function exportarContadoraPdf(
   desde: string,
   hasta: string,
@@ -403,7 +430,7 @@ export async function exportarContadoraPdf(
   opciones: OpcionesExport = {},
 ) {
   const doc = await pdfContadora(desde, hasta, perfil, pacientes, pagos, opciones)
-  doc.save(`contadora-${mesArchivo(desde)}-a-${mesArchivo(hasta)}.pdf`)
+  doc.save(nombreArchivoContadora(desde, hasta))
 }
 
 // ---------------------------------------------------------------------

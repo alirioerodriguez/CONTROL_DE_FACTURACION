@@ -1,6 +1,7 @@
 // Recibo de pago para el paciente (PDF). No es un comprobante fiscal: lo dice el propio documento.
 import { ETIQUETA_MEDIO, nombreCompleto, type Paciente, type Pago, type Perfil } from './datos'
 import { formatFecha, formatMonto, formatPeriodo, hoyAR, numeroWhatsApp } from './formato'
+import { compartirPdf, linkMail, type ResultadoCompartir } from './compartir'
 import { C, caja, etiqueta, franja, linea, montoGrande, nuevoPdf, pie, texto } from './pdfEstilo'
 import { etiquetaProfesion } from './terminos'
 
@@ -127,30 +128,16 @@ export function linkWhatsAppRecibo(pago: Pago, paciente: Paciente, perfil: Perfi
 
 /** Link mailto con asunto y cuerpo (al mail del paciente si lo tiene). */
 export function linkMailRecibo(pago: Pago, paciente: Paciente, perfil: Perfil | undefined): string {
-  const asunto = `Recibo de pago · ${formatPeriodo(pago.periodo)}`
-  const cuerpo = `${mensajeRecibo(pago, paciente, perfil)}\n\n(El recibo va adjunto en PDF.)`
-  return `mailto:${encodeURIComponent(paciente.email ?? '')}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`
+  return linkMail(
+    paciente.email,
+    `Recibo de pago · ${formatPeriodo(pago.periodo)}`,
+    `${mensajeRecibo(pago, paciente, perfil)}\n\n(El recibo va adjunto en PDF.)`,
+  )
 }
 
-/**
- * Comparte el PDF con el menú del celular (WhatsApp, mail, etc.).
- * Devuelve 'sin-soporte' si el navegador no puede compartir archivos (la mayoría de las computadoras).
- */
-export async function compartirRecibo(
-  pago: Pago,
-  paciente: Paciente,
-  perfil: Perfil | undefined,
-  unidad: string,
-): Promise<'compartido' | 'cancelado' | 'sin-soporte'> {
+/** Comparte el PDF con el menú del celular. 'sin-soporte' en la mayoría de las computadoras. */
+export async function compartirRecibo(pago: Pago, paciente: Paciente, perfil: Perfil | undefined, unidad: string): Promise<ResultadoCompartir> {
   if (typeof navigator === 'undefined' || !navigator.canShare) return 'sin-soporte'
   const doc = await pdfRecibo(pago, paciente, perfil, unidad)
-  const archivo = new File([doc.output('blob')], `recibo-${numeroRecibo(pago)}.pdf`, { type: 'application/pdf' })
-  if (!navigator.canShare({ files: [archivo] })) return 'sin-soporte'
-  try {
-    await navigator.share({ files: [archivo], title: 'Recibo de pago', text: mensajeRecibo(pago, paciente, perfil) })
-    return 'compartido'
-  } catch (e) {
-    if (e instanceof DOMException && e.name === 'AbortError') return 'cancelado'
-    throw e
-  }
+  return compartirPdf(doc.output('blob'), `recibo-${numeroRecibo(pago)}.pdf`, 'Recibo de pago', mensajeRecibo(pago, paciente, perfil))
 }

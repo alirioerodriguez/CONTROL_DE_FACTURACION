@@ -24,6 +24,8 @@ export interface Perfil {
   matricula: string | null
   /** Alias, CBU o link de pago que se suma al recordatorio de WhatsApp. */
   datos_pago: string | null
+  /** Mail de la contadora (opcional), para mandarle el reporte. */
+  contadora_email: string | null
   tutorial_visto: boolean
   profesion: string | null
   termino: Termino
