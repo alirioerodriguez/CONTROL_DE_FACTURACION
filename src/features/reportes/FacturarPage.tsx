@@ -128,7 +128,7 @@ function ItemFactura({ item }: { item: ParaFacturar }) {
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[1.0625rem] font-semibold">{nombreCompleto(paciente)}</span>
           <span className="block text-sm text-ink2">
-            Pagó el {formatFecha(pago.fecha)} · {pago.comprobante === 'recibo' ? 'con recibo' : 'sin comprobante'}
+            {pago.pagador === 'obra_social' ? `Pagó ${paciente.obra_social || 'la obra social'} el ${formatFecha(pago.fecha)}` : `Pagó el ${formatFecha(pago.fecha)}`} · {pago.comprobante === 'recibo' ? 'con recibo' : 'sin comprobante'}
           </span>
         </span>
         <span className="text-[1.0625rem] font-semibold whitespace-nowrap tabular">{formatMonto(pago.monto, pago.moneda)}</span>

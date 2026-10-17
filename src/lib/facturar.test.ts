@@ -51,4 +51,13 @@ describe('datos para ARCA', () => {
     expect(d[d.length - 1].etiqueta).toBe('Moneda')
     expect(d.find((x) => x.etiqueta === 'Condición frente al IVA')?.valor).toBe('Monotributo')
   })
+
+  it('si pagó la obra social, la factura va a su nombre', () => {
+    const conOS = { ...pacientes[0], obra_social: 'OSDE 310', nro_afiliado: '61-1' }
+    const d = datosFactura({ pago: { ...pagos[0], pagador: 'obra_social' }, paciente: conOS }, 'sesiones')
+    expect(d.find((x) => x.etiqueta === 'Receptor')?.valor).toBe('OSDE 310')
+    expect(d.find((x) => x.etiqueta === 'Descripción')?.valor).toBe(
+      'Honorarios profesionales: sesiones de septiembre 2026 · Lucía Pérez, afiliado N.º 61-1',
+    )
+  })
 })

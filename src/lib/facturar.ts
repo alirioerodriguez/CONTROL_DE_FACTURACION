@@ -49,10 +49,26 @@ export function documentoReceptor(p: Paciente): { tipo: 'CUIT' | 'DNI'; numero: 
 /** Los datos en el orden en que los pide el formulario de ARCA (Comprobantes en línea). */
 export function datosFactura(item: ParaFacturar, unidad: string): { etiqueta: string; valor: string }[] {
   const { pago, paciente } = item
+  const periodo = `${formatFecha(pago.periodo)} al ${formatFecha(finDeMes(pago.periodo))}`
+  // Si pagó la obra social, la factura va a su nombre y la paciente se nombra en la descripción.
+  if (pago.pagador === 'obra_social') {
+    const afiliado = [nombreCompleto(paciente), paciente.nro_afiliado && `afiliado N.º ${paciente.nro_afiliado}`].filter(Boolean).join(', ')
+    const datos = [
+      { etiqueta: 'Concepto', valor: 'Servicios' },
+      { etiqueta: 'Período facturado', valor: periodo },
+      { etiqueta: 'Condición frente al IVA', valor: 'La de la obra social (ARCA la muestra al cargar el CUIT)' },
+      { etiqueta: 'Receptor', valor: paciente.obra_social || 'Obra social' },
+      { etiqueta: 'CUIT', valor: 'El de la obra social (ARCA completa el nombre al cargarlo)' },
+      { etiqueta: 'Descripción', valor: `Honorarios profesionales: ${unidad} de ${formatPeriodo(pago.periodo)} · ${afiliado}` },
+      { etiqueta: 'Importe', valor: formatMonto(pago.monto, pago.moneda) },
+    ]
+    if (pago.moneda === 'USD') datos.push({ etiqueta: 'Moneda', valor: 'Dólares: en ARCA elegí moneda extranjera y la cotización del día' })
+    return datos
+  }
   const doc = documentoReceptor(paciente)
   const datos = [
     { etiqueta: 'Concepto', valor: 'Servicios' },
-    { etiqueta: 'Período facturado', valor: `${formatFecha(pago.periodo)} al ${formatFecha(finDeMes(pago.periodo))}` },
+    { etiqueta: 'Período facturado', valor: periodo },
     { etiqueta: 'Condición frente al IVA', valor: paciente.condicion_iva || 'Consumidor final' },
     { etiqueta: 'Receptor', valor: nombreCompleto(paciente) },
     { etiqueta: doc ? doc.tipo : 'Documento', valor: doc ? doc.numero : 'Sin cargar (con consumidor final se puede omitir si el monto es bajo)' },
