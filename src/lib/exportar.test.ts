@@ -8,7 +8,7 @@ const perfil = { id: 'u', nombre: 'Ana', email: 'ana@x.com', tarifa_estandar: 50
 
 const base = {
   apellido: null, dni: null, cuil_cuit: null, condicion_iva: null, telefono: null, email: null, domicilio: null,
-  frecuencia: 'Semanal', dias_semana: [1], horas_por_sesion: 1, fecha_alta: '2026-03-01', activo: true, notas_admin: null, abono_mensual: null,
+  frecuencia: 'Semanal', dias_semana: [1], horas_por_sesion: 1, fecha_alta: '2026-03-01', activo: true, notas_admin: null, abono_mensual: null, obra_social: null, nro_afiliado: null,
 }
 const pacientes: Paciente[] = [
   { ...base, id: 'a', codigo: null, nombre: 'Lucía Fernández', tipo_tarifa: 'estandar', tarifa_personalizada: null, moneda: 'ARS' },
@@ -22,7 +22,7 @@ const sesiones: Sesion[] = [
 const pagos: Pago[] = [
   {
     id: 'g1', patient_id: 'a', fecha: '2026-11-02', periodo: '2026-10-01', monto: 50000, moneda: 'ARS', medio: 'mercadopago',
-    comprobante: 'factura_c', punto_venta: '00002', nro_factura: '00000123', session_id: 's1', observaciones: null,
+    comprobante: 'factura_c', punto_venta: '00002', nro_factura: '00000123', session_id: 's1', observaciones: null, pagador: 'paciente',
   },
 ]
 

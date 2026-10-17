@@ -38,6 +38,8 @@ export interface Perfil {
   ver_recordatorios: boolean
   /** Recibe el resumen por mail el día 1 de cada mes. */
   aviso_mensual: boolean
+  /** Trabaja con obras sociales o prepagas (función opcional). */
+  usa_obras_sociales: boolean
   /** Código del link privado del calendario (null = apagado). */
   calendario_token: string | null
   /** Ve los resultados de las pruebas con usuarias. Solo se cambia por SQL. */
@@ -62,6 +64,9 @@ export interface Paciente {
   tarifa_personalizada: number | null
   /** Cobro mensual fijo (abono). Si tiene, reemplaza la tarifa en los meses con sesiones. */
   abono_mensual: number | null
+  /** Obra social o prepaga (solo si la profesional prendió la función). */
+  obra_social: string | null
+  nro_afiliado: string | null
   moneda: Moneda
   fecha_alta: string
   activo: boolean
@@ -94,7 +99,11 @@ export interface Pago {
   nro_factura: string | null
   session_id: string | null
   observaciones: string | null
+  /** Quién pagó: el paciente o su obra social / prepaga. */
+  pagador: Pagador
 }
+
+export type Pagador = 'paciente' | 'obra_social'
 
 export const ETIQUETA_MEDIO: Record<Medio, string> = {
   efectivo: 'Efectivo',

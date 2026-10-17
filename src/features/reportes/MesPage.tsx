@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { SelectorMes, useMesSeleccionado } from '../../components/SelectorMes'
 import { Avatar, Boton, EstadoError, EstadoVacio, Esqueleto, MontoGrande, Tarjeta } from '../../components/ui'
 import { useDatos } from '../../lib/datos'
-import { etiquetaDia, formatMonto, nombreMes, plural } from '../../lib/formato'
+import { etiquetaDia, formatMonto, nombreMes, periodoDe, plural, redondear2 } from '../../lib/formato'
 import { reporteMes } from '../../lib/reportes'
 import type { EstadoSesion } from '../../lib/saldos'
 import { mensajeError } from '../../lib/supabase'
@@ -30,13 +30,20 @@ const TEXTO_ESTADO: Record<EstadoPunto, string> = {
 const COLUMNAS = 'grid-cols-[minmax(11.875rem,1.5fr)_minmax(13.75rem,2fr)_repeat(3,minmax(7.5rem,1fr))]'
 
 export function MesPage() {
-  const { pacientes, sesiones, pagos, cargando, error, reintentar } = useDatos()
+  const { perfil, pacientes, sesiones, pagos, cargando, error, reintentar } = useDatos()
   const [periodo, setPeriodo] = useMesSeleccionado()
   const { abrir } = useRegistro()
   const pal = usePalabras()
   const navegar = useNavigate()
   const [exportando, setExportando] = useState(false)
   const r = useMemo(() => reporteMes(periodo, pacientes, sesiones, pagos), [periodo, pacientes, sesiones, pagos])
+  /** Lo que pagaron las obras sociales en el mes (por fecha de pago), si la función está prendida. */
+  const deObrasSociales = useMemo(() => {
+    const t = { ARS: 0, USD: 0 }
+    if (perfil?.usa_obras_sociales)
+      for (const p of pagos) if (p.pagador === 'obra_social' && periodoDe(p.fecha) === periodo) t[p.moneda] = redondear2(t[p.moneda] + p.monto)
+    return t
+  }, [perfil?.usa_obras_sociales, pagos, periodo])
 
   if (cargando) return <Esqueleto que="el reporte" tarjetas />
   if (error) return <EstadoError que="el reporte" reintentar={reintentar} />
@@ -109,6 +116,11 @@ export function MesPage() {
                     <span className="text-ink2">de {formatMonto(t.facturado, t.moneda)} facturado</span>
                     <span className="font-semibold text-bad">Pendiente {formatMonto(t.pendiente, t.moneda)}</span>
                   </div>
+                  {deObrasSociales[t.moneda] > 0 && (
+                    <div className="text-sm text-ink2">
+                      Pagos de obras sociales en {nombreMes(periodo)}: {formatMonto(deObrasSociales[t.moneda], t.moneda)}
+                    </div>
+                  )}
                 </Tarjeta>
               )
             })}

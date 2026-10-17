@@ -91,6 +91,9 @@ export function FichaPage() {
           : 'Sin tarifa',
     },
     { k: 'Moneda', v: paciente.moneda === 'ARS' ? 'Pesos (ARS)' : 'Dólares (USD)' },
+    ...(perfil?.usa_obras_sociales
+      ? [{ k: 'Obra social', v: paciente.obra_social ? [paciente.obra_social, paciente.nro_afiliado && `N.º ${paciente.nro_afiliado}`].filter(Boolean).join(' · ') : '—' }]
+      : []),
     {
       k: 'Días fijos',
       v: paciente.dias_semana.length ? paciente.dias_semana.map((d) => capitalizar(NOMBRES_DIAS[d])).join(', ') : '—',
@@ -184,7 +187,7 @@ export function FichaPage() {
             </div>
           ) : (
             calculos.grupos.map((g) => (
-              <GrupoMes key={g.periodo} periodo={g.periodo} items={g.items} cubierto={calculos.cubierto} />
+              <GrupoMes key={g.periodo} periodo={g.periodo} items={g.items} cubierto={calculos.cubierto} obraSocial={paciente.obra_social} />
             ))
           )}
         </Tarjeta>
@@ -221,7 +224,17 @@ export function FichaPage() {
   )
 }
 
-function GrupoMes({ periodo, items, cubierto }: { periodo: string; items: Movimiento[]; cubierto: Map<string, number> }) {
+function GrupoMes({
+  periodo,
+  items,
+  cubierto,
+  obraSocial,
+}: {
+  periodo: string
+  items: Movimiento[]
+  cubierto: Map<string, number>
+  obraSocial: string | null
+}) {
   const { abrir } = useRegistro()
   const pal = usePalabras()
   const cantSesiones = items.filter((i) => i.sesion).length
@@ -294,7 +307,10 @@ function GrupoMes({ periodo, items, cubierto }: { periodo: string; items: Movimi
               <Banknote {...IC} />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-base font-semibold">Pago · {ETIQUETA_MEDIO[p.medio]}</div>
+              <div className="text-base font-semibold">
+                Pago · {ETIQUETA_MEDIO[p.medio]}
+                {p.pagador === 'obra_social' && <span className="font-normal text-ink2"> · {obraSocial || 'obra social'}</span>}
+              </div>
               <div className="mt-0.5 text-sm break-words text-ink2">
                 {etiquetaDia(p.fecha)}
                 {otroMes ? ` · de ${nombreMes(p.periodo)}` : ''}

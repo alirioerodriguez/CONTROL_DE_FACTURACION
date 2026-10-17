@@ -5,7 +5,7 @@ import { useGuardar, type Perfil } from '../../lib/datos'
 import { mensajeError } from '../../lib/supabase'
 
 /** Funciones que no todas usan: arrancan apagadas y se prenden acá. */
-type Opcion = 'ver_recordatorios' | 'aviso_mensual'
+type Opcion = 'ver_recordatorios' | 'aviso_mensual' | 'usa_obras_sociales'
 
 const OPCIONES: { clave: Opcion; titulo: string; ayuda: ReactNode; prendida: string; apagada: string }[] = [
   {
@@ -21,6 +21,13 @@ const OPCIONES: { clave: Opcion; titulo: string; ayuda: ReactNode; prendida: str
     ayuda: 'El día 1 de cada mes te llega un mail con cuánto te deben y cuánto cobraste el mes anterior.',
     prendida: 'Listo: el día 1 te llega el resumen por mail',
     apagada: 'Listo: ya no te llega el resumen por mail',
+  },
+  {
+    clave: 'usa_obras_sociales',
+    titulo: 'Obras sociales y prepagas',
+    ayuda: 'Anotá la obra social y el n.º de afiliado de cada paciente, y al cargar un pago, si pagó el paciente o la obra social.',
+    prendida: 'Listo: ya podés cargar la obra social de cada paciente',
+    apagada: 'Listo: se ocultaron las obras sociales (los datos quedan guardados)',
   },
 ]
 

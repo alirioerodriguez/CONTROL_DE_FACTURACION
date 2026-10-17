@@ -45,6 +45,8 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
   const [frecuencia, setFrecuencia] = useState(paciente?.frecuencia ?? 'Semanal')
   const [activo, setActivo] = useState(paciente?.activo ?? true)
   const [notas, setNotas] = useState(paciente?.notas_admin ?? '')
+  const [obraSocial, setObraSocial] = useState(paciente?.obra_social ?? '')
+  const [afiliado, setAfiliado] = useState(paciente?.nro_afiliado ?? '')
   const [error, setError] = useState('')
   const [confirmarBorrado, setConfirmarBorrado] = useState(false)
 
@@ -74,6 +76,9 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
       frecuencia,
       activo,
       notas_admin: notas.trim() || null,
+      ...(perfil?.usa_obras_sociales
+        ? { obra_social: obraSocial.trim() || null, nro_afiliado: obraSocial.trim() ? afiliado.trim() || null : null }
+        : {}),
     }
     try {
       if (paciente) {
@@ -141,6 +146,26 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
         onChange={(e) => setTelefono(e.target.value)}
         placeholder="11 5555-5555"
       />
+      {perfil?.usa_obras_sociales && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.4fr_1fr]">
+          <Campo
+            etiqueta="Obra social o prepaga"
+            opcional
+            value={obraSocial}
+            maxLength={80}
+            onChange={(e) => setObraSocial(e.target.value)}
+            placeholder="Ej. OSDE 310"
+          />
+          <Campo
+            etiqueta="N.º de afiliado"
+            opcional
+            value={afiliado}
+            maxLength={40}
+            disabled={!obraSocial.trim()}
+            onChange={(e) => setAfiliado(e.target.value)}
+          />
+        </div>
+      )}
 
       <div className="flex flex-col gap-2.5">
         <div className="text-[0.9375rem] font-semibold">Honorario</div>

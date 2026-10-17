@@ -7,7 +7,7 @@ import {
   Alerta, Avatar, Boton, Campo, CampoMonto, Confirmar, Hoja, IC, Pastilla, Segmentado, type Opcion,
 } from '../../components/ui'
 import {
-  ETIQUETA_MEDIO, nombreCompleto, useDatos, useGuardar, type Medio, type Paciente, type Pago, type Perfil,
+  ETIQUETA_MEDIO, nombreCompleto, useDatos, useGuardar, type Medio, type Paciente, type Pagador, type Pago, type Perfil,
 } from '../../lib/datos'
 import {
   capitalizar, etiquetaDia, formatMonto, formatPeriodo, hoyAR, montoParaInput, normalizar, parseMontoAR, periodoDe,
@@ -98,6 +98,7 @@ export function RegistroHoja({
   const [pagado, setPagado] = useState(false)
   const [medio, setMedio] = useState<Medio>(edPago?.medio ?? preferencia<Medio>('ultimoMedio', 'transferencia'))
   const [factura, setFactura] = useState(edPago?.nro_factura ?? '')
+  const [pagador, setPagador] = useState<Pagador>(edPago?.pagador ?? 'paciente')
   const [busqueda, setBusqueda] = useState('')
   const [error, setError] = useState('')
   const [confirmarBorrado, setConfirmarBorrado] = useState(false)
@@ -140,6 +141,9 @@ export function RegistroHoja({
     if (!lista.includes(periodo)) lista.push(periodo)
     return lista.sort().reverse()
   }, [hoy, periodo])
+
+  // Solo se pregunta quién pagó si la función está prendida y el paciente tiene obra social.
+  const conObraSocial = !!perfil?.usa_obras_sociales && !!paciente?.obra_social
 
   const resumenPaciente = paciente
     ? (() => {
@@ -188,6 +192,7 @@ export function RegistroHoja({
           monto,
           moneda,
           medio,
+          pagador: conObraSocial ? pagador : 'paciente',
           nro_factura: nro || null,
           comprobante: nro ? 'factura_c' : 'sin_comprobante',
         }
@@ -405,6 +410,21 @@ export function RegistroHoja({
             onCambio={setPagado}
             className="w-[11.25rem]"
             alto="h-10"
+          />
+        </div>
+      )}
+
+      {!esSesion && conObraSocial && paciente?.obra_social && (
+        <div className="flex flex-col gap-2.5">
+          <div className="text-[0.9375rem] font-semibold">Quién paga</div>
+          <Segmentado
+            opciones={[
+              { v: 'paciente' as Pagador, l: 'El paciente' },
+              { v: 'obra_social' as Pagador, l: paciente.obra_social },
+            ]}
+            valor={pagador}
+            onCambio={setPagador}
+            className="[&>button]:text-sm [&>button]:leading-tight [&>button]:whitespace-normal"
           />
         </div>
       )}

@@ -16,6 +16,7 @@ function pago(fecha: string, monto: number, moneda: 'ARS' | 'USD' = 'ARS'): Pago
     nro_factura: null,
     session_id: null,
     observaciones: null,
+    pagador: 'paciente',
   }
 }
 

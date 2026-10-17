@@ -721,6 +721,17 @@ select cron.schedule(
 );
 
 -- ---------------------------------------------------------------------------
+-- Obras sociales y prepagas (opcional, se prende en Ajustes): datos del paciente y quién pagó cada pago.
+-- ---------------------------------------------------------------------------
+alter table public.profiles add column if not exists usa_obras_sociales boolean not null default false;
+alter table public.patients add column if not exists obra_social text
+  check (obra_social is null or char_length(obra_social) <= 80);
+alter table public.patients add column if not exists nro_afiliado text
+  check (nro_afiliado is null or char_length(nro_afiliado) <= 40);
+alter table public.payments add column if not exists pagador text not null default 'paciente'
+  check (pagador in ('paciente', 'obra_social'));
+
+-- ---------------------------------------------------------------------------
 create or replace function public.user_id_inmutable()
 returns trigger
 language plpgsql
