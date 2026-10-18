@@ -277,8 +277,9 @@ function ConFacturitas({ visibles, pendientes }: { visibles: ParaFacturar[]; pen
           </ul>
           {cruce.sinCruzar > 0 && (
             <div className="text-sm text-ink2">
-              {cruce.sinCruzar} {cruce.sinCruzar === 1 ? 'fila del archivo no coincide' : 'filas del archivo no coinciden'} con ningún pago pendiente
-              y no se tocan.
+              {cruce.sinCruzar === 1
+                ? '1 fila del archivo no coincide con ningún pago pendiente y no se toca.'
+                : `${cruce.sinCruzar} filas del archivo no coinciden con ningún pago pendiente y no se tocan.`}
             </div>
           )}
           <div className="flex flex-wrap gap-2 pt-1">
