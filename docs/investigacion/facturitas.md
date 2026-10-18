@@ -51,6 +51,11 @@ honorapp ya tiene la pantalla **Para facturar**: los pagos sin Factura C con los
 
 **Recomendación:** hacer la **A** como función de la versión paga y, en paralelo, **escribirle a Facturitas** para explorar la **B**. Si la B sale, reemplaza a la A sin tirar nada: los datos son los mismos que ya arma «Para facturar». Dejar la C para cuando haya muchas usuarias pagas.
 
+## Estado (18/10/2026)
+- **Opción A hecha** en «Para facturar»: «Bajar planilla» (columnas provisorias en `src/lib/facturitas.ts`, `COLUMNAS_FACTURITAS`) y «Subir resumen», que cruza por importe y fecha y marca los pagos como facturados.
+- Cuando tengamos el modelo oficial, se ajusta `COLUMNAS_FACTURITAS` y, si hace falta, el reconocimiento de columnas de `cruzarResumen`.
+- Borrador del mail para el convenio: `mail-facturitas.md`.
+
 ## Sobre la versión paga de honorapp
 
 Hoy honorapp no tiene planes ni cobro. Para «sumarlo a la versión paga» hace falta, antes:
