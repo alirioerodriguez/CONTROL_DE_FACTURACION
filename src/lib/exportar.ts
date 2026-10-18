@@ -5,6 +5,7 @@ import { capitalizar, formatFecha, formatMonto, formatPeriodo, hoyAR, mesCorto, 
 import { compartirPdf, type ResultadoCompartir } from './compartir'
 import { C, caja, etiqueta, franja, montoGrande, nuevoPdf, pie, texto } from './pdfEstilo'
 import { MEDIOS, reporteContadora, reporteMes } from './reportes'
+import type { ParaFacturar } from './facturar'
 import { tarifaVigente } from './saldos'
 
 type Fila = (string | number | Date | null)[]
@@ -581,4 +582,23 @@ export async function libroBackup(perfil: Perfil | undefined, pacientes: Pacient
 
 export async function exportarBackup(perfil: Perfil | undefined, pacientes: Paciente[], sesiones: Sesion[], pagos: Pago[]) {
   await guardarLibro(await libroBackup(perfil, pacientes, sesiones, pagos), `honorapp-datos-${hoyAR()}.xlsx`)
+}
+
+// ---------------------------------------------------------------------
+// Planilla para la facturación masiva de Facturitas (ver lib/facturitas.ts)
+// ---------------------------------------------------------------------
+
+export async function exportarParaFacturitas(items: ParaFacturar[], unidad: string) {
+  const { COLUMNAS_FACTURITAS, filasFacturitas } = await import('./facturitas')
+  const libro = await libroNuevo()
+  const hoja = libro.addWorksheet('Facturas')
+  const filas = filasFacturitas(items, unidad).map((f) =>
+    f.map((v, i) => (COLUMNAS_FACTURITAS[i].tipo === 'fecha' && typeof v === 'string' ? fechaExcel(v) : v)),
+  )
+  tabla(
+    hoja,
+    COLUMNAS_FACTURITAS.map((c) => ({ titulo: c.titulo, tipo: c.tipo, ancho: c.titulo === 'Descripción' ? 48 : c.tipo === 'fecha' ? 13 : 20 })),
+    filas,
+  )
+  await guardarLibro(libro, `facturitas-${hoyAR()}.xlsx`)
 }

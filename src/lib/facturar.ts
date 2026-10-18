@@ -33,7 +33,7 @@ export function pagosParaFacturar(pagos: Pago[], pacientes: Paciente[], desde: s
 }
 
 /** Último día del mes de un periodo 'AAAA-MM-01'. */
-function finDeMes(periodo: string): string {
+export function finDeMes(periodo: string): string {
   const [a, m] = periodo.split('-').map(Number)
   return `${periodo.slice(0, 8)}${String(new Date(Date.UTC(a, m, 0)).getUTCDate()).padStart(2, '0')}`
 }

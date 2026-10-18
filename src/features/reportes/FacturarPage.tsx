@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check, ChevronDown, ChevronLeft, Copy, ExternalLink, ReceiptText } from 'lucide-react'
+import { Check, ChevronDown, ChevronLeft, Copy, Download, ExternalLink, ReceiptText, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { Boton, Campo, EstadoError, EstadoVacio, Esqueleto, IC, Pastilla, Tarjeta, Titulo } from '../../components/ui'
 import { usePalabras } from '../../components/usePalabras'
 import { nombreCompleto, useDatos, useGuardar } from '../../lib/datos'
 import { datosFactura, pagosParaFacturar, textoFactura, type ParaFacturar } from '../../lib/facturar'
 import { capitalizar, formatFecha, formatMonto, formatPeriodo, hoyAR, periodoDe, sumarMeses, type Moneda } from '../../lib/formato'
+import type { ResultadoCruce } from '../../lib/facturitas'
 import { mensajeError } from '../../lib/supabase'
 
 const ARCA = 'https://auth.afip.gob.ar/contribuyente_/login.xhtml'
@@ -27,6 +28,8 @@ export function FacturarPage() {
   const actual = periodoDe(hoyAR())
   const [meses, setMeses] = useState(3)
   const lista = useMemo(() => pagosParaFacturar(pagos, pacientes, sumarMeses(actual, -(meses - 1))), [pagos, pacientes, actual, meses])
+  // El resumen de Facturitas se cruza con todo lo pendiente del último año, no solo con lo que se ve.
+  const pendientesAnio = useMemo(() => pagosParaFacturar(pagos, pacientes, sumarMeses(actual, -11)).flatMap((m) => m.items), [pagos, pacientes, actual])
 
   if (cargando) return <Esqueleto que="los pagos para facturar" />
   if (error) return <EstadoError que="los pagos para facturar" reintentar={reintentar} />
@@ -61,6 +64,10 @@ export function FacturarPage() {
           </Pastilla>
         ))}
       </div>
+
+      {(lista.length > 0 || pendientesAnio.length > 0) && (
+        <ConFacturitas visibles={lista.flatMap((m) => m.items)} pendientes={pendientesAnio} />
+      )}
 
       {lista.length === 0 ? (
         <EstadoVacio icono={Check} titulo="Todo facturado">
@@ -180,5 +187,129 @@ function ItemFactura({ item }: { item: ParaFacturar }) {
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * Facturar todo junto con Facturitas: se baja la planilla para su facturación masiva y, después, se sube el
+ * resumen que da Facturitas para marcar los pagos como facturados. Ver docs/investigacion/facturitas.md.
+ */
+function ConFacturitas({ visibles, pendientes }: { visibles: ParaFacturar[]; pendientes: ParaFacturar[] }) {
+  const pal = usePalabras()
+  const guardar = useGuardar()
+  const archivo = useRef<HTMLInputElement>(null)
+  const [bajando, setBajando] = useState(false)
+  const [leyendo, setLeyendo] = useState(false)
+  const [cruce, setCruce] = useState<ResultadoCruce | null>(null)
+
+  async function descargar() {
+    setBajando(true)
+    try {
+      const { exportarParaFacturitas } = await import('../../lib/exportar')
+      await exportarParaFacturitas(visibles, pal.sesiones)
+      toast.success(`Planilla descargada con ${visibles.length} ${visibles.length === 1 ? 'pago' : 'pagos'}. Subila en Facturitas → Facturación Masiva.`)
+    } catch (e) {
+      toast.error(`No se pudo armar la planilla: ${mensajeError(e)}`)
+    } finally {
+      setBajando(false)
+    }
+  }
+
+  async function leer(f: File) {
+    setLeyendo(true)
+    try {
+      const [{ leerArchivo }, { cruzarResumen }] = await Promise.all([import('../../lib/importar/leer'), import('../../lib/facturitas')])
+      const hojas = await leerArchivo(f)
+      const hoja = hojas.find((h) => h.filas.length > 0) ?? hojas[0]
+      const r = cruzarResumen(hoja, pendientes)
+      if (r.columnasFaltantes.length) toast.error(`El archivo no tiene: ${r.columnasFaltantes.join(', ')}. ¿Es el resumen que da Facturitas?`)
+      else if (!r.coincidencias.length) toast.error('Ninguna factura del archivo coincide con un pago pendiente (mismo importe y fecha cercana).')
+      else setCruce(r)
+    } catch (e) {
+      toast.error(mensajeError(e))
+    } finally {
+      setLeyendo(false)
+      if (archivo.current) archivo.current.value = ''
+    }
+  }
+
+  async function confirmar() {
+    if (!cruce) return
+    try {
+      await guardar.mutateAsync(
+        cruce.coincidencias.map((c) => ({
+          tipo: 'actualizar' as const,
+          tabla: 'payments' as const,
+          id: c.item.pago.id,
+          cambios: { comprobante: 'factura_c', nro_factura: c.numero },
+        })),
+      )
+      toast.success(`${cruce.coincidencias.length} ${cruce.coincidencias.length === 1 ? 'pago marcado' : 'pagos marcados'} como facturados`)
+      setCruce(null)
+    } catch (e) {
+      toast.error(`No se pudo guardar: ${mensajeError(e)}`)
+    }
+  }
+
+  return (
+    <Tarjeta className="flex flex-col gap-3 p-[1.375rem]">
+      <h2 className="m-0 text-lg font-semibold">Facturar todo junto con Facturitas</h2>
+      <p className="m-0 text-[0.9375rem] leading-normal text-ink2">
+        Si usás Facturitas (plan Profesional), bajá la planilla con estos pagos y subila en su Facturación Masiva. Después subí acá el
+        resumen que te da Facturitas y los pagos quedan marcados como facturados, con su número.
+      </p>
+      {cruce ? (
+        <div className="flex flex-col gap-2 rounded-2xl bg-surface2 p-4">
+          <div className="text-base font-semibold">
+            {cruce.coincidencias.length} {cruce.coincidencias.length === 1 ? 'factura coincide' : 'facturas coinciden'} con pagos pendientes
+          </div>
+          <ul className="m-0 flex list-none flex-col gap-1 p-0 text-[0.9375rem]">
+            {cruce.coincidencias.map((c) => (
+              <li key={c.item.pago.id} className="flex flex-wrap justify-between gap-x-3">
+                <span>
+                  {nombreCompleto(c.item.paciente)} · {formatFecha(c.item.pago.fecha)}
+                </span>
+                <span className="text-ink2 tabular">
+                  {formatMonto(c.item.pago.monto, c.item.pago.moneda)} → {c.numero}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {cruce.sinCruzar > 0 && (
+            <div className="text-sm text-ink2">
+              {cruce.sinCruzar} {cruce.sinCruzar === 1 ? 'fila del archivo no coincide' : 'filas del archivo no coinciden'} con ningún pago pendiente
+              y no se tocan.
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Boton icono={Check} cargando={guardar.isPending} onClick={confirmar}>
+              Marcar como facturados
+            </Boton>
+            <Boton variante="texto" onClick={() => setCruce(null)}>
+              Cancelar
+            </Boton>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          <Boton variante="borde" icono={Download} disabled={!visibles.length} cargando={bajando} onClick={descargar}>
+            Bajar planilla ({visibles.length})
+          </Boton>
+          <Boton variante="borde" icono={Upload} cargando={leyendo} onClick={() => archivo.current?.click()}>
+            Subir resumen
+          </Boton>
+          <input
+            ref={archivo}
+            type="file"
+            accept=".xlsx,.csv"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) void leer(f)
+            }}
+          />
+        </div>
+      )}
+    </Tarjeta>
   )
 }
