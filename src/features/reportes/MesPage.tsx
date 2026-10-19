@@ -132,7 +132,7 @@ export function MesPage() {
 
           <Tarjeta className="overflow-hidden">
             <div className="overflow-x-auto">
-              <div className="min-w-[45rem]">
+              <div className="min-w-[54rem]">
                 <div className={`grid ${COLUMNAS} gap-3 border-b border-line px-[1.375rem] py-4 text-[0.8125rem] font-bold tracking-[.06em] text-ink2 uppercase`}>
                   <div>Paciente</div>
                   <div>{pal.Sesiones}</div>

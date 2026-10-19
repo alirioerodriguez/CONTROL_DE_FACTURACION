@@ -129,16 +129,18 @@ function ItemFactura({ item }: { item: ParaFacturar }) {
   return (
     <div className="rounded-2xl px-3.5 py-3 [&+&]:border-t [&+&]:border-line">
       <button type="button" onClick={() => setAbierto(!abierto)} aria-expanded={abierto} className="flex w-full items-center gap-3 bg-transparent p-0 text-left">
-        <span className="grid size-11 shrink-0 place-items-center rounded-[0.875rem] bg-surface2 text-ink2">
+        {/* En el celular el ícono se oculta y el monto va debajo del nombre, para que el texto entre en una línea. */}
+        <span className="hidden size-11 shrink-0 place-items-center rounded-[0.875rem] bg-surface2 text-ink2 sm:grid">
           <ReceiptText {...IC} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[1.0625rem] font-semibold">{nombreCompleto(paciente)}</span>
+          <span className="block text-base font-semibold tabular sm:hidden">{formatMonto(pago.monto, pago.moneda)}</span>
           <span className="block text-sm text-ink2">
             {pago.pagador === 'obra_social' ? `Pagó ${paciente.obra_social || 'la obra social'} el ${formatFecha(pago.fecha)}` : `Pagó el ${formatFecha(pago.fecha)}`} · {pago.comprobante === 'recibo' ? 'con recibo' : 'sin comprobante'}
           </span>
         </span>
-        <span className="text-[1.0625rem] font-semibold whitespace-nowrap tabular">{formatMonto(pago.monto, pago.moneda)}</span>
+        <span className="hidden text-[1.0625rem] font-semibold whitespace-nowrap tabular sm:inline">{formatMonto(pago.monto, pago.moneda)}</span>
         <ChevronDown {...IC} className={`shrink-0 text-ink2 transition-transform ${abierto ? 'rotate-180' : ''}`} />
       </button>
 
