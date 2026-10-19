@@ -2,8 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useLayoutEffect, use
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import {
-  Calendar, ChartColumn, Check, FileSpreadsheet, House, MessageCircle, Plus, SlidersHorizontal, Smartphone, Sparkles,
-  Upload, Users, type LucideIcon,
+  Calendar, CalendarDays, ChartColumn, Check, Eye, FileSpreadsheet, House, Landmark, MessageCircle, Plus, ReceiptText,
+  SlidersHorizontal, Smartphone, Sparkles, ToggleRight, Upload, Users, Wallet, type LucideIcon,
 } from 'lucide-react'
 import { Boton, IC } from '../../components/ui'
 import { usePalabras } from '../../components/usePalabras'
@@ -46,7 +46,7 @@ function armarPasos(p: Palabras): Paso[] {
     icono: Users,
     titulo: 'Tus pacientes',
     texto:
-      `Creá cada paciente con su teléfono, si usa tu tarifa estándar o una personalizada${p.porHora ? `, cuánto dura la ${p.sesion}` : ''} y sus días fijos (por ejemplo, todos los lunes).`,
+      `Creá cada paciente con su teléfono, si usa tu tarifa estándar, una personalizada o un abono mensual fijo${p.porHora ? `, cuánto dura la ${p.sesion}` : ''} y sus días fijos (por ejemplo, todos los lunes).`,
   },
   {
     ruta: '/pacientes',
@@ -62,7 +62,7 @@ function armarPasos(p: Palabras): Paso[] {
     icono: Plus,
     titulo: 'Registrar en segundos',
     texto:
-      `Con «Registrar» cargás una ${p.sesion} o un pago: elegís paciente, fecha y monto, y listo. Si ya te pagó la ${p.sesion}, lo marcás en el mismo paso.`,
+      `Con «Registrar» cargás una ${p.sesion} o un pago: elegís paciente, fecha y monto, y listo. Si ya te pagó la ${p.sesion}, lo marcás en el mismo paso. Al abrir un pago podés descargar el recibo o mandarlo por WhatsApp o mail.`,
   },
   {
     ruta: '/pacientes',
@@ -81,11 +81,19 @@ function armarPasos(p: Palabras): Paso[] {
   },
   {
     ruta: '/',
+    objetivo: 'monotributo',
+    icono: Landmark,
+    titulo: 'Tu tope del monotributo',
+    texto:
+      'Si sos monotributista, elegí tu categoría y acá ves cuánto cobraste en los últimos 12 meses contra el tope. Te avisamos cuando te acercás y te sugerimos la categoría que te correspondería.',
+  },
+  {
+    ruta: '/',
     objetivo: 'sin-abonar',
     icono: MessageCircle,
     titulo: 'Recordatorios por WhatsApp',
     texto:
-      `Acá aparecen las ${p.sesiones} sin abonar. Con el botón verde le mandás al paciente un recordatorio ya escrito con lo que debe. El mensaje lo podés cambiar en Ajustes.`,
+      `Acá aparecen las ${p.sesiones} sin abonar. Con el botón verde le mandás al paciente un recordatorio ya escrito con lo que debe. El mensaje lo podés cambiar en Ajustes, donde también podés prender una pantalla de Recordatorios para llevar la cuenta de a quién ya le escribiste.`,
   },
   {
     ruta: '/mes',
@@ -101,7 +109,47 @@ function armarPasos(p: Palabras): Paso[] {
     icono: FileSpreadsheet,
     titulo: 'Para tu contadora',
     texto:
-      'Elegí el período y descargá el reporte en Excel o PDF: cobros por mes, moneda y medio de pago, con los números de factura y el total de los últimos 12 meses.',
+      'Elegí el período y descargá el reporte en Excel o PDF: cobros por mes, moneda y medio de pago, con los números de factura y el total de los últimos 12 meses. También podés elegir qué pacientes incluir y mandárselo directo a tu contadora.',
+  },
+  {
+    ruta: '/contadora',
+    objetivo: 'para-facturar',
+    icono: ReceiptText,
+    titulo: 'Para facturar',
+    texto:
+      'Cuando tenés pagos sin factura, aparece este acceso. Adentro están los datos listos para hacer la Factura C en ARCA y, si usás Facturitas, una planilla para facturar todo junto. Después marcás los pagos como facturados.',
+  },
+  {
+    ruta: '/ajustes',
+    objetivo: 'letra',
+    icono: Eye,
+    titulo: 'A tu medida',
+    texto:
+      'Agrandá la letra si te cuesta leer y, más abajo, prendé el modo oscuro o los colores para daltonismo (azul y naranja en lugar de verde y rojo).',
+  },
+  {
+    ruta: '/ajustes',
+    objetivo: 'opciones',
+    icono: ToggleRight,
+    titulo: 'Funciones opcionales',
+    texto:
+      'Prendé solo lo que te sirva: la pantalla de Recordatorios, un resumen por mail el día 1 de cada mes y las obras sociales y prepagas (para anotar si pagó el paciente o su obra social).',
+  },
+  {
+    ruta: '/ajustes',
+    objetivo: 'calendario',
+    icono: CalendarDays,
+    titulo: `Tus ${p.sesiones} en Google Calendar`,
+    texto:
+      `Creá tu link privado y agregalo a Google Calendar (o al calendario del iPhone): tus ${p.sesiones} aparecen solas, solo con las iniciales del paciente.`,
+  },
+  {
+    ruta: '/ajustes',
+    objetivo: 'mis-cuentas',
+    icono: Wallet,
+    titulo: 'Tus cobros en Mis Cuentas',
+    texto:
+      'Si usás Mis Cuentas, nuestra app de gastos personales, con el mismo mail, enlazalas y lo que cobrás llega allá como ingreso, un total por mes. Nunca viajan los datos de tus pacientes.',
   },
   {
     ruta: '/ajustes',

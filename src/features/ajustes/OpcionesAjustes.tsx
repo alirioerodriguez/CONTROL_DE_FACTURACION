@@ -62,7 +62,7 @@ export function OpcionesAjustes({ perfil }: { perfil: Perfil }) {
   }
 
   return (
-    <Tarjeta className="flex flex-col gap-1 p-[1.375rem]">
+    <Tarjeta data-tour="opciones" className="flex flex-col gap-1 p-[1.375rem]">
       <h2 className="m-0 text-lg font-semibold">Funciones opcionales</h2>
       <p className="m-0 mb-1 text-[0.9375rem] leading-normal text-ink2">Prendé solo lo que te sirva.</p>
       {OPCIONES.map((o, i) => (

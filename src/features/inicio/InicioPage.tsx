@@ -119,7 +119,7 @@ export function InicioPage() {
         </div>
       </div>
 
-      {perfil && <TarjetaMonotributo perfil={perfil} pagos={pagos} />}
+      <div data-tour="monotributo">{perfil && <TarjetaMonotributo perfil={perfil} pagos={pagos} />}</div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:grid-cols-[repeat(auto-fit,minmax(min(100%,26.25rem),1fr))]">
         <Tarjeta className="@container p-2" data-tour="sin-abonar">

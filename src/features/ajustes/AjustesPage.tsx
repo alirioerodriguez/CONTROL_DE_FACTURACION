@@ -173,7 +173,7 @@ export function AjustesPage() {
     <section className="flex max-w-[45rem] flex-col gap-4">
       <h1 className="m-0 mb-2 font-serif text-[clamp(2.375rem,5cqi,3.25rem)] leading-none font-normal">Ajustes</h1>
 
-      <Tarjeta className="flex flex-col gap-[1.125rem] p-[1.375rem]">
+      <Tarjeta data-tour="letra" className="flex flex-col gap-[1.125rem] p-[1.375rem]">
         <h2 className="m-0 text-lg font-semibold">Tamaño de letra</h2>
         <p className="m-0 text-[0.9375rem] leading-normal text-ink2">
           Agrandá todo para leer más cómodo. Se guarda en este dispositivo.

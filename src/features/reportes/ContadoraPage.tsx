@@ -196,6 +196,7 @@ export function ContadoraPage() {
       {sinFactura > 0 && (
         <button
           type="button"
+          data-tour="para-facturar"
           onClick={() => navegar('/facturar')}
           className="flex items-center gap-3 rounded-[1.375rem] border border-line bg-surface px-[1.375rem] py-4 text-left hover:bg-surface2"
         >

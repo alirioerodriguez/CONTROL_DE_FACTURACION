@@ -101,7 +101,7 @@ export function OtraApp() {
   )
 
   return (
-    <div className="flex flex-col gap-3 rounded-[1.375rem] bg-acc-soft p-[1.375rem] text-acc-strong">
+    <div data-tour="mis-cuentas" className="flex flex-col gap-3 rounded-[1.375rem] bg-acc-soft p-[1.375rem] text-acc-strong">
       <h2 className="m-0 flex items-center gap-2.5 text-lg font-semibold">
         <Wallet {...IC} />
         Mis Cuentas

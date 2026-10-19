@@ -41,7 +41,7 @@ export function CalendarioAjustes({ perfil }: { perfil: Perfil }) {
   const google = token ? `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(link.replace(/^https:/, 'webcal:'))}` : ''
 
   return (
-    <Tarjeta className="flex flex-col gap-3 p-[1.375rem]">
+    <Tarjeta data-tour="calendario" className="flex flex-col gap-3 p-[1.375rem]">
       <h2 className="m-0 flex items-center gap-2.5 text-lg font-semibold">
         <CalendarDays {...IC} />
         Tus {pal.sesiones} en Google Calendar
