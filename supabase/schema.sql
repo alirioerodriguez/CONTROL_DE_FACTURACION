@@ -782,6 +782,28 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
+-- Topes de sentido común: fechas entre 2000 y 2100 (atrapa errores de tipeo como 20026) y hasta 24 horas.
+-- ---------------------------------------------------------------------------
+do $$
+declare r record;
+begin
+  for r in
+    select * from (values
+      ('sessions', 'sessions_fecha_rango', 'fecha between ''2000-01-01'' and ''2100-12-31'''),
+      ('sessions', 'sessions_horas_tope', 'horas <= 24'),
+      ('payments', 'payments_fecha_rango', 'fecha between ''2000-01-01'' and ''2100-12-31'''),
+      ('payments', 'payments_periodo_rango', 'periodo between ''2000-01-01'' and ''2100-12-01'''),
+      ('patients', 'patients_alta_rango', 'fecha_alta between ''2000-01-01'' and ''2100-12-31'''),
+      ('patients', 'patients_horas_tope', 'horas_por_sesion <= 24')
+    ) as v(tabla, nombre, regla)
+  loop
+    if not exists (select 1 from pg_constraint where conname = r.nombre) then
+      execute format('alter table public.%I add constraint %I check (%s)', r.tabla, r.nombre, r.regla);
+    end if;
+  end loop;
+end $$;
+
+-- ---------------------------------------------------------------------------
 create or replace function public.user_id_inmutable()
 returns trigger
 language plpgsql

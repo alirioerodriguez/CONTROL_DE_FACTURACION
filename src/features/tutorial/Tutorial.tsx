@@ -101,7 +101,7 @@ function armarPasos(p: Palabras): Paso[] {
     icono: ChartColumn,
     titulo: 'Reporte del mes',
     texto:
-      `Cuánto facturaste, cuánto cobraste y quién debe, paciente por paciente, con cada ${p.sesion} marcada como pagada, parcial o pendiente. Lo podés descargar en Excel.`,
+      `Cuánto tenías para cobrar, cuánto cobraste y quién debe, paciente por paciente, con cada ${p.sesion} marcada como pagada, parcial o pendiente. Lo podés descargar en Excel.`,
   },
   {
     ruta: '/contadora',

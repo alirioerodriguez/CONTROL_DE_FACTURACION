@@ -14,7 +14,7 @@ App publicada: **https://control-de-facturacion-eight.vercel.app**
 - **Registrar**: sesión o pago en pocos toques (en el celular, botón flotante).
 - **Cobro mensual**: lo que se debe de un mes es la suma de sus sesiones. Cada pago se imputa a un mes; lo que sobra cancela los meses impagos más viejos. Si cambia la tarifa, las sesiones ya cargadas conservan su precio.
 - **Inicio**: cobrado y pendiente del mes, sesiones sin abonar con recordatorio por WhatsApp (mensaje editable en Ajustes) y gráfico de 6 meses.
-- **Reporte del mes**: facturado, cobrado y pendiente por paciente, con cada sesión marcada como pagada, parcial o pendiente. Se descarga en Excel.
+- **Reporte del mes**: a cobrar, cobrado y pendiente por paciente, con cada sesión marcada como pagada, parcial o pendiente. Se descarga en Excel.
 - **Reporte para contadora**: cobros por fecha de pago, por mes, moneda y medio, con números de factura y total de los últimos 12 meses. Se descarga en Excel o PDF.
 - **Importar** `.xlsx` o `.csv`: reconoce la plantilla de la app (hojas Pacientes, Sesiones, Pagos) o deja elegir las columnas de cualquier planilla. Valida fechas `dd/mm/aaaa` y montos `25.000,50`, muestra las filas con error, no duplica lo ya cargado, pregunta antes de crear pacientes y guarda todo o nada.
 - **Descargar Excel**: sin datos, baja la plantilla vacía para completar; con datos, baja todo en ese mismo formato (sirve de backup y se puede volver a subir).

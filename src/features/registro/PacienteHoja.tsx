@@ -49,6 +49,8 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
   const [afiliado, setAfiliado] = useState(paciente?.nro_afiliado ?? '')
   const [error, setError] = useState('')
   const [confirmarBorrado, setConfirmarBorrado] = useState(false)
+  // Id fijo mientras la hoja está abierta: reintentar después de un corte no crea el paciente dos veces.
+  const [idNuevo] = useState(() => crypto.randomUUID())
 
   function alternarDia(d: number) {
     setDias((actuales) => (actuales.includes(d) ? actuales.filter((x) => x !== d) : [...actuales, d].sort()))
@@ -86,12 +88,10 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
         toast.success('Paciente actualizado')
         onCerrar()
       } else {
-        const [creados] = await guardar.mutateAsync([
-          { tipo: 'insertar', tabla: 'patients', filas: [{ ...fila, fecha_alta: hoyAR() }] },
-        ])
+        await guardar.mutateAsync([{ tipo: 'insertar', tabla: 'patients', filas: [{ ...fila, id: idNuevo, fecha_alta: hoyAR() }] }])
         toast.success(`Paciente creado · ${limpio}`)
         onCerrar()
-        if (creados[0]?.id) navegar(`/pacientes/${creados[0].id}`)
+        navegar(`/pacientes/${idNuevo}`)
       }
     } catch (e) {
       setError(mensajeError(e))

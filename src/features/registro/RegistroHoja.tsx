@@ -99,6 +99,8 @@ export function RegistroHoja({
   const [medio, setMedio] = useState<Medio>(edPago?.medio ?? preferencia<Medio>('ultimoMedio', 'transferencia'))
   const [factura, setFactura] = useState(edPago?.nro_factura ?? '')
   const [pagador, setPagador] = useState<Pagador>(edPago?.pagador ?? 'paciente')
+  // Ids fijos mientras la hoja está abierta: si se reintenta después de un corte, no se duplica nada.
+  const [ids] = useState(() => ({ sesion: crypto.randomUUID(), pago: crypto.randomUUID() }))
   const [busqueda, setBusqueda] = useState('')
   const [error, setError] = useState('')
   const [confirmarBorrado, setConfirmarBorrado] = useState(false)
@@ -166,21 +168,25 @@ export function RegistroHoja({
     try {
       if (esSesion) {
         const fila = { patient_id: pid, fecha, horas, tarifa_hora: redondear2(monto / horas), moneda, estado }
+        const conPago = pagado && estado !== 'cancelada'
         if (edSesion) {
           await guardar.mutateAsync([{ tipo: 'actualizar', tabla: 'sessions', id: edSesion.id, cambios: fila }])
           toast.success(`${pal.Sesion} actualizada`)
         } else {
-          const [creadas] = await guardar.mutateAsync([{ tipo: 'insertar', tabla: 'sessions', filas: [fila] }])
-          if (pagado && estado !== 'cancelada') {
-            guardarPreferencia('ultimoMedio', medio)
-            await guardar.mutateAsync([
-              {
-                tipo: 'insertar',
-                tabla: 'payments',
-                filas: [{ patient_id: pid, fecha, periodo: periodoDe(fecha), monto, moneda, medio, session_id: creadas[0]?.id }],
-              },
-            ])
-          }
+          if (conPago) guardarPreferencia('ultimoMedio', medio)
+          // Sesión y pago en un solo envío; con ids fijos, reintentar no los duplica.
+          await guardar.mutateAsync([
+            { tipo: 'insertar', tabla: 'sessions', filas: [{ ...fila, id: ids.sesion }] },
+            ...(conPago
+              ? [
+                  {
+                    tipo: 'insertar' as const,
+                    tabla: 'payments' as const,
+                    filas: [{ id: ids.pago, patient_id: pid, fecha, periodo: periodoDe(fecha), monto, moneda, medio, session_id: ids.sesion }],
+                  },
+                ]
+              : []),
+          ])
           toast.success(`${pal.Sesion} guardada · ${nombre} · ${formatMonto(monto, moneda)} · ${pagado ? 'pagada' : 'pendiente'}`)
         }
       } else {
@@ -201,7 +207,7 @@ export function RegistroHoja({
           await guardar.mutateAsync([{ tipo: 'actualizar', tabla: 'payments', id: edPago.id, cambios: fila }])
           toast.success('Pago actualizado')
         } else {
-          await guardar.mutateAsync([{ tipo: 'insertar', tabla: 'payments', filas: [fila] }])
+          await guardar.mutateAsync([{ tipo: 'insertar', tabla: 'payments', filas: [{ ...fila, id: ids.pago }] }])
           toast.success(`Pago registrado · ${nombre} · ${formatMonto(monto, moneda)}`)
         }
       }

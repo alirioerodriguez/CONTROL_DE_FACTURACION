@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Banknote, Calendar, CalendarPlus, ChevronLeft, MessageCircle, Pencil } from 'lucide-react'
 import { toast } from 'sonner'
@@ -333,6 +333,12 @@ function GenerarSesiones({ paciente, tarifa, onCerrar }: { paciente: Paciente; t
   const horas = pal.porHora ? paciente.horas_por_sesion : 1
   const actual = periodoDe(hoyAR())
   const [periodo, setPeriodo] = useState(actual)
+  // Un id fijo por fecha mientras la hoja está abierta: si se reintenta después de un corte, no se duplican.
+  const idsPorFecha = useRef(new Map<string, string>())
+  const idDe = (fecha: string) => {
+    if (!idsPorFecha.current.has(fecha)) idsPorFecha.current.set(fecha, crypto.randomUUID())
+    return idsPorFecha.current.get(fecha)!
+  }
 
   const yaCargadas = new Set(sesiones.filter((s) => s.patient_id === paciente.id).map((s) => s.fecha))
   const fechas = fechasDelMes(periodo, paciente.dias_semana)
@@ -347,6 +353,7 @@ function GenerarSesiones({ paciente, tarifa, onCerrar }: { paciente: Paciente; t
           tipo: 'insertar',
           tabla: 'sessions',
           filas: nuevas.map((fecha) => ({
+            id: idDe(fecha),
             patient_id: paciente.id,
             fecha,
             horas,

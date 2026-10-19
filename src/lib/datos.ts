@@ -244,7 +244,13 @@ type Operacion =
 async function ejecutar(op: Operacion) {
   if (!navigator.onLine) throw new Error('Sin conexión: no se puede guardar ahora.')
   if (op.tipo === 'insertar') {
-    const { data, error } = await supabase.from(op.tabla).insert(op.filas).select()
+    // Si las filas traen su id (generado al abrir el formulario), un reintento después de un corte de red no duplica:
+    // la base ve que ese id ya existe y no inserta de nuevo.
+    const conId = op.filas.length > 0 && op.filas.every((f) => typeof f.id === 'string')
+    const consulta = conId
+      ? supabase.from(op.tabla).upsert(op.filas, { onConflict: 'id', ignoreDuplicates: true })
+      : supabase.from(op.tabla).insert(op.filas)
+    const { data, error } = await consulta.select()
     if (error) throw error
     return data
   }

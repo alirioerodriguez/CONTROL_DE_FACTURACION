@@ -114,7 +114,7 @@ export function MesPage() {
                     <div className="h-full rounded-full bg-acc" style={{ width: `${pct}%` }} />
                   </div>
                   <div className="flex flex-wrap justify-between gap-3 text-[0.9375rem]">
-                    <span className="text-ink2">de {formatMonto(t.facturado, t.moneda)} facturado</span>
+                    <span className="text-ink2">de {formatMonto(t.facturado, t.moneda)} a cobrar</span>
                     <span className="font-semibold text-bad">Pendiente {formatMonto(t.pendiente, t.moneda)}</span>
                   </div>
                   {deObrasSociales[t.moneda] > 0 && (
@@ -133,7 +133,7 @@ export function MesPage() {
                 <div className={`grid ${COLUMNAS} gap-3 border-b border-line px-[1.375rem] py-4 text-[0.8125rem] font-bold tracking-[.06em] text-ink2 uppercase`}>
                   <div>Paciente</div>
                   <div>{pal.Sesiones}</div>
-                  <div className="text-right">Facturado</div>
+                  <div className="text-right">A cobrar</div>
                   <div className="text-right">Cobrado</div>
                   <div className="text-right">Pendiente</div>
                 </div>
