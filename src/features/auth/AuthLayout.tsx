@@ -124,7 +124,8 @@ export function IngresoGoogle({ onError }: { onError: (mensaje: string) => void 
     setCargando(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      // select_account: Google siempre muestra el selector, para elegir qué cuenta usar o entrar con otra.
+      options: { redirectTo: window.location.origin, queryParams: { prompt: 'select_account' } },
     })
     // Si salió bien, el navegador ya se está yendo a Google.
     if (error) {
