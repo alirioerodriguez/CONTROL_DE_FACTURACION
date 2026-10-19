@@ -167,7 +167,8 @@ export function AjustesPage() {
     toast.success('Tu cuenta y todos tus datos se eliminaron')
   }
 
-  const fila = 'flex h-16 w-full items-center justify-between gap-3 bg-transparent p-0 text-base font-semibold'
+  // Alto mínimo: con letra grande el texto puede ir en dos renglones sin salirse.
+  const fila = 'flex min-h-16 w-full items-center justify-between gap-3 bg-transparent px-0 py-2 text-left text-base font-semibold'
 
   return (
     <section className="flex max-w-[45rem] flex-col gap-4">
@@ -366,7 +367,7 @@ export function AjustesPage() {
           onClick={alternarDaltonismo}
           className="flex min-h-16 w-full items-center justify-between gap-3 border-t border-line bg-transparent px-0 py-3 text-left text-base font-semibold"
         >
-          <span className="flex items-center gap-3">
+          <span className="flex min-w-0 items-center gap-3">
             <Eye {...IC} className="shrink-0" />
             <span>
               Colores para daltonismo

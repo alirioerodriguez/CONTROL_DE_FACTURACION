@@ -27,7 +27,8 @@ export function useMesSeleccionado(): [string, (periodo: string) => void] {
 export function SelectorMes({ periodo, onCambio }: { periodo: string; onCambio: (p: string) => void }) {
   const [abierto, setAbierto] = useState(false)
   const caja = useRef<HTMLDivElement>(null)
-  const boton = 'grid size-[2.625rem] shrink-0 place-items-center rounded-full hover:bg-surface2'
+  // Con letra grande las flechas no pasan de 46 px, para que el selector entre en el celular.
+  const boton = 'grid size-[min(2.625rem,46px)] shrink-0 place-items-center rounded-full hover:bg-surface2'
 
   // Se cierra tocando afuera o con Escape.
   useEffect(() => {
@@ -57,7 +58,7 @@ export function SelectorMes({ periodo, onCambio }: { periodo: string; onCambio: 
           onClick={() => setAbierto((a) => !a)}
           aria-expanded={abierto}
           aria-label={`Elegir mes (ahora ${formatPeriodo(periodo)})`}
-          className="flex min-w-[7.5rem] items-center justify-center gap-2 rounded-full px-2 py-2 text-[min(1.0625rem,20px)] font-semibold whitespace-nowrap hover:bg-surface2"
+          className="flex min-w-0 items-center justify-center gap-2 rounded-full px-2 py-2 text-[min(1.0625rem,20px)] font-semibold whitespace-nowrap hover:bg-surface2"
         >
           <CalendarDays {...IC} className="text-ink2" />
           {capitalizar(formatPeriodo(periodo))}
