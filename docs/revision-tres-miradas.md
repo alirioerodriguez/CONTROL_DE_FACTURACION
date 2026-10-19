@@ -30,17 +30,17 @@
 
 ## 2. Una persona nueva que no sabe nada
 
-Revisión de los textos y del recorrido de pantallas, pensando en alguien que entra por primera vez. Lo marcado con ✅ se corrigió.
+Revisión de los textos y del recorrido de pantallas, pensando en alguien que entra por primera vez. Todo lo marcado con ✅ se corrigió (las mejoras 2 a 9, el mismo día): ayudas en «Mes que paga» y en el tipo de honorario, botón «Más» en el celular, Ajustes en secciones, tutorial corto o completo, «parte del abono» en cada sesión, acceso fijo a «Para facturar» (también desde Mes y reportes) y aviso de cómo se marca un recordatorio.
 
 1. ✅ **«Facturado» en el reporte del mes.** Significaba «el total de las sesiones», pero suena a facturas de ARCA, y en la misma app está «Para facturar». Ahora dice **«A cobrar»** en la pantalla, en el Excel y en el tutorial.
-2. **«Mes que paga» al cargar un pago.** La idea de imputar un pago a un mes no es obvia. Ya viene sugerido, pero conviene una ayuda corta: «¿De qué mes son las sesiones que te paga?».
-3. **En el celular, Contadora, Importar y Recordatorios no están en la barra de abajo.** Se llega desde «Mes» (botón «Para contadora»), Ajustes e Inicio, pero alguien nuevo puede no encontrarlos. Una opción es un botón «Más» en la barra.
-4. **Ajustes es muy largo.** Tiene tarifa, profesión, letra, monotributo, funciones opcionales, calendario, Mis Cuentas, Excel, tutorial y cuenta. Convendría agruparlo en secciones con títulos (Cobros, Apariencia, Conexiones, Cuenta).
-5. **«Tarifa estándar» y «personalizada».** Son palabras de la app. Una ayuda: «La estándar es tu precio de siempre; la personalizada, un precio distinto para este paciente».
-6. **El tutorial tiene 18 pasos.** Está completo pero es largo. Se puede saltear y repetir; quizás convenga ofrecer una versión corta de 6 pasos al principio.
-7. **Con abono mensual, cada sesión muestra «su parte» del abono** (por ejemplo $ 60.000 si hubo dos sesiones). Puede confundir: convendría un cartelito «parte del abono».
-8. **«Para facturar» solo aparece en Contadora y solo si hay pagos sin factura.** Quien quiere facturar no sabe que existe hasta que la encuentra. El tutorial ya la muestra.
-9. **Recordatorios marca «enviado» al tocar WhatsApp,** aunque después no se mande el mensaje. Se puede desmarcar, pero vale aclararlo.
+2. ✅ **«Mes que paga» al cargar un pago.** La idea de imputar un pago a un mes no es obvia. Ya viene sugerido, pero conviene una ayuda corta: «¿De qué mes son las sesiones que te paga?».
+3. ✅ **En el celular, Contadora, Importar y Recordatorios no están en la barra de abajo.** Se llega desde «Mes» (botón «Para contadora»), Ajustes e Inicio, pero alguien nuevo puede no encontrarlos. Una opción es un botón «Más» en la barra.
+4. ✅ **Ajustes es muy largo.** Tiene tarifa, profesión, letra, monotributo, funciones opcionales, calendario, Mis Cuentas, Excel, tutorial y cuenta. Convendría agruparlo en secciones con títulos (Cobros, Apariencia, Conexiones, Cuenta).
+5. ✅ **«Tarifa estándar» y «personalizada».** Son palabras de la app. Una ayuda: «La estándar es tu precio de siempre; la personalizada, un precio distinto para este paciente».
+6. ✅ **El tutorial tiene 18 pasos.** Está completo pero es largo. Se puede saltear y repetir; quizás convenga ofrecer una versión corta de 6 pasos al principio.
+7. ✅ **Con abono mensual, cada sesión muestra «su parte» del abono** (por ejemplo $ 60.000 si hubo dos sesiones). Puede confundir: convendría un cartelito «parte del abono».
+8. ✅ **«Para facturar» solo aparece en Contadora y solo si hay pagos sin factura.** Quien quiere facturar no sabe que existe hasta que la encuentra. El tutorial ya la muestra.
+9. ✅ **Recordatorios marca «enviado» al tocar WhatsApp,** aunque después no se mande el mensaje. Se puede desmarcar, pero vale aclararlo.
 
 ---
 

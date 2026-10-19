@@ -193,23 +193,30 @@ export function ContadoraPage() {
         {conCobros.length > 0 && <ElegirPacientes pacientes={conCobros} excluidos={excluidos} onCambio={cambiarExcluidos} />}
       </Tarjeta>
 
-      {sinFactura > 0 && (
-        <button
-          type="button"
-          data-tour="para-facturar"
-          onClick={() => navegar('/facturar')}
-          className="flex items-center gap-3 rounded-[1.375rem] border border-line bg-surface px-[1.375rem] py-4 text-left hover:bg-surface2"
+      {/* Siempre visible, así quien quiere facturar sabe dónde está. */}
+      <button
+        type="button"
+        data-tour="para-facturar"
+        onClick={() => navegar('/facturar')}
+        className="flex items-center gap-3 rounded-[1.375rem] border border-line bg-surface px-[1.375rem] py-4 text-left hover:bg-surface2"
+      >
+        <span
+          className={`grid size-11 shrink-0 place-items-center rounded-[0.875rem] ${sinFactura > 0 ? 'bg-warn-soft text-warn' : 'bg-acc-soft text-acc-strong'}`}
         >
-          <span className="grid size-11 shrink-0 place-items-center rounded-[0.875rem] bg-warn-soft text-warn">
-            <ReceiptText {...IC} />
+          <ReceiptText {...IC} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[1.0625rem] font-semibold">
+            {sinFactura > 0 ? `Para facturar: ${plural(sinFactura, 'pago sin factura', 'pagos sin factura')}` : 'Para facturar: todo al día'}
           </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[1.0625rem] font-semibold">{plural(sinFactura, 'pago sin factura', 'pagos sin factura')}</span>
-            <span className="block text-[0.9375rem] text-ink2">En los últimos 3 meses. Mirá los datos listos para cargar en ARCA.</span>
+          <span className="block text-[0.9375rem] text-ink2">
+            {sinFactura > 0
+              ? 'En los últimos 3 meses. Mirá los datos listos para ARCA o facturá todo junto con Facturitas.'
+              : 'No hay pagos sin Factura C en los últimos 3 meses. Entrá para ver meses anteriores.'}
           </span>
-          <ChevronRight {...IC} className="shrink-0 text-ink2" />
-        </button>
-      )}
+        </span>
+        <ChevronRight {...IC} className="shrink-0 text-ink2" />
+      </button>
 
       {r && (
         <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,18.125rem),1fr))] gap-3">

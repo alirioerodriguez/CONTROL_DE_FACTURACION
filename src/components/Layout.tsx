@@ -1,9 +1,12 @@
-import { useEffect } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { BellRing, ChartColumn, FileSpreadsheet, House, Plus, SlidersHorizontal, Upload, Users, type LucideIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import {
+  BellRing, ChartColumn, ChevronRight, Ellipsis, FileSpreadsheet, House, Plus, ReceiptText, SlidersHorizontal, Upload, Users,
+  type LucideIcon,
+} from 'lucide-react'
 import { useRegistro } from '../features/registro/RegistroContext'
 import { FotoUsuario, useUsuario } from './FotoUsuario'
-import { IC } from './ui'
+import { Hoja, IC } from './ui'
 import { usePerfil } from '../lib/datos'
 
 interface Seccion {
@@ -58,13 +61,19 @@ export function Logo({ tam = 34, conNombre = true }: { tam?: number; conNombre?:
   )
 }
 
-/** Sección activa: la ficha cuenta como Pacientes; en el celular, Importar va con Ajustes y Contadora con Mes. */
+/** En el celular, lo que no entra en la barra de abajo va en «Más». */
+const EN_MAS: { to: string; etiqueta: string; ayuda: string; icono: LucideIcon; opcional?: 'ver_recordatorios' }[] = [
+  { to: '/contadora', etiqueta: 'Contadora', ayuda: 'Reporte de cobros en Excel o PDF', icono: FileSpreadsheet },
+  { to: '/facturar', etiqueta: 'Para facturar', ayuda: 'Pagos sin factura y datos para ARCA', icono: ReceiptText },
+  { to: '/recordatorios', etiqueta: 'Recordatorios', ayuda: 'Quién te debe y a quién ya le escribiste', icono: BellRing, opcional: 'ver_recordatorios' },
+  { to: '/importar', etiqueta: 'Importar', ayuda: 'Subir una planilla de Excel o CSV', icono: Upload },
+]
+
+/** Sección activa: la ficha cuenta como Pacientes; en el celular, lo que va en «Más» marca «Más». */
 function activa(ruta: string, movil: boolean): string {
   if (ruta.startsWith('/pacientes')) return '/pacientes'
-  if (movil && ruta.startsWith('/importar')) return '/ajustes'
-  if (movil && ruta.startsWith('/contadora')) return '/mes'
-  if (ruta.startsWith('/facturar')) return movil ? '/mes' : '/contadora'
-  if (movil && ruta.startsWith('/recordatorios')) return '/'
+  if (movil && EN_MAS.some((x) => ruta.startsWith(x.to))) return 'mas'
+  if (ruta.startsWith('/facturar')) return '/contadora'
   const s = SECCIONES.find((x) => x.to !== '/' && ruta.startsWith(x.to))
   return s ? s.to : '/'
 }
@@ -75,6 +84,8 @@ export function Layout() {
   const { nombre, email } = useUsuario()
   const { data: perfil } = usePerfil()
   const secciones = SECCIONES.filter((s) => !s.opcional || perfil?.[s.opcional])
+  const navegar = useNavigate()
+  const [mas, setMas] = useState(false)
   // Cada pantalla arranca desde arriba.
   // Con llaves: en Chrome nuevo scrollTo devuelve una promesa y React la tomaría como limpieza.
   useEffect(() => {
@@ -131,7 +142,7 @@ export function Layout() {
         </div>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-4 border-t border-line bg-surface px-2 pt-2 pb-[max(1.375rem,env(safe-area-inset-bottom))] md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-line bg-surface px-2 pt-2 pb-[max(1.375rem,env(safe-area-inset-bottom))] md:hidden">
         {SECCIONES.filter((s) => s.enMovil).map((s) => {
           const on = activa(pathname, true) === s.to
           return (
@@ -147,7 +158,46 @@ export function Layout() {
             </NavLink>
           )
         })}
+        <button
+          type="button"
+          onClick={() => setMas(true)}
+          className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 py-1 text-[min(0.75rem,1rem)] leading-tight font-bold ${activa(pathname, true) === 'mas' ? 'text-acc-strong' : 'text-ink2'}`}
+        >
+          <span
+            className={`grid h-[1.875rem] w-full max-w-[3.625rem] place-items-center rounded-full text-[1.0625rem] ${activa(pathname, true) === 'mas' ? 'bg-acc-soft' : ''}`}
+          >
+            <Ellipsis {...IC} />
+          </span>
+          Más
+        </button>
       </nav>
+
+      {mas && (
+        <Hoja titulo="Más" onCerrar={() => setMas(false)}>
+          <div className="flex flex-col">
+            {EN_MAS.filter((x) => !x.opcional || perfil?.[x.opcional]).map((x) => (
+              <button
+                key={x.to}
+                type="button"
+                onClick={() => {
+                  setMas(false)
+                  navegar(x.to)
+                }}
+                className="flex min-h-16 items-center gap-3 border-b border-line bg-transparent px-1 py-3 text-left last:border-b-0"
+              >
+                <span className="grid size-11 shrink-0 place-items-center rounded-[0.875rem] bg-acc-soft text-acc-strong">
+                  <x.icono {...IC} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-base font-semibold">{x.etiqueta}</span>
+                  <span className="block text-sm text-ink2">{x.ayuda}</span>
+                </span>
+                <ChevronRight {...IC} className="shrink-0 text-ink2" />
+              </button>
+            ))}
+          </div>
+        </Hoja>
+      )}
 
       {conBotonFlotante && (
         <button

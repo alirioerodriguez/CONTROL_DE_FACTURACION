@@ -20,19 +20,23 @@ interface Paso {
   icono: LucideIcon
   titulo: string
   texto: string
+  /** Entra en el recorrido corto («Lo básico»). */
+  basico?: boolean
 }
 
 /** Pasos del recorrido, con el vocabulario de la cuenta (sesión/consulta, por hora/por sesión). */
 function armarPasos(p: Palabras): Paso[] {
   return [
   {
+    basico: true,
     ruta: '/',
     icono: Sparkles,
     titulo: '¡Te damos la bienvenida!',
     texto:
-      'honorapp te ayuda a llevar los cobros de tus pacientes sin planillas. En un minuto te mostramos todo lo que podés hacer. Podés saltear el recorrido cuando quieras y volver a verlo desde Ajustes.',
+      'honorapp te ayuda a llevar los cobros de tus pacientes sin planillas. Elegí si querés ver lo básico para arrancar o todo lo que podés hacer. Podés saltear el recorrido cuando quieras y volver a verlo desde Ajustes.',
   },
   {
+    basico: true,
     ruta: '/ajustes',
     objetivo: 'tarifa',
     icono: SlidersHorizontal,
@@ -41,6 +45,7 @@ function armarPasos(p: Palabras): Paso[] {
       `Cargá cuánto cobrás ${p.porUnidad}. Los pacientes con tarifa estándar la usan solos. Si la cambiás, las ${p.sesiones} nuevas se cobran con el valor nuevo y las ya cargadas conservan su precio.`,
   },
   {
+    basico: true,
     ruta: '/pacientes',
     objetivo: 'nuevo-paciente',
     icono: Users,
@@ -57,6 +62,7 @@ function armarPasos(p: Palabras): Paso[] {
       'Con «Descargar Excel» bajás nuestra planilla para completarla. Después la subís desde Importar (también acepta tu propio Excel o CSV). Lo que ya estaba cargado no se duplica.',
   },
   {
+    basico: true,
     ruta: '/',
     objetivo: 'registrar',
     icono: Plus,
@@ -72,6 +78,7 @@ function armarPasos(p: Palabras): Paso[] {
       `Tocando un paciente ves cuánto debe (pesos y dólares por separado), su historial mes a mes y un botón para cargar de un toque todas las ${p.sesiones} del mes según sus días fijos. Ahí también editás o borrás ${p.sesiones} y pagos.`,
   },
   {
+    basico: true,
     ruta: '/',
     objetivo: 'resumen',
     icono: House,
@@ -88,6 +95,7 @@ function armarPasos(p: Palabras): Paso[] {
       'Si sos monotributista, elegí tu categoría y acá ves cuánto cobraste en los últimos 12 meses contra el tope. Te avisamos cuando te acercás y te sugerimos la categoría que te correspondería.',
   },
   {
+    basico: true,
     ruta: '/',
     objetivo: 'sin-abonar',
     icono: MessageCircle,
@@ -104,6 +112,7 @@ function armarPasos(p: Palabras): Paso[] {
       `Cuánto tenías para cobrar, cuánto cobraste y quién debe, paciente por paciente, con cada ${p.sesion} marcada como pagada, parcial o pendiente. Lo podés descargar en Excel.`,
   },
   {
+    basico: true,
     ruta: '/contadora',
     objetivo: 'descargar-contadora',
     icono: FileSpreadsheet,
@@ -118,14 +127,6 @@ function armarPasos(p: Palabras): Paso[] {
     titulo: 'Para facturar',
     texto:
       'Cuando tenés pagos sin factura, aparece este acceso. Adentro están los datos listos para hacer la Factura C en ARCA y, si usás Facturitas, una planilla para facturar todo junto. Después marcás los pagos como facturados.',
-  },
-  {
-    ruta: '/ajustes',
-    objetivo: 'letra',
-    icono: Eye,
-    titulo: 'A tu medida',
-    texto:
-      'Agrandá la letra si te cuesta leer y, más abajo, prendé el modo oscuro o los colores para daltonismo (azul y naranja en lugar de verde y rojo).',
   },
   {
     ruta: '/ajustes',
@@ -153,12 +154,21 @@ function armarPasos(p: Palabras): Paso[] {
   },
   {
     ruta: '/ajustes',
+    objetivo: 'letra',
+    icono: Eye,
+    titulo: 'A tu medida',
+    texto:
+      'Agrandá la letra si te cuesta leer y, más abajo, prendé el modo oscuro o los colores para daltonismo (azul y naranja en lugar de verde y rojo).',
+  },
+  {
+    ruta: '/ajustes',
     icono: Smartphone,
     titulo: 'Llevala en el celular',
     texto:
       'Instalala como una app. En Android: menú ⋮ → «Instalar app». En iPhone: Compartir → «Agregar a inicio». Lo que cargás en el celular aparece en la compu y al revés.',
   },
   {
+    basico: true,
     ruta: '/',
     icono: Check,
     titulo: '¡Listo!',
@@ -232,7 +242,10 @@ function Recorrido({
   onTerminar: () => void
 }) {
   const palabrasCuenta = usePalabras()
-  const PASOS = useMemo(() => armarPasos(palabrasCuenta), [palabrasCuenta])
+  const [corto, setCorto] = useState(false)
+  const todos = useMemo(() => armarPasos(palabrasCuenta), [palabrasCuenta])
+  const basicos = todos.filter((p) => p.basico)
+  const PASOS = corto ? basicos : todos
   const paso = PASOS[indice]
   const navegar = useNavigate()
   const { pathname } = useLocation()
@@ -340,12 +353,40 @@ function Recorrido({
               Anterior
             </Boton>
           )}
-          <Boton alto="h-12" className="flex-1" autoFocus onClick={() => {
-              if (ultimo) onTerminar()
-              else setIndice(indice + 1)
-            }}>
-            {indice === 0 ? 'Empezar el recorrido' : ultimo ? 'Empezar a usar la app' : 'Siguiente'}
-          </Boton>
+          {indice === 0 ? (
+            // Al empezar se elige: lo básico (lo justo para arrancar) o todo.
+            <>
+              <Boton
+                alto="h-12"
+                className="flex-1"
+                autoFocus
+                onClick={() => {
+                  setCorto(true)
+                  setIndice(1)
+                }}
+              >
+                Lo básico · {basicos.length - 1} pasos
+              </Boton>
+              <Boton
+                variante="borde"
+                alto="h-12"
+                className="flex-1"
+                onClick={() => {
+                  setCorto(false)
+                  setIndice(1)
+                }}
+              >
+                Todo · {todos.length - 1} pasos
+              </Boton>
+            </>
+          ) : (
+            <Boton alto="h-12" className="flex-1" autoFocus onClick={() => {
+                if (ultimo) onTerminar()
+                else setIndice(indice + 1)
+              }}>
+              {ultimo ? 'Empezar a usar la app' : 'Siguiente'}
+            </Boton>
+          )}
         </div>
       </div>
     </div>

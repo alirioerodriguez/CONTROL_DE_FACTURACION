@@ -173,36 +173,7 @@ export function AjustesPage() {
     <section className="flex max-w-[45rem] flex-col gap-4">
       <h1 className="m-0 mb-2 font-serif text-[clamp(2.375rem,5cqi,3.25rem)] leading-none font-normal">Ajustes</h1>
 
-      <Tarjeta data-tour="letra" className="flex flex-col gap-[1.125rem] p-[1.375rem]">
-        <h2 className="m-0 text-lg font-semibold">Tamaño de letra</h2>
-        <p className="m-0 text-[0.9375rem] leading-normal text-ink2">
-          Agrandá todo para leer más cómodo. Se guarda en este dispositivo.
-        </p>
-        <div role="radiogroup" aria-label="Tamaño de letra" className="grid grid-cols-5 gap-2">
-          {TAMANOS_LETRA.map((t) => (
-            <button
-              key={t.n}
-              type="button"
-              role="radio"
-              aria-checked={letra === t.n}
-              aria-label={t.nombre}
-              title={t.nombre}
-              onClick={() => {
-                cambiarLetra(t.n)
-                setLetra(t.n)
-              }}
-              className={`flex h-16 items-center justify-center rounded-2xl border font-serif leading-none ${
-                letra === t.n ? 'border-ink bg-ink text-fondo' : 'border-line bg-surface text-ink hover:bg-surface2'
-              }`}
-              style={{ fontSize: `${1 + t.n * 0.25}rem` }}
-            >
-              A
-            </button>
-          ))}
-        </div>
-        <div className="text-base font-semibold">{TAMANOS_LETRA[letra - 1]?.nombre}</div>
-      </Tarjeta>
-
+      <h2 className="m-0 mt-5 px-1 text-sm font-bold tracking-wide text-ink2 uppercase">Cobros</h2>
       <Tarjeta className="flex flex-col gap-[1.125rem] p-[1.375rem]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="m-0 text-lg font-semibold">Tu profesión</h2>
@@ -336,9 +307,43 @@ export function AjustesPage() {
 
       {perfil.data && <MonotributoAjustes perfil={perfil.data} />}
 
+      <h2 className="m-0 mt-5 px-1 text-sm font-bold tracking-wide text-ink2 uppercase">Funciones y conexiones</h2>
       {perfil.data && <OpcionesAjustes perfil={perfil.data} />}
 
       {perfil.data && <CalendarioAjustes perfil={perfil.data} />}
+
+      <OtraApp />
+
+      <h2 className="m-0 mt-5 px-1 text-sm font-bold tracking-wide text-ink2 uppercase">Apariencia</h2>
+      <Tarjeta data-tour="letra" className="flex flex-col gap-[1.125rem] p-[1.375rem]">
+        <h2 className="m-0 text-lg font-semibold">Tamaño de letra</h2>
+        <p className="m-0 text-[0.9375rem] leading-normal text-ink2">
+          Agrandá todo para leer más cómodo. Se guarda en este dispositivo.
+        </p>
+        <div role="radiogroup" aria-label="Tamaño de letra" className="grid grid-cols-5 gap-2">
+          {TAMANOS_LETRA.map((t) => (
+            <button
+              key={t.n}
+              type="button"
+              role="radio"
+              aria-checked={letra === t.n}
+              aria-label={t.nombre}
+              title={t.nombre}
+              onClick={() => {
+                cambiarLetra(t.n)
+                setLetra(t.n)
+              }}
+              className={`flex h-16 items-center justify-center rounded-2xl border font-serif leading-none ${
+                letra === t.n ? 'border-ink bg-ink text-fondo' : 'border-line bg-surface text-ink hover:bg-surface2'
+              }`}
+              style={{ fontSize: `${1 + t.n * 0.25}rem` }}
+            >
+              A
+            </button>
+          ))}
+        </div>
+        <div className="text-base font-semibold">{TAMANOS_LETRA[letra - 1]?.nombre}</div>
+      </Tarjeta>
 
       <Tarjeta className="px-[1.375rem] py-2">
         <button type="button" role="switch" aria-checked={tema === 'dark'} onClick={alternarTema} className={fila}>
@@ -378,6 +383,7 @@ export function AjustesPage() {
         </button>
       </Tarjeta>
 
+      <h2 className="m-0 mt-5 px-1 text-sm font-bold tracking-wide text-ink2 uppercase">Tus datos y ayuda</h2>
       <Tarjeta className="flex flex-col gap-3 p-[1.375rem]">
         <h2 className="m-0 text-lg font-semibold">Tus datos en Excel</h2>
         <p className="m-0 text-[0.9375rem] leading-normal text-ink2">
@@ -421,8 +427,7 @@ export function AjustesPage() {
         </button>
       </Tarjeta>
 
-      <OtraApp />
-
+      <h2 className="m-0 mt-5 px-1 text-sm font-bold tracking-wide text-ink2 uppercase">Cuenta</h2>
       <Tarjeta className="px-[1.375rem] py-2">
         <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 text-base">
           <span className="text-ink2">Cuenta</span>

@@ -457,6 +457,9 @@ export function RegistroHoja({
                 </option>
               ))}
             </select>
+            <span className="text-sm font-normal text-ink2">
+              ¿De qué mes son las {pal.sesiones} que te paga? Viene sugerido el mes más viejo que debe (o este mes, si está al día).
+            </span>
           </label>
           <Campo
             etiqueta="Nro de factura"

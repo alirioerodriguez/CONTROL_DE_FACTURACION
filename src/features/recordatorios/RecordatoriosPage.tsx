@@ -72,7 +72,7 @@ export function RecordatoriosPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <Titulo sub={`Quién te debe hoy. Al mandar el WhatsApp queda marcado como enviado en ${nombreMes(periodo)}.`}>
+      <Titulo sub={`Quién te debe hoy. Al tocar WhatsApp se abre el mensaje y queda marcado como enviado en ${nombreMes(periodo)}; si al final no lo mandaste, tocá «Desmarcar».`}>
         Recordatorios
       </Titulo>
 

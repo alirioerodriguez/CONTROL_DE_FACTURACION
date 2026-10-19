@@ -187,7 +187,7 @@ export function FichaPage() {
             </div>
           ) : (
             calculos.grupos.map((g) => (
-              <GrupoMes key={g.periodo} periodo={g.periodo} items={g.items} cubierto={calculos.cubierto} obraSocial={paciente.obra_social} />
+              <GrupoMes key={g.periodo} periodo={g.periodo} items={g.items} cubierto={calculos.cubierto} obraSocial={paciente.obra_social} conAbono={tieneAbono(paciente)} />
             ))
           )}
         </Tarjeta>
@@ -229,11 +229,14 @@ function GrupoMes({
   items,
   cubierto,
   obraSocial,
+  conAbono,
 }: {
   periodo: string
   items: Movimiento[]
   cubierto: Map<string, number>
   obraSocial: string | null
+  /** Con abono, el monto de cada sesión es su parte del abono del mes. */
+  conAbono: boolean
 }) {
   const { abrir } = useRegistro()
   const pal = usePalabras()
@@ -280,6 +283,7 @@ function GrupoMes({
                 <div className="mt-0.5 text-sm break-words text-ink2">
                   {etiquetaDia(s.fecha)}
                   {visible === 'ausente' ? ' · ausente (se cobra)' : ''}
+                  {conAbono && visible !== 'cancelada' ? ' · parte del abono' : ''}
                   {pagado > 0 && pagado < s.monto ? ` · abonó ${formatMonto(pagado, s.moneda)}` : ''}
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Calendar, Download, FileSpreadsheet, Plus } from 'lucide-react'
+import { Calendar, Download, FileSpreadsheet, Plus, ReceiptText } from 'lucide-react'
 import { toast } from 'sonner'
 import { SelectorMes, useMesSeleccionado } from '../../components/SelectorMes'
 import { Avatar, Boton, EstadoError, EstadoVacio, Esqueleto, MontoGrande, Tarjeta } from '../../components/ui'
@@ -70,6 +70,9 @@ export function MesPage() {
           <SelectorMes periodo={periodo} onCambio={setPeriodo} />
           <Boton variante="borde" icono={FileSpreadsheet} onClick={() => navegar('/contadora')}>
             Para contadora
+          </Boton>
+          <Boton variante="borde" icono={ReceiptText} onClick={() => navegar('/facturar')}>
+            Para facturar
           </Boton>
           <Boton variante="borde" icono={Download} disabled={!r.filas.length} cargando={exportando} onClick={exportar}>
             Descargar Excel

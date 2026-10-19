@@ -171,6 +171,9 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
 
       <div className="flex flex-col gap-2.5">
         <div className="text-[0.9375rem] font-semibold">Honorario</div>
+        <div className="-mt-1 text-sm leading-snug text-ink2">
+          Estándar: tu precio de siempre (lo cargás en Ajustes). Personalizada: un precio distinto para este paciente. Abono: un monto fijo por mes.
+        </div>
         <Segmentado
           opciones={[
             { v: 'estandar', l: 'Estándar' },
