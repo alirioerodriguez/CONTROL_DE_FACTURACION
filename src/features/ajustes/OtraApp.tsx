@@ -123,9 +123,9 @@ export function OtraApp() {
               href={MIS_CUENTAS}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-12 items-center gap-2 rounded-full bg-acc px-5 text-base font-semibold text-on-acc hover:bg-acc-strong"
+              className="inline-flex max-w-full min-h-12 items-center justify-center gap-2 py-1.5 text-center leading-tight rounded-full bg-acc px-5 text-base font-semibold text-on-acc hover:bg-acc-strong"
             >
-              <ExternalLink {...IC} />
+              <ExternalLink {...IC} className="shrink-0" />
               Conocer Mis Cuentas
             </a>
             {!estado.isLoading && (

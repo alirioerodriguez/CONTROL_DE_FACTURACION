@@ -41,14 +41,17 @@ export function Boton({
   icono?: LucideIcon
   cargando?: boolean
 }) {
+  // El alto es un mínimo: con letra grande, si el texto no entra en un renglón, el botón crece y lo parte
+  // (centrado) en vez de cortarlo o sacarlo del botón.
+  const altura = alto.startsWith('h-') && alto !== 'h-full' ? `min-${alto}` : alto
   return (
     <button
       type="button"
       {...props}
       disabled={props.disabled || cargando}
-      className={`inline-flex items-center justify-center gap-2 rounded-full px-5 text-base font-semibold whitespace-nowrap transition-colors disabled:opacity-45 ${alto} ${VARIANTES[variante]} ${className}`}
+      className={`inline-flex max-w-full items-center justify-center gap-2 rounded-full px-5 py-1.5 text-center text-base leading-tight font-semibold transition-colors disabled:opacity-45 ${altura} ${VARIANTES[variante]} ${className}`}
     >
-      {cargando ? <Spinner /> : Icono && <Icono {...IC} />}
+      {cargando ? <Spinner /> : Icono && <Icono {...IC} className="shrink-0" />}
       {children}
     </button>
   )

@@ -33,9 +33,9 @@ const PREGUNTAS: { p: string; r: string }[] = [
 /** Página pública: lo primero que ve quien abre el link sin tener cuenta. */
 export function PortadaPage() {
   const botonPrincipal =
-    'inline-flex h-14 items-center justify-center rounded-full bg-acc px-7 text-[1.0625rem] font-semibold text-on-acc no-underline hover:bg-acc-strong'
+    'inline-flex min-h-14 max-w-full items-center justify-center rounded-full py-2 text-center leading-tight bg-acc px-7 text-[1.0625rem] font-semibold text-on-acc no-underline hover:bg-acc-strong'
   const botonSecundario =
-    'inline-flex h-14 items-center justify-center rounded-full border border-line bg-surface px-7 text-[1.0625rem] font-semibold text-ink no-underline hover:bg-surface2'
+    'inline-flex min-h-14 max-w-full items-center justify-center rounded-full py-2 text-center leading-tight border border-line bg-surface px-7 text-[1.0625rem] font-semibold text-ink no-underline hover:bg-surface2'
 
   return (
     <div className="min-h-dvh bg-fondo text-ink">

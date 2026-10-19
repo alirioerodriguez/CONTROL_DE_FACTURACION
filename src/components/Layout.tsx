@@ -149,7 +149,7 @@ export function Layout() {
             <NavLink
               key={s.to}
               to={s.to}
-              className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 py-1 text-[min(0.75rem,1rem)] leading-tight font-bold ${on ? 'text-acc-strong' : 'text-ink2'}`}
+              className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 py-1 text-[min(0.75rem,13px)] leading-tight font-bold ${on ? 'text-acc-strong' : 'text-ink2'}`}
             >
               <span className={`grid h-[1.875rem] w-full max-w-[3.625rem] place-items-center rounded-full text-[1.0625rem] ${on ? 'bg-acc-soft' : ''}`}>
                 <s.icono {...IC} />
@@ -161,7 +161,7 @@ export function Layout() {
         <button
           type="button"
           onClick={() => setMas(true)}
-          className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 py-1 text-[min(0.75rem,1rem)] leading-tight font-bold ${activa(pathname, true) === 'mas' ? 'text-acc-strong' : 'text-ink2'}`}
+          className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 py-1 text-[min(0.75rem,13px)] leading-tight font-bold ${activa(pathname, true) === 'mas' ? 'text-acc-strong' : 'text-ink2'}`}
         >
           <span
             className={`grid h-[1.875rem] w-full max-w-[3.625rem] place-items-center rounded-full text-[1.0625rem] ${activa(pathname, true) === 'mas' ? 'bg-acc-soft' : ''}`}

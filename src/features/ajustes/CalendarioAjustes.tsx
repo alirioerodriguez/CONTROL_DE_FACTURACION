@@ -77,9 +77,9 @@ export function CalendarioAjustes({ perfil }: { perfil: Perfil }) {
               href={google}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-[3.25rem] items-center gap-2 rounded-full bg-acc px-5 text-base font-semibold text-on-acc hover:bg-acc-strong"
+              className="inline-flex max-w-full min-h-[3.25rem] items-center justify-center gap-2 py-1.5 text-center leading-tight rounded-full bg-acc px-5 text-base font-semibold text-on-acc hover:bg-acc-strong"
             >
-              <ExternalLink {...IC} />
+              <ExternalLink {...IC} className="shrink-0" />
               Agregar a Google Calendar
             </a>
           </div>

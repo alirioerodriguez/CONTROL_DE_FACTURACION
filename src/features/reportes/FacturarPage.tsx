@@ -50,9 +50,9 @@ export function FacturarPage() {
           href={ARCA}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex h-[3.25rem] items-center gap-2 rounded-full border border-line px-5 text-base font-semibold hover:bg-surface2"
+          className="inline-flex max-w-full min-h-[3.25rem] items-center justify-center gap-2 py-1.5 text-center leading-tight rounded-full border border-line px-5 text-base font-semibold hover:bg-surface2"
         >
-          <ExternalLink {...IC} />
+          <ExternalLink {...IC} className="shrink-0" />
           Abrir ARCA
         </a>
       </div>
