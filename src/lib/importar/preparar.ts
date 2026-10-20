@@ -2,6 +2,7 @@
 import { nombreCompleto, type Comprobante, type Medio, type Paciente, type Pago, type Sesion } from '../datos'
 import { hoyAR, normalizar, parseFechaAR, parseMontoAR, periodoDe, redondear2, type Moneda } from '../formato'
 import type { Celda, Hoja } from './leer'
+import { normalizarDocumentos } from '../documentos'
 
 export interface PacienteNuevo {
   ref: string
@@ -372,8 +373,7 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
         nombre,
         apellido,
         codigo,
-        dni: texto(v(celdas, c.dni)),
-        cuil_cuit: texto(v(celdas, c.cuil)),
+        ...normalizarDocumentos(texto(v(celdas, c.dni)), texto(v(celdas, c.cuil))),
         condicion_iva: texto(v(celdas, c.iva)),
         telefono: texto(v(celdas, c.tel)),
         email: texto(v(celdas, c.email)),

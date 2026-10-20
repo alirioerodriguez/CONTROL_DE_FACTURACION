@@ -21,4 +21,11 @@ describe('totales para Mis Cuentas', () => {
       { periodo: '2026-10-01', moneda: 'USD', total: 50 },
     ])
   })
+
+  it('solo manda mes, moneda y total: nunca datos de pacientes (nombre, DNI, CUIL)', () => {
+    const pago = { fecha: '2026-10-05', monto: 100, moneda: 'ARS', nombre: 'Lucía Pérez', dni: '30123456', cuil_cuit: '27-30123456-8' }
+    const t = totalesPorMes([pago], '2026-10-18')
+    for (const fila of t) expect(Object.keys(fila).sort()).toEqual(['moneda', 'periodo', 'total'])
+    expect(JSON.stringify(t)).not.toMatch(/30123456|Lucía/)
+  })
 })
