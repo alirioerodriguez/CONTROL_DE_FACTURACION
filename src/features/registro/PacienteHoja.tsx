@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Trash2 } from 'lucide-react'
+import { TriangleAlert, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Alerta, Boton, Campo, CampoMonto, Confirmar, Hoja, Segmentado, type Opcion } from '../../components/ui'
+import { Alerta, Boton, Campo, CampoMonto, Confirmar, Hoja, IC, Segmentado, type Opcion } from '../../components/ui'
 import { nombreCompleto, useDatos, useGuardar, type Paciente } from '../../lib/datos'
 import { formatMonto, hoyAR, montoParaInput, parseMontoAR, type Moneda } from '../../lib/formato'
+import {
+  cuilCoincideConDni, cuilValido, dniValido, formatCuil, formatDni, pacienteConMismoDocumento, soloDigitos, sugerirCuil,
+} from '../../lib/documentos'
 import { mensajeError } from '../../lib/supabase'
 import { usePalabras } from '../../components/usePalabras'
 import { opcionesHoras } from './opciones'
@@ -19,8 +22,18 @@ const DIAS: Opcion<number>[] = [
 ]
 const FRECUENCIAS = ['Semanal', 'Quincenal', 'Mensual'].map((f) => ({ v: f, l: f }))
 
+/** Aviso que no impide guardar (ej. DNI repetido). */
+function Aviso({ children }: { children: ReactNode }) {
+  return (
+    <div role="status" className="flex items-start gap-2.5 rounded-[0.875rem] bg-warn-soft px-3.5 py-3 text-[0.9375rem] leading-snug text-ink">
+      <TriangleAlert {...IC} className="mt-px shrink-0 text-warn" />
+      <span>{children}</span>
+    </div>
+  )
+}
+
 export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCerrar: () => void }) {
-  const { perfil } = useDatos()
+  const { perfil, pacientes } = useDatos()
   const guardar = useGuardar()
   const navegar = useNavigate()
   const pal = usePalabras()
@@ -29,6 +42,8 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
 
   const [nombre, setNombre] = useState(paciente ? nombreCompleto(paciente) : '')
   const [telefono, setTelefono] = useState(paciente?.telefono ?? '')
+  const [dni, setDni] = useState(soloDigitos(paciente?.dni))
+  const [cuil, setCuil] = useState(formatCuil(paciente?.cuil_cuit))
   const [tipo, setTipo] = useState<'estandar' | 'personalizada' | 'abono'>(
     paciente?.abono_mensual ? 'abono' : (paciente?.tipo_tarifa ?? 'estandar'),
   )
@@ -62,11 +77,15 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
     const tarifa = parseMontoAR(tarifaTxt)
     if (tipo === 'personalizada' && !(tarifa != null && tarifa > 0)) return setError(`Ingresá la tarifa ${pal.porUnidad}.`)
     if (tipo === 'abono' && !(tarifa != null && tarifa > 0)) return setError('Ingresá el monto del abono mensual.')
+    if (dni && !dniValido(dni)) return setError('El DNI tiene que tener 7 u 8 números.')
+    if (cuil && !cuilValido(cuil)) return setError('El CUIL/CUIT no es válido: revisá los 11 números (el último es el dígito verificador).')
     setError('')
     const fila = {
       nombre: limpio,
       apellido: null,
       telefono: telefono.trim() || null,
+      dni: dni || null,
+      cuil_cuit: cuil ? formatCuil(cuil) : null,
       // Con abono las sesiones guardan la tarifa estándar como referencia; lo que se cobra es el abono (ver abono.ts).
       tipo_tarifa: tipo === 'personalizada' ? 'personalizada' : 'estandar',
       tarifa_personalizada: tipo === 'personalizada' ? tarifa : null,
@@ -112,6 +131,18 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
     }
   }
 
+  // Avisos que no impiden guardar.
+  const avisos: string[] = []
+  const dniRepetido = dniValido(dni) ? pacienteConMismoDocumento(pacientes, 'dni', dni, paciente?.id) : undefined
+  if (dniRepetido) avisos.push(`Ya tenés otro paciente con el DNI ${formatDni(dni)}: ${nombreCompleto(dniRepetido)}.`)
+  const cuilRepetido = cuilValido(cuil) ? pacienteConMismoDocumento(pacientes, 'cuil_cuit', cuil, paciente?.id) : undefined
+  if (cuilRepetido) avisos.push(`Ya tenés otro paciente con el CUIL/CUIT ${formatCuil(cuil)}: ${nombreCompleto(cuilRepetido)}.`)
+  if (soloDigitos(cuil).length === 11 && !cuilValido(cuil)) {
+    avisos.push('El último número del CUIL/CUIT no coincide con el dígito verificador. Revisalo.')
+  } else if (dniValido(dni) && cuilValido(cuil) && !cuilCoincideConDni(cuil, dni)) {
+    avisos.push('El CUIL no lleva este DNI en el medio. Revisá que los dos sean de la misma persona.')
+  }
+
   if (confirmarBorrado && paciente) {
     return (
       <Confirmar
@@ -148,6 +179,55 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
         onChange={(e) => setTelefono(e.target.value)}
         placeholder="11 5555-5555"
       />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Campo
+          etiqueta="DNI"
+          opcional
+          inputMode="numeric"
+          autoComplete="off"
+          maxLength={10}
+          value={dni}
+          onChange={(e) => {
+            setDni(soloDigitos(e.target.value).slice(0, 8))
+            setError('')
+          }}
+          placeholder="Solo números"
+        />
+        <Campo
+          etiqueta="CUIL / CUIT"
+          opcional
+          inputMode="numeric"
+          autoComplete="off"
+          maxLength={13}
+          value={cuil}
+          onChange={(e) => {
+            setCuil(formatCuil(e.target.value))
+            setError('')
+          }}
+          placeholder="XX-XXXXXXXX-X"
+        />
+      </div>
+      {dniValido(dni) && !cuil && (
+        <div className="-mt-1 flex flex-wrap items-center gap-2 text-sm text-ink2">
+          <span>Completar el CUIL con el DNI:</span>
+          {(['F', 'M'] as const).map((sexo) => {
+            const sugerido = sugerirCuil(dni, sexo)!
+            return (
+              <button
+                key={sexo}
+                type="button"
+                onClick={() => setCuil(sugerido)}
+                className="num min-h-10 rounded-full border border-line bg-surface px-3 text-[0.9375rem] font-semibold text-ink hover:bg-surface2"
+              >
+                {sugerido} <span className="font-normal text-ink2">{sexo === 'F' ? 'fem.' : 'masc.'}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+      {avisos.map((a) => (
+        <Aviso key={a}>{a}</Aviso>
+      ))}
       {perfil?.usa_obras_sociales && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.4fr_1fr]">
           <Campo

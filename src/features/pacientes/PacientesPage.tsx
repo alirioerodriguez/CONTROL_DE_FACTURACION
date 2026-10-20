@@ -10,6 +10,7 @@ import { formatMonto, normalizar, plural } from '../../lib/formato'
 import { debeAlgo, deudaDe, saldosDe, textoDeuda } from '../../lib/resumen'
 import { tieneAbono } from '../../lib/abono'
 import { tarifaVigente } from '../../lib/saldos'
+import { coincideDocumento, formatCuil, formatDni } from '../../lib/documentos'
 import { usePalabras } from '../../components/usePalabras'
 import { useRegistro } from '../registro/RegistroContext'
 
@@ -45,7 +46,7 @@ export function PacientesPage() {
   const q = normalizar(busqueda.trim())
   const lista = filas
     .filter(cumple[filtro])
-    .filter((f) => !q || normalizar(f.nombre).includes(q))
+    .filter((f) => !q || normalizar(f.nombre).includes(q) || coincideDocumento(f.p, q))
     .sort((a, b) => Number(b.p.activo) - Number(a.p.activo) || a.nombre.localeCompare(b.nombre))
   const activos = pacientes.filter((p) => p.activo).length
   const conSaldo = filas.filter((f) => f.debe).length
@@ -102,7 +103,7 @@ export function PacientesPage() {
               <input
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
-                placeholder="Buscar por nombre"
+                placeholder="Buscar por nombre, DNI o CUIL"
                 className="min-w-0 flex-1 border-none bg-transparent text-[1.0625rem] text-ink outline-none"
               />
             </label>
@@ -139,6 +140,11 @@ export function PacientesPage() {
                         {p.frecuencia ? ` · ${p.frecuencia}` : ''}
                         {p.activo ? '' : ' · Inactivo'}
                       </div>
+                      {(p.dni || p.cuil_cuit) && (
+                        <div className="num mt-0.5 truncate text-sm text-ink2">
+                          {p.dni ? `DNI ${formatDni(p.dni)}` : `CUIL/CUIT ${formatCuil(p.cuil_cuit)}`}
+                        </div>
+                      )}
                       {/* En el celular el saldo va debajo del nombre, para que los dos se lean completos. */}
                       <div className="mt-2 md:hidden">
                         <Chip tono={debe ? 'mal' : 'ok'} grande ajustable>

@@ -43,8 +43,8 @@ export function PrivacidadPage() {
       <ul>
         <li>De tu cuenta: tu mail y tu nombre. Si ingresás con Google, recibimos solo tu nombre, tu mail y tu foto de perfil.</li>
         <li>
-          Lo que cargás vos: datos administrativos de tus pacientes (nombre, teléfono, tarifa, días de atención),
-          sesiones, pagos, medios de pago y números de factura.
+          Lo que cargás vos: datos administrativos de tus pacientes (nombre, teléfono, DNI, CUIL o CUIT, obra social,
+          tarifa, días de atención), sesiones, pagos, medios de pago y números de factura.
         </li>
         <li>No guardamos historia clínica ni notas de sesión, y te pedimos que no las cargues.</li>
         <li>
@@ -71,6 +71,15 @@ export function PrivacidadPage() {
         confidencialidad, y no los usa para nada propio. Sabemos que la lista de pacientes de una profesional de la
         salud es información delicada: por eso cada cuenta está separada y nadie de honorapp mira esos datos, salvo que
         la profesional lo pida para resolver un problema.
+      </p>
+      <p>
+        El DNI y el CUIL o CUIT de cada paciente son optativos. Se usan solo para identificarlo en los recibos, en el
+        resumen para facturar y en los reportes que vos descargás o le mandás a tu contador o contadora (si elegís
+        exportar con iniciales, no se incluyen). No los mandamos a ARCA ni a ningún otro organismo, y no los compartimos.
+      </p>
+      <p>
+        Si enlazás honorapp con Mis Cuentas, solo se envía el total cobrado de cada mes por moneda. Nunca viajan
+        nombres, teléfonos, DNI, CUIL ni ningún otro dato de tus pacientes.
       </p>
 
       <h2>Dónde se guardan y quién más interviene</h2>

@@ -7,6 +7,7 @@ import { C, caja, etiqueta, franja, montoGrande, nuevoPdf, pie, texto } from './
 import { MEDIOS, reporteContadora, reporteMes } from './reportes'
 import type { ParaFacturar } from './facturar'
 import { tarifaVigente } from './saldos'
+import { formatCuil, formatDni } from './documentos'
 
 type Fila = (string | number | Date | null)[]
 type Tipo = 'texto' | 'monto' | 'fecha' | 'numero'
@@ -102,6 +103,8 @@ export async function exportarReporteMes(periodo: string, pacientes: Paciente[],
     hoja,
     [
       { titulo: 'Paciente', ancho: 28 },
+      { titulo: 'DNI', ancho: 12 },
+      { titulo: 'CUIL / CUIT', ancho: 15 },
       { titulo: 'Moneda', ancho: 9 },
       { titulo: 'Sesiones', ancho: 10, tipo: 'numero' },
       { titulo: 'Fechas', ancho: 34 },
@@ -111,6 +114,8 @@ export async function exportarReporteMes(periodo: string, pacientes: Paciente[],
     ],
     r.filas.map((f) => [
       f.nombre,
+      formatDni(f.paciente.dni) || null,
+      formatCuil(f.paciente.cuil_cuit) || null,
       f.moneda,
       f.sesiones.filter((s) => s.estado !== 'programada' && s.estado !== 'cancelada').length,
       f.sesiones
@@ -120,7 +125,7 @@ export async function exportarReporteMes(periodo: string, pacientes: Paciente[],
       f.cobrado,
       f.pendiente,
     ]),
-    r.totales.map((t) => [`Total ${t.moneda}`, t.moneda, t.sesiones, '', t.facturado, t.cobrado, t.pendiente]),
+    r.totales.map((t) => [`Total ${t.moneda}`, null, null, t.moneda, t.sesiones, '', t.facturado, t.cobrado, t.pendiente]),
   )
   await guardarLibro(libro, `honorapp-${mesArchivo(periodo)}.xlsx`)
 }
@@ -208,6 +213,8 @@ export async function exportarContadoraXlsx(
       { titulo: 'Fecha de pago', ancho: 13, tipo: 'fecha' },
       { titulo: 'Mes imputado', ancho: 16 },
       { titulo: 'Paciente', ancho: 28 },
+      // Con iniciales tampoco van los documentos.
+      ...(opciones.iniciales ? [] : [{ titulo: 'DNI', ancho: 12 }, { titulo: 'CUIL / CUIT', ancho: 15 }]),
       { titulo: 'Moneda', ancho: 9 },
       { titulo: 'Medio de pago', ancho: 15 },
       { titulo: 'Comprobante', ancho: 16 },
@@ -216,10 +223,11 @@ export async function exportarContadoraXlsx(
       { titulo: 'Monto', tipo: 'monto' },
     ],
     r.meses.flatMap((m) =>
-      m.pagos.map(({ pago: p, paciente }) => [
+      m.pagos.map(({ pago: p, paciente, dni, cuil_cuit }) => [
         fechaExcel(p.fecha),
         capitalizar(formatPeriodo(p.periodo)),
         nombrePaciente(paciente),
+        ...(opciones.iniciales ? [] : [formatDni(dni) || null, formatCuil(cuil_cuit) || null]),
         p.moneda,
         ETIQUETA_MEDIO[p.medio],
         COMPROBANTE[p.comprobante],
@@ -374,9 +382,13 @@ export async function pdfContadora(
     startY: (y + 18) * k,
     head: [['FECHA', 'PACIENTE', 'MEDIO', 'COMPROBANTE', 'N.º DE FACTURA', 'MONTO']],
     body: r.meses.flatMap((m) =>
-      m.pagos.map(({ pago: x, paciente }) => [
+      m.pagos.map(({ pago: x, paciente, dni, cuil_cuit }) => [
         formatFecha(x.fecha),
-        nombrePaciente(paciente),
+        // Debajo del nombre, el CUIL (o el DNI): lo que la contadora necesita para facturar.
+        opciones.iniciales || !(cuil_cuit || dni)
+          ? nombrePaciente(paciente)
+          : `${paciente}
+${cuil_cuit ? formatCuil(cuil_cuit) : `DNI ${formatDni(dni)}`}`,
         ETIQUETA_MEDIO[x.medio],
         COMPROBANTE[x.comprobante],
         [x.punto_venta, x.nro_factura].filter(Boolean).join('-') || guion,

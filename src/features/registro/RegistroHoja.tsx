@@ -13,6 +13,7 @@ import {
   capitalizar, etiquetaDia, formatMonto, formatPeriodo, hoyAR, montoParaInput, normalizar, parseMontoAR, periodoDe,
   redondear2, sumarDias, sumarMeses, type Moneda,
 } from '../../lib/formato'
+import { coincideDocumento } from '../../lib/documentos'
 import { tieneAbono } from '../../lib/abono'
 import { deudaDe, debeAlgo, saldosDe, textoDeuda } from '../../lib/resumen'
 import { periodoSugerido, tarifaVigente } from '../../lib/saldos'
@@ -132,7 +133,7 @@ export function RegistroHoja({
     for (const s of sesiones) if ((ultima.get(s.patient_id) ?? '') < s.fecha) ultima.set(s.patient_id, s.fecha)
     const q = normalizar(busqueda.trim())
     return pacientes
-      .filter((p) => p.activo && (!q || normalizar(nombreCompleto(p)).includes(q)))
+      .filter((p) => p.activo && (!q || normalizar(nombreCompleto(p)).includes(q) || coincideDocumento(p, q)))
       .sort((a, b) => (ultima.get(b.id) ?? '').localeCompare(ultima.get(a.id) ?? '') || a.nombre.localeCompare(b.nombre))
       .slice(0, 8)
   }, [pacientes, sesiones, busqueda])

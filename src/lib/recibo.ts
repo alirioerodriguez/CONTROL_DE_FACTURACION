@@ -4,6 +4,7 @@ import { formatFecha, formatMonto, formatPeriodo, hoyAR, numeroWhatsApp } from '
 import { compartirPdf, linkMail, type ResultadoCompartir } from './compartir'
 import { C, caja, etiqueta, franja, linea, montoGrande, nuevoPdf, pie, texto } from './pdfEstilo'
 import { etiquetaProfesion } from './terminos'
+import { formatCuil, formatDni } from './documentos'
 
 const UNIDADES = ['', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve']
 const DIEZ_A_VEINTINUEVE = [
@@ -78,6 +79,8 @@ export async function pdfRecibo(pago: Pago, paciente: Paciente, perfil: Perfil |
 
   texto(p, 'Recibí de', 62, 262, { t: 16, color: C.gris })
   texto(p, nombreCompleto(paciente), 62, 300, { t: 25, peso: 'bold', ancho: 380 })
+  const documentos = [paciente.dni && `DNI ${formatDni(paciente.dni)}`, paciente.cuil_cuit && `CUIL/CUIT ${formatCuil(paciente.cuil_cuit)}`]
+  documentos.filter((d): d is string => !!d).forEach((d, i) => texto(p, d, 62, 329 + i * 22, { t: 16, color: C.gris, ancho: 380 }))
   texto(p, 'Profesional', 481, 262, { t: 16, color: C.gris })
   texto(p, perfil?.nombre || 'Profesional', 481, 298, { t: 22, peso: 'semibold', ancho: 373 })
   const detalle = [etiquetaProfesion(perfil?.profesion), perfil?.matricula].filter(Boolean).join(' · ')

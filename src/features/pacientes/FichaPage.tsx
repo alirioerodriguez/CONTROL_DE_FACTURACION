@@ -15,6 +15,7 @@ import {
 } from '../../lib/formato'
 import { cobrables, estadoVisible } from '../../lib/estados'
 import { tieneAbono } from '../../lib/abono'
+import { formatCuil, formatDni } from '../../lib/documentos'
 import { aFavorDe, deudaDe, saldosDe } from '../../lib/resumen'
 import { estadoSesion, fechasDelMes, pagadoPorSesion, tarifaVigente, type EstadoSesion } from '../../lib/saldos'
 import { mensajeError } from '../../lib/supabase'
@@ -82,6 +83,8 @@ export function FichaPage() {
 
   const datos: { k: string; v: string }[] = [
     { k: 'Teléfono', v: paciente.telefono || '—' },
+    { k: 'DNI', v: formatDni(paciente.dni) || '—' },
+    { k: 'CUIL / CUIT', v: formatCuil(paciente.cuil_cuit) || '—' },
     {
       k: 'Honorario',
       v: tieneAbono(paciente)
@@ -101,7 +104,7 @@ export function FichaPage() {
     { k: 'Frecuencia', v: paciente.frecuencia || '—' },
     { k: pal.Sesiones, v: String(calculos.ses.length) },
   ]
-  if (pal.porHora) datos.splice(3, 0, { k: 'Duración', v: `${montoParaInput(paciente.horas_por_sesion)} h por ${pal.sesion}` })
+  if (pal.porHora) datos.splice(datos.findIndex((d) => d.k === 'Moneda') + 1, 0,{ k: 'Duración', v: `${montoParaInput(paciente.horas_por_sesion)} h por ${pal.sesion}` })
   if (paciente.notas_admin) datos.push({ k: 'Notas', v: paciente.notas_admin })
 
   return (

@@ -108,6 +108,8 @@ export function agregar(pagos: Pago[]): Record<Moneda, Agregado> {
 export interface PagoDetalle {
   pago: Pago
   paciente: string
+  dni: string | null
+  cuil_cuit: string | null
 }
 
 export interface MesContadora {
@@ -124,7 +126,7 @@ export function mesesEntre(desde: string, hasta: string): string[] {
 }
 
 export function reporteContadora(desde: string, hasta: string, hoy: string, pacientes: Paciente[], pagos: Pago[]) {
-  const nombres = new Map(pacientes.map((p) => [p.id, nombreCompleto(p)]))
+  const porId = new Map(pacientes.map((p) => [p.id, p]))
   const enRango = pagos
     .filter((p) => periodoDe(p.fecha) >= desde && periodoDe(p.fecha) <= hasta)
     .sort((a, b) => a.fecha.localeCompare(b.fecha))
@@ -133,7 +135,10 @@ export function reporteContadora(desde: string, hasta: string, hoy: string, paci
     return {
       periodo,
       porMoneda: agregar(delMes),
-      pagos: delMes.map((pago) => ({ pago, paciente: nombres.get(pago.patient_id) ?? '—' })),
+      pagos: delMes.map((pago) => {
+        const p = porId.get(pago.patient_id)
+        return { pago, paciente: p ? nombreCompleto(p) : '—', dni: p?.dni ?? null, cuil_cuit: p?.cuil_cuit ?? null }
+      }),
     }
   })
   const actual = periodoDe(hoy)
