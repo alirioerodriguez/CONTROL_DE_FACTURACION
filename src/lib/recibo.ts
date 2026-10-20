@@ -83,8 +83,12 @@ export async function pdfRecibo(pago: Pago, paciente: Paciente, perfil: Perfil |
   documentos.filter((d): d is string => !!d).forEach((d, i) => texto(p, d, 62, 329 + i * 22, { t: 16, color: C.gris, ancho: 380 }))
   texto(p, 'Profesional', 481, 262, { t: 16, color: C.gris })
   texto(p, perfil?.nombre || 'Profesional', 481, 298, { t: 22, peso: 'semibold', ancho: 373 })
-  const detalle = [etiquetaProfesion(perfil?.profesion), perfil?.matricula].filter(Boolean).join(' · ')
-  if (detalle) texto(p, detalle, 481, 329, { t: 16, color: C.gris, ancho: 373 })
+  // Profesión y matrícula en un renglón; abajo el CUIT (o el DNI si no cargó CUIT), como los datos del paciente.
+  const lineasProfesional = [
+    [etiquetaProfesion(perfil?.profesion), perfil?.matricula].filter(Boolean).join(' · '),
+    perfil?.cuit ? `CUIT ${formatCuil(perfil.cuit)}` : perfil?.dni ? `DNI ${formatDni(perfil.dni)}` : '',
+  ].filter(Boolean)
+  lineasProfesional.forEach((l, i) => texto(p, l, 481, 329 + i * 22, { t: 16, color: C.gris, ancho: 373 }))
 
   caja(p, 62, 380, 801, 204, C.fondoVerde)
   etiqueta(p, 'Importe recibido', 99, 434, C.verdeEtiqueta, 15)

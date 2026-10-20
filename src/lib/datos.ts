@@ -16,6 +16,9 @@ export type Comprobante = 'factura_c' | 'recibo' | 'sin_comprobante'
 export interface Perfil {
   id: string
   nombre: string | null
+  /** DNI y CUIT de la profesional (opcionales): van en el reporte para la contadora y en el recibo. */
+  dni: string | null
+  cuit: string | null
   email: string | null
   tarifa_estandar: number
   moneda_default: Moneda

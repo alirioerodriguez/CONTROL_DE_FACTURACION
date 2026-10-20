@@ -7,7 +7,7 @@ import { C, caja, etiqueta, franja, montoGrande, nuevoPdf, pie, texto } from './
 import { MEDIOS, reporteContadora, reporteMes } from './reportes'
 import type { ParaFacturar } from './facturar'
 import { tarifaVigente } from './saldos'
-import { formatCuil, formatDni } from './documentos'
+import { documentosProfesional, formatCuil, formatDni } from './documentos'
 
 type Fila = (string | number | Date | null)[]
 type Tipo = 'texto' | 'monto' | 'fecha' | 'numero'
@@ -242,6 +242,8 @@ export async function exportarContadoraXlsx(
   datos.columns = [{ width: 24 }, { width: 40 }]
   ;[
     ['Profesional', perfil?.nombre ?? ''],
+    ['CUIT', perfil?.cuit ? formatCuil(perfil.cuit) : ''],
+    ['DNI', perfil?.dni ? formatDni(perfil.dni) : ''],
     ['Mail', perfil?.email ?? ''],
     ['Período', titulosRango(desde, hasta)],
     ['Pacientes', textoParcial(opciones.parcial) ?? 'Todos los pacientes con cobros en el período'],
@@ -277,7 +279,7 @@ export async function pdfContadora(
       : desde.slice(0, 4) === hasta.slice(0, 4)
         ? `${capitalizar(nombreMes(desde))} a ${formatPeriodo(hasta)}`
         : `${capitalizar(formatPeriodo(desde))} a ${formatPeriodo(hasta)}`
-  texto(p, [perfil?.nombre, rangoTexto].filter(Boolean).join(' · '), 62, 160, { t: 16, color: C.gris })
+  texto(p, [perfil?.nombre, perfil?.cuit && `CUIT ${formatCuil(perfil.cuit)}`, rangoTexto].filter(Boolean).join(' · '), 62, 160, { t: 16, color: C.gris })
   const [ah, mh] = hasta.split('-').map(Number)
   const ultimoDia = new Date(Date.UTC(ah, mh, 0)).getUTCDate()
   texto(p, 'Período', 677, 82, { t: 14.5, color: C.gris, alinear: 'right' })
@@ -425,9 +427,10 @@ ${cuil_cuit ? formatCuil(cuil_cuit) : `DNI ${formatDni(dni)}`}`,
 /** Texto del mail o mensaje con que se manda el reporte a la contadora. */
 export function mensajeContadora(desde: string, hasta: string, perfil: Perfil | undefined): { asunto: string; cuerpo: string } {
   const rango = desde === hasta ? formatPeriodo(desde) : `${formatPeriodo(desde)} a ${formatPeriodo(hasta)}`
+  const firma = [perfil?.nombre, documentosProfesional(perfil)].filter(Boolean).join('\n')
   return {
     asunto: `Reporte de cobros · ${rango}`,
-    cuerpo: `Hola, te paso el reporte de cobros de ${rango}.${perfil?.nombre ? `\n\n${perfil.nombre}` : ''}`,
+    cuerpo: `Hola, te paso el reporte de cobros de ${rango}.${firma ? `\n\n${firma}` : ''}`,
   }
 }
 

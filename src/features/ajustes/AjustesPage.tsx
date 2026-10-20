@@ -10,6 +10,7 @@ import {
   completarPlantilla, formatMonto, montoParaInput, parseMontoAR, PLANTILLA_WHATSAPP_DEFECTO, type Moneda,
 } from '../../lib/formato'
 import { mensajeError, supabase } from '../../lib/supabase'
+import { cuilValido, dniValido, formatCuil, soloDigitos } from '../../lib/documentos'
 import {
   cambiarColoresDaltonismo, cambiarLetra, cambiarTema, coloresDaltonismo, letraActual, TAMANOS_LETRA, temaActual, type Tema,
 } from '../../lib/tema'
@@ -36,6 +37,8 @@ export function AjustesPage() {
   const [plantilla, setPlantilla] = useState('')
   const [datosPago, setDatosPago] = useState('')
   const [matricula, setMatricula] = useState('')
+  const [dni, setDni] = useState('')
+  const [cuit, setCuit] = useState('')
   const [mailContadora, setMailContadora] = useState('')
   const [tema, setTema] = useState<Tema>(temaActual())
   const [daltonismo, setDaltonismo] = useState(coloresDaltonismo())
@@ -68,6 +71,8 @@ export function AjustesPage() {
     setPlantilla(perfil.data.plantilla_whatsapp || PLANTILLA_WHATSAPP_DEFECTO)
     setDatosPago(perfil.data.datos_pago ?? '')
     setMatricula(perfil.data.matricula ?? '')
+    setDni(soloDigitos(perfil.data.dni))
+    setCuit(formatCuil(perfil.data.cuit))
     setMailContadora(perfil.data.contadora_email ?? '')
     cargarProfesion()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -84,6 +89,14 @@ export function AjustesPage() {
     const mail = mailContadora.trim()
     if (mail && !/^[^s@]+@[^s@]+.[^s@]+$/.test(mail)) {
       toast.error('Revisá el mail de tu contadora: tiene que ser como nombre@ejemplo.com')
+      return
+    }
+    if (dni && !dniValido(dni)) {
+      toast.error('Revisá tu DNI: tiene que tener 7 u 8 números.')
+      return
+    }
+    if (cuit && !cuilValido(cuit)) {
+      toast.error('Revisá tu CUIT: son 11 números y el último es el dígito verificador.')
       return
     }
     const tarifa = parseMontoAR(tarifaTxt || '0')
@@ -104,6 +117,8 @@ export function AjustesPage() {
             plantilla_whatsapp: plantilla.trim() || PLANTILLA_WHATSAPP_DEFECTO,
             datos_pago: datosPago.trim() || null,
             matricula: matricula.trim() || null,
+            dni: dni || null,
+            cuit: cuit ? formatCuil(cuit) : null,
             contadora_email: mail || null,
           },
         },
@@ -266,6 +281,31 @@ export function AjustesPage() {
           onChange={(e) => setMatricula(e.target.value)}
           placeholder="Ej. M.P. 12345 (aparece en el recibo)"
         />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Campo
+            etiqueta="Tu CUIT"
+            opcional
+            id="cuit"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={13}
+            value={cuit}
+            onChange={(e) => setCuit(formatCuil(e.target.value))}
+            placeholder="XX-XXXXXXXX-X"
+          />
+          <Campo
+            etiqueta="Tu DNI"
+            opcional
+            id="dni"
+            inputMode="numeric"
+            autoComplete="off"
+            maxLength={10}
+            value={dni}
+            onChange={(e) => setDni(soloDigitos(e.target.value).slice(0, 8))}
+            placeholder="Solo números"
+          />
+        </div>
+        <span className="-mt-2 text-sm font-normal text-ink2">Tu CUIT y DNI van en el reporte para tu contadora y en los recibos.</span>
         <Campo
           etiqueta="Datos para el pago"
           opcional
