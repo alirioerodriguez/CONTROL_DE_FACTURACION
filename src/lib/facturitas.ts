@@ -72,7 +72,7 @@ export interface ResultadoCruce {
 }
 
 /** Busca la columna cuyo encabezado contiene alguna de las palabras (sin tildes ni mayúsculas). */
-function columna(encabezados: string[], palabras: string[], excluir: string[] = []): number {
+export function columna(encabezados: string[], palabras: string[], excluir: string[] = []): number {
   const norm = encabezados.map((e) => normalizar(e))
   return norm.findIndex((e) => palabras.some((p) => e.includes(p)) && !excluir.some((x) => e.includes(x)))
 }
