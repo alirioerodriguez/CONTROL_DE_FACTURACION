@@ -178,7 +178,7 @@ export function FichaPage() {
       </div>
 
       <div className="flex flex-wrap items-start gap-4">
-        <Tarjeta className="min-w-0 flex-[2_1_27.5rem] p-2">
+        <Tarjeta className="escalonado min-w-0 flex-[2_1_27.5rem] p-2">
           <h2 className="m-0 px-3.5 pt-3.5 pb-1 text-xl font-semibold">Historial</h2>
           {calculos.grupos.length === 0 ? (
             <div className="px-5 pt-10 pb-12 text-center text-base leading-normal text-ink2">

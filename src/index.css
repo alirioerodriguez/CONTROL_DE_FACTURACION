@@ -167,3 +167,151 @@ html[data-colores='daltonismo'][data-theme='dark'] {
   background: var(--surface2);
   animation: pulso 1.4s ease-in-out infinite;
 }
+
+/* Movimiento: cortito (150–350 ms) y solo con transform/opacity, para que se sienta vivo sin hacer lenta la app. */
+@keyframes entrar {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+}
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes subir-hoja {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes bajar-hoja {
+  to {
+    transform: translateY(100%);
+  }
+}
+@keyframes acercar {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+@keyframes alejar {
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+@keyframes desvanecer {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes saltito {
+  0% {
+    transform: scale(0.4);
+  }
+  60% {
+    transform: scale(1.15);
+  }
+}
+@keyframes crecer-barra {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+/* Respuesta al toque: botones y filas se hunden apenas al apretarlos. */
+.presionable {
+  transition-property: color, background-color, border-color, box-shadow, transform;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+.presionable:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Cada pantalla entra con un deslizamiento corto. Sin "fill" para que el transform no quede puesto
+   (un transform rompe los position: fixed de adentro). */
+.anim-pantalla {
+  animation: entrar 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Listas y grillas: los hijos aparecen uno detrás de otro (los primeros 10; el resto, junto con el 10). */
+.escalonado > * {
+  animation: entrar 280ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--orden, 9) * 35ms);
+}
+.escalonado > :nth-child(1) { --orden: 0; }
+.escalonado > :nth-child(2) { --orden: 1; }
+.escalonado > :nth-child(3) { --orden: 2; }
+.escalonado > :nth-child(4) { --orden: 3; }
+.escalonado > :nth-child(5) { --orden: 4; }
+.escalonado > :nth-child(6) { --orden: 5; }
+.escalonado > :nth-child(7) { --orden: 6; }
+.escalonado > :nth-child(8) { --orden: 7; }
+.escalonado > :nth-child(9) { --orden: 8; }
+
+/* Hojas (paneles): suben desde abajo en el celular y aparecen con un leve zoom en desktop. */
+.anim-fondo {
+  animation: aparecer 200ms ease-out;
+}
+.anim-fondo[data-saliendo] {
+  animation: desvanecer 180ms ease-in forwards;
+}
+.anim-hoja {
+  animation: subir-hoja 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.anim-hoja[data-saliendo] {
+  animation: bajar-hoja 180ms ease-in forwards;
+}
+@media (width >= 45rem) {
+  .anim-hoja {
+    animation: acercar 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .anim-hoja[data-saliendo] {
+    animation: alejar 160ms ease-in forwards;
+  }
+}
+
+/* Confirmación: el tilde del aviso entra con un saltito. */
+.anim-saltito {
+  animation: saltito 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Barras del gráfico: crecen desde abajo. */
+.anim-barra {
+  transform-origin: bottom;
+  animation: crecer-barra 350ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+/* Barras de progreso: se llenan de izquierda a derecha. */
+@keyframes crecer-ancho {
+  from {
+    transform: scaleX(0);
+  }
+}
+.anim-progreso {
+  transform-origin: left;
+  animation: crecer-ancho 350ms cubic-bezier(0.2, 0.8, 0.2, 1) 120ms backwards;
+}
+
+/* Quien pidió menos movimiento en el sistema no ve nada de esto. */
+@media (prefers-reduced-motion: reduce) {
+  .anim-pantalla,
+  .escalonado > *,
+  .anim-fondo,
+  .anim-hoja,
+  .anim-saltito,
+  .anim-barra,
+  .anim-progreso {
+    animation: none !important;
+  }
+  .anim-barra,
+  .anim-progreso {
+    transition: none !important;
+  }
+  .presionable:active {
+    transform: none !important;
+  }
+}

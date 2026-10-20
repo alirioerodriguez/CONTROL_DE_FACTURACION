@@ -94,7 +94,7 @@ export function MesPage() {
         </EstadoVacio>
       ) : (
         <>
-          <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,20rem),1fr))] gap-3">
+          <div className="escalonado grid grid-cols-[repeat(auto-fit,minmax(min(100%,20rem),1fr))] gap-3">
             {r.totales.map((t) => {
               const pct = t.facturado ? Math.round((t.cobrado / t.facturado) * 100) : 0
               return (
@@ -114,7 +114,7 @@ export function MesPage() {
                     aria-valuemin={0}
                     aria-valuemax={100}
                   >
-                    <div className="h-full rounded-full bg-acc" style={{ width: `${pct}%` }} />
+                    <div className="anim-progreso h-full rounded-full bg-acc transition-[width] duration-300" style={{ width: `${pct}%` }} />
                   </div>
                   <div className="flex flex-wrap justify-between gap-3 text-[0.9375rem]">
                     <span className="text-ink2">de {formatMonto(t.facturado, t.moneda)} a cobrar</span>
@@ -132,7 +132,7 @@ export function MesPage() {
 
           <Tarjeta className="overflow-hidden">
             <div className="overflow-x-auto">
-              <div className="min-w-[54rem]">
+              <div className="escalonado min-w-[54rem]">
                 <div className={`grid ${COLUMNAS} gap-3 border-b border-line px-[1.375rem] py-4 text-[0.8125rem] font-bold tracking-[.06em] text-ink2 uppercase`}>
                   <div>Paciente</div>
                   <div>{pal.Sesiones}</div>

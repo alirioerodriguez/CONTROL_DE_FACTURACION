@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
 
 // Avisos con el estilo del diseño: pastilla oscura con ícono a la izquierda.
 const icono = (ok: boolean) => (
-  <span className={`grid size-[1.625rem] place-items-center rounded-full ${ok ? 'bg-acc text-on-acc' : 'bg-bad text-surface'}`}>
+  <span className={`grid size-[1.625rem] place-items-center rounded-full ${ok ? 'anim-saltito ' : ''}${ok ? 'bg-acc text-on-acc' : 'bg-bad text-surface'}`}>
     {ok ? <Check size={15} strokeWidth={2.4} /> : <CircleAlert size={15} strokeWidth={2.2} />}
   </span>
 )

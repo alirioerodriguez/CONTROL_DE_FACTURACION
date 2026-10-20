@@ -1,6 +1,6 @@
 // Piezas de UI compartidas, con las medidas del diseño (docs/diseno).
 import {
-  useEffect, useLayoutEffect, useRef, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode,
+  useCallback, useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode,
 } from 'react'
 import { CircleAlert, RefreshCw, X, type LucideIcon } from 'lucide-react'
 import { iniciales, partesMonto, type Moneda } from '../lib/formato'
@@ -49,7 +49,7 @@ export function Boton({
       type="button"
       {...props}
       disabled={props.disabled || cargando}
-      className={`inline-flex max-w-full items-center justify-center gap-2 rounded-full px-5 py-1.5 text-center text-base leading-tight font-semibold transition-colors disabled:opacity-45 ${altura} ${VARIANTES[variante]} ${className}`}
+      className={`inline-flex max-w-full items-center justify-center gap-2 rounded-full px-5 py-1.5 text-center text-base leading-tight font-semibold presionable disabled:opacity-45 ${altura} ${VARIANTES[variante]} ${className}`}
     >
       {cargando ? <Spinner /> : Icono && <Icono {...IC} className="shrink-0" />}
       {children}
@@ -144,7 +144,7 @@ export function Segmentado<T extends string | number | boolean>({
             role="radio"
             aria-checked={activo}
             onClick={() => onCambio(o.v)}
-            className={`flex-1 px-1.5 text-[0.9375rem] font-semibold whitespace-nowrap ${alto} ${redondeo} ${
+            className={`presionable flex-1 px-1.5 text-[0.9375rem] font-semibold whitespace-nowrap ${alto} ${redondeo} ${
               activo ? 'bg-surface text-ink shadow-[0_1px_3px_rgba(0,0,0,.14)]' : 'text-ink2'
             }`}
           >
@@ -173,7 +173,7 @@ export function Pastilla({
       type="button"
       aria-pressed={activa}
       onClick={onClick}
-      className={`shrink-0 rounded-full border px-4 text-[0.9375rem] font-semibold whitespace-nowrap ${alto} ${
+      className={`presionable shrink-0 rounded-full border px-4 text-[0.9375rem] font-semibold whitespace-nowrap ${alto} ${
         activa ? 'border-ink bg-ink text-fondo' : 'border-line bg-surface text-ink'
       }`}
     >
@@ -240,6 +240,38 @@ export function Titulo({ children, sub }: { children: ReactNode; sub?: ReactNode
   )
 }
 
+/** true si la persona pidió menos movimiento en el sistema (accesibilidad). */
+function menosMovimiento(): boolean {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
+/** Número que cuenta hasta su valor (desde 0 al aparecer, desde el anterior cuando cambia). */
+function useNumeroAnimado(destino: number, ms = 350): number {
+  const [valor, setValor] = useState(() => (menosMovimiento() ? destino : 0))
+  const actual = useRef(valor)
+  useEffect(() => {
+    const desde = actual.current
+    if (desde === destino) return
+    if (menosMovimiento()) {
+      actual.current = destino
+      setValor(destino)
+      return
+    }
+    const inicio = performance.now()
+    let id = 0
+    const paso = (ahora: number) => {
+      const k = Math.min((ahora - inicio) / ms, 1)
+      // Arranca rápido y frena al llegar; redondeado a centavos.
+      actual.current = k === 1 ? destino : Math.round((desde + (destino - desde) * (1 - (1 - k) ** 3)) * 100) / 100
+      setValor(actual.current)
+      if (k < 1) id = requestAnimationFrame(paso)
+    }
+    id = requestAnimationFrame(paso)
+    return () => cancelAnimationFrame(id)
+  }, [destino, ms])
+  return valor
+}
+
 /** Monto grande con los centavos más chicos. */
 export function MontoGrande({
   monto,
@@ -252,7 +284,7 @@ export function MontoGrande({
   className?: string
   colorDecimales?: string
 }) {
-  const p = partesMonto(monto, moneda)
+  const p = partesMonto(useNumeroAnimado(monto), moneda)
   return (
     <AjustarAncho className={`num ${className}`}>
       {p.entero}
@@ -395,8 +427,17 @@ export function Hoja({
   children: ReactNode
   ancho?: string
 }) {
+  // Al cerrarla a mano (X, fondo o Escape) baja con una animación corta antes de desaparecer.
+  const [saliendo, setSaliendo] = useState(false)
+  const cerrar = useCallback(() => {
+    if (saliendo) return
+    if (menosMovimiento()) return onCerrar()
+    setSaliendo(true)
+    window.setTimeout(onCerrar, 170)
+  }, [onCerrar, saliendo])
+
   useEffect(() => {
-    const tecla = (e: KeyboardEvent) => e.key === 'Escape' && onCerrar()
+    const tecla = (e: KeyboardEvent) => e.key === 'Escape' && cerrar()
     document.addEventListener('keydown', tecla)
     const overflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -404,28 +445,30 @@ export function Hoja({
       document.removeEventListener('keydown', tecla)
       document.body.style.overflow = overflow
     }
-  }, [onCerrar])
+  }, [cerrar])
 
   return (
     <div
-      onClick={onCerrar}
-      className="fixed inset-0 z-30 flex items-end justify-center bg-[rgba(12,18,15,.42)] md:items-center md:p-6"
+      onClick={saliendo ? undefined : cerrar}
+      data-saliendo={saliendo || undefined}
+      className="anim-fondo fixed inset-0 z-30 flex items-end justify-center bg-[rgba(12,18,15,.42)] md:items-center md:p-6"
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label={titulo}
         onClick={(e) => e.stopPropagation()}
-        className={`flex max-h-[92dvh] w-full flex-col gap-[1.125rem] overflow-auto rounded-t-[1.75rem] bg-surface px-[1.375rem] pt-3 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-[0_24px_60px_rgba(0,0,0,.25)] md:rounded-[1.75rem] md:px-8 md:pt-7 md:pb-8 ${ancho}`}
+        data-saliendo={saliendo || undefined}
+        className={`anim-hoja flex max-h-[92dvh] w-full flex-col gap-[1.125rem] overflow-auto rounded-t-[1.75rem] bg-surface px-[1.375rem] pt-3 pb-[max(1.75rem,env(safe-area-inset-bottom))] shadow-[0_24px_60px_rgba(0,0,0,.25)] md:rounded-[1.75rem] md:px-8 md:pt-7 md:pb-8 ${ancho}`}
       >
         <div className="h-[0.3125rem] w-11 self-center rounded-full bg-line md:hidden" />
         <div className="flex items-center justify-between gap-3">
           <h2 className="m-0 font-serif text-[2.125rem] leading-none font-normal">{titulo}</h2>
           <button
             type="button"
-            onClick={onCerrar}
+            onClick={cerrar}
             aria-label="Cerrar"
-            className="grid size-11 shrink-0 place-items-center rounded-full bg-surface2 hover:bg-line"
+            className="presionable grid size-11 shrink-0 place-items-center rounded-full bg-surface2 hover:bg-line"
           >
             <X {...IC} />
           </button>

@@ -299,7 +299,7 @@ export function RegistroHoja({
                     key={p.id}
                     type="button"
                     onClick={() => elegir(p)}
-                    className="flex h-11 items-center gap-2 rounded-full border border-line bg-surface pr-3.5 pl-[0.3125rem] text-[0.9375rem] font-semibold hover:border-acc hover:bg-acc-soft"
+                    className="presionable flex h-11 items-center gap-2 rounded-full border border-line bg-surface pr-3.5 pl-[0.3125rem] text-[0.9375rem] font-semibold hover:border-acc hover:bg-acc-soft"
                   >
                     <Avatar nombre={nombreCompleto(p)} className="size-[2.125rem] text-xs" />
                     {partes[0]} {partes[1] ? `${partes[1][0]}.` : ''}

@@ -74,7 +74,7 @@ export function InicioPage() {
         <SelectorMes periodo={periodo} onCambio={setPeriodo} />
       </div>
 
-      <div data-tour="resumen" className="grid grid-cols-2 gap-3 max-md:letra-grande:grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(13.75rem,1fr))]">
+      <div data-tour="resumen" className="escalonado grid grid-cols-2 gap-3 max-md:letra-grande:grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(13.75rem,1fr))]">
         <div className={`${tarjeta} col-span-2 max-md:letra-grande:col-span-1 md:col-span-1`}>
           <div className={etiqueta}>Cobrado ARS</div>
           <MontoGrande monto={r.cobrado.ARS} moneda="ARS" />
@@ -122,7 +122,7 @@ export function InicioPage() {
       <div data-tour="monotributo">{perfil && <TarjetaMonotributo perfil={perfil} pagos={pagos} />}</div>
 
       <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 md:grid-cols-[repeat(auto-fit,minmax(min(100%,26.25rem),1fr))]">
-        <Tarjeta className="@container p-2" data-tour="sin-abonar">
+        <Tarjeta className="escalonado @container p-2" data-tour="sin-abonar">
           <div className="flex items-baseline justify-between gap-3 px-3.5 pt-3.5 pb-2">
             <h2 className="m-0 text-xl font-semibold">{pal.Sesiones} sin abonar</h2>
             <div className="text-[0.9375rem] text-ink2">{r.impagas.length ? plural(r.impagas.length, pal.sesion, pal.sesiones) : ''}</div>
@@ -148,7 +148,7 @@ export function InicioPage() {
                   tabIndex={0}
                   onClick={() => navegar(`/pacientes/${p.id}`)}
                   onKeyDown={(e) => e.key === 'Enter' && navegar(`/pacientes/${p.id}`)}
-                  className="flex cursor-pointer items-center gap-3 rounded-2xl px-3.5 py-3 hover:bg-surface2"
+                  className="presionable flex cursor-pointer items-center gap-3 rounded-2xl px-3.5 py-3 hover:bg-surface2"
                 >
                   <Avatar nombre={nombreCompleto(p)} className="size-11 text-[0.9375rem]" />
                   <div className="min-w-0 flex-1">
@@ -235,8 +235,8 @@ export function InicioPage() {
                     {formatCompacto(valor, monedaGrafico)}
                   </div>
                   <div
-                    className={`min-h-1 w-full max-w-12 rounded-[0.625rem] ${elegido ? 'bg-acc' : 'bg-acc-soft'}`}
-                    style={{ height: `${Math.round((valor / max) * 82)}%` }}
+                    className={`anim-barra min-h-1 w-full max-w-12 rounded-[0.625rem] transition-[height] duration-300 ${elegido ? 'bg-acc' : 'bg-acc-soft'}`}
+                    style={{ height: `${Math.round((valor / max) * 82)}%`, animationDelay: `${i * 40}ms` }}
                     title={`${capitalizar(nombreMes(b.periodo))}: ${formatMonto(valor, monedaGrafico)}`}
                   />
                 </div>

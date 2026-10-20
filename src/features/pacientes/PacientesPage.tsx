@@ -116,7 +116,7 @@ export function PacientesPage() {
           </div>
 
           {lista.length > 0 ? (
-            <Tarjeta className="flex flex-col gap-0.5 p-2">
+            <Tarjeta className="escalonado flex flex-col gap-0.5 p-2">
               {lista.map(({ p, nombre, deuda, debe }) => {
                 const tarifa = tarifaVigente(p, tarifaEstandar)
                 return (
@@ -124,7 +124,7 @@ export function PacientesPage() {
                     key={p.id}
                     type="button"
                     onClick={() => navegar(`/pacientes/${p.id}`)}
-                    className={`flex items-center gap-3.5 rounded-2xl p-3.5 text-left hover:bg-surface2 ${p.activo ? '' : 'opacity-60'}`}
+                    className={`presionable flex items-center gap-3.5 rounded-2xl p-3.5 text-left hover:bg-surface2 ${p.activo ? '' : 'opacity-60'}`}
                   >
                     <Avatar nombre={nombre} />
                     <div className="min-w-0 flex-1">

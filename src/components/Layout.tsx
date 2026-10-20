@@ -104,7 +104,7 @@ export function Layout() {
           type="button"
           data-tour="registrar"
           onClick={() => abrir({ modo: 'sesion' })}
-          className="flex h-[3.25rem] shrink-0 items-center justify-center gap-2 rounded-full bg-acc text-base font-semibold text-on-acc hover:bg-acc-strong"
+          className="presionable flex h-[3.25rem] shrink-0 items-center justify-center gap-2 rounded-full bg-acc text-base font-semibold text-on-acc hover:bg-acc-strong"
         >
           <Plus {...IC} />
           Registrar
@@ -116,7 +116,7 @@ export function Layout() {
               <NavLink
                 key={s.to}
                 to={s.to}
-                className={`flex h-12 items-center gap-3 rounded-[0.875rem] px-3.5 text-base font-semibold ${
+                className={`presionable flex h-12 items-center gap-3 rounded-[0.875rem] px-3.5 text-base font-semibold ${
                   on ? 'bg-acc-soft text-acc-strong' : 'text-ink2 hover:bg-surface2'
                 }`}
               >
@@ -138,7 +138,10 @@ export function Layout() {
 
       <main className="min-w-0 flex-1 [container-type:inline-size]">
         <div className="mx-auto max-w-[70rem] px-5 pt-6 pb-[11.25rem] md:px-12 md:pt-10 md:pb-16">
-          <Outlet />
+          {/* Con key: cada pantalla nueva entra con su animación. */}
+          <div key={pathname} className="anim-pantalla">
+            <Outlet />
+          </div>
         </div>
       </main>
 
@@ -149,9 +152,9 @@ export function Layout() {
             <NavLink
               key={s.to}
               to={s.to}
-              className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 py-1 text-[min(0.75rem,13px)] leading-tight font-bold ${on ? 'text-acc-strong' : 'text-ink2'}`}
+              className={`presionable flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 py-1 text-[min(0.75rem,13px)] leading-tight font-bold ${on ? 'text-acc-strong' : 'text-ink2'}`}
             >
-              <span className={`grid h-[1.875rem] w-full max-w-[3.625rem] place-items-center rounded-full text-[1.0625rem] ${on ? 'bg-acc-soft' : ''}`}>
+              <span className={`grid h-[1.875rem] w-full max-w-[3.625rem] place-items-center rounded-full text-[1.0625rem] transition-colors duration-200 ${on ? 'bg-acc-soft' : ''}`}>
                 <s.icono {...IC} />
               </span>
               {s.corta ?? s.etiqueta}
@@ -161,7 +164,7 @@ export function Layout() {
         <button
           type="button"
           onClick={() => setMas(true)}
-          className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 py-1 text-[min(0.75rem,13px)] leading-tight font-bold ${activa(pathname, true) === 'mas' ? 'text-acc-strong' : 'text-ink2'}`}
+          className={`presionable flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 py-1 text-[min(0.75rem,13px)] leading-tight font-bold ${activa(pathname, true) === 'mas' ? 'text-acc-strong' : 'text-ink2'}`}
         >
           <span
             className={`grid h-[1.875rem] w-full max-w-[3.625rem] place-items-center rounded-full text-[1.0625rem] ${activa(pathname, true) === 'mas' ? 'bg-acc-soft' : ''}`}
@@ -174,7 +177,7 @@ export function Layout() {
 
       {mas && (
         <Hoja titulo="Más" onCerrar={() => setMas(false)}>
-          <div className="flex flex-col">
+          <div className="escalonado flex flex-col">
             {EN_MAS.filter((x) => !x.opcional || perfil?.[x.opcional]).map((x) => (
               <button
                 key={x.to}
@@ -183,7 +186,7 @@ export function Layout() {
                   setMas(false)
                   navegar(x.to)
                 }}
-                className="flex min-h-16 items-center gap-3 border-b border-line bg-transparent px-1 py-3 text-left last:border-b-0"
+                className="presionable flex min-h-16 items-center gap-3 border-b border-line bg-transparent px-1 py-3 text-left last:border-b-0"
               >
                 <span className="grid size-11 shrink-0 place-items-center rounded-[0.875rem] bg-acc-soft text-acc-strong">
                   <x.icono {...IC} />
@@ -204,7 +207,7 @@ export function Layout() {
           type="button"
           data-tour="registrar"
           onClick={() => abrir({ modo: 'sesion' })}
-          className="fixed right-[1.125rem] bottom-[calc(6.375rem+env(safe-area-inset-bottom))] z-[21] flex h-[3.625rem] items-center gap-2 rounded-full bg-acc px-[1.375rem] text-[1.0625rem] font-semibold text-on-acc shadow-[0_10px_28px_rgba(25,50,38,.28)] hover:bg-acc-strong md:hidden"
+          className="presionable anim-saltito fixed right-[1.125rem] bottom-[calc(6.375rem+env(safe-area-inset-bottom))] z-[21] flex h-[3.625rem] items-center gap-2 rounded-full bg-acc px-[1.375rem] text-[1.0625rem] font-semibold text-on-acc shadow-[0_10px_28px_rgba(25,50,38,.28)] hover:bg-acc-strong md:hidden"
         >
           <Plus {...IC} />
           Registrar
