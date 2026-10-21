@@ -80,6 +80,8 @@ export interface Sesion {
   id: string
   patient_id: string
   fecha: string
+  /** Hora de la cita 'HH:MM' (opcional). */
+  hora: string | null
   horas: number
   tarifa_hora: number
   monto: number
@@ -170,6 +172,8 @@ export function useSesiones() {
     queryFn: async () =>
       (await traer<Sesion>('sessions', 'fecha')).map((s) => ({
         ...s,
+        // Postgres devuelve la hora como 'HH:MM:SS'.
+        hora: s.hora ? s.hora.slice(0, 5) : null,
         horas: n(s.horas),
         tarifa_hora: n(s.tarifa_hora),
         monto: n(s.monto),

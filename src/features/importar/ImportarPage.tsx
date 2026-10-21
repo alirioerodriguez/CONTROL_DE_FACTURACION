@@ -9,7 +9,7 @@ import { useDatos } from '../../lib/datos'
 import { capitalizar, formatFecha, formatMonto, plural } from '../../lib/formato'
 import { leerArchivo, type Celda, type Hoja } from '../../lib/importar/leer'
 import {
-  CAMPOS, camposFaltantes, esPlantilla, mapeoAutomatico, prepararGenerico, prepararPlantilla,
+  CAMPOS, camposFaltantes, esPlanillaCitas, esPlantilla, mapeoAutomatico, prepararCitas, prepararGenerico, prepararPlantilla,
   type CampoGenerico, type Mapeo, type Preparado,
 } from '../../lib/importar/preparar'
 import { mensajeError, supabase } from '../../lib/supabase'
@@ -36,6 +36,8 @@ export function ImportarPage() {
   const [archivo, setArchivo] = useState('')
   const [hojas, setHojas] = useState<Hoja[]>([])
   const [plantilla, setPlantilla] = useState(false)
+  // Planilla de una sola pestaña («Citas»): la que se baja desde la app.
+  const [citas, setCitas] = useState(false)
   const [indiceHoja, setIndiceHoja] = useState(0)
   const [mapeo, setMapeo] = useState<Mapeo | null>(null)
   const [leyendo, setLeyendo] = useState(false)
@@ -57,9 +59,10 @@ export function ImportarPage() {
   const hoja = hojas[indiceHoja]
   const preparado: Preparado | null = useMemo(() => {
     if (paso !== 3) return null
+    if (citas) return prepararCitas(hojas, contexto)
     if (plantilla) return prepararPlantilla(hojas, contexto)
     return hoja && mapeo ? prepararGenerico(hoja, mapeo, contexto) : null
-  }, [paso, plantilla, hojas, hoja, mapeo, contexto])
+  }, [paso, citas, plantilla, hojas, hoja, mapeo, contexto])
 
   function reiniciar() {
     setPaso(1)
@@ -80,10 +83,16 @@ export function ImportarPage() {
       if (!conDatos.length) throw new Error(`“${f.name}” está vacío.`)
       setArchivo(f.name)
       setHojas(leidas)
-      if (esPlantilla(leidas)) {
+      if (esPlanillaCitas(leidas)) {
+        setCitas(true)
+        setPlantilla(false)
+        setPaso(3)
+      } else if (esPlantilla(leidas)) {
+        setCitas(false)
         setPlantilla(true)
         setPaso(3)
       } else {
+        setCitas(false)
         const i = leidas.findIndex((h) => h.filas.length > 0)
         const elegida = i >= 0 ? i : 0
         setPlantilla(false)
@@ -135,7 +144,8 @@ export function ImportarPage() {
     }
   }
 
-  const pasos = ['Subir archivo', plantilla ? 'Revisar' : 'Mapear columnas', 'Confirmar']
+  const formatoApp = plantilla || citas
+  const pasos = ['Subir archivo', formatoApp ? 'Revisar' : 'Mapear columnas', 'Confirmar']
   const faltan = mapeo ? camposFaltantes(mapeo) : []
   const usadas = new Map<number, string>()
   if (mapeo) for (const c of CAMPOS) if (mapeo[c.k] != null) usadas.set(mapeo[c.k]!, c.l)
@@ -331,12 +341,12 @@ export function ImportarPage() {
       {paso === 3 && preparado && (
         <Confirmacion
           archivo={archivo}
-          plantilla={plantilla}
+          plantilla={formatoApp}
           preparado={preparado}
           crearPacientes={crearPacientes}
           setCrearPacientes={setCrearPacientes}
           guardando={guardando}
-          onVolver={() => (plantilla ? reiniciar() : setPaso(2))}
+          onVolver={() => (formatoApp ? reiniciar() : setPaso(2))}
           onConfirmar={confirmar}
           onCambiar={reiniciar}
         />

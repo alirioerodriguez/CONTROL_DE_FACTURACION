@@ -535,6 +535,7 @@ export async function libroBackup(perfil: Perfil | undefined, pacientes: Pacient
     [
       { titulo: 'ID sesión', ancho: 11 },
       { titulo: 'Fecha', ancho: 12, tipo: 'fecha' },
+      { titulo: 'Hora', ancho: 8 },
       { titulo: 'ID paciente', ancho: 12 },
       { titulo: 'Paciente', ancho: 26 },
       { titulo: 'Mes', ancho: 16 },
@@ -547,6 +548,7 @@ export async function libroBackup(perfil: Perfil | undefined, pacientes: Pacient
     sesiones.map((s) => [
       idSesion.get(s.id)!,
       fechaExcel(s.fecha),
+      s.hora,
       codigo.get(s.patient_id) ?? null,
       nombre.get(s.patient_id) ?? null,
       capitalizar(formatPeriodo(periodoDe(s.fecha))),

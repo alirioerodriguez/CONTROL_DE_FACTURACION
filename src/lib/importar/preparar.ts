@@ -3,6 +3,7 @@ import { nombreCompleto, type Comprobante, type Medio, type Paciente, type Pago,
 import { hoyAR, normalizar, parseFechaAR, parseMontoAR, periodoDe, redondear2, type Moneda } from '../formato'
 import type { Celda, Hoja } from './leer'
 import { normalizarDocumentos } from '../documentos'
+import { tarifaVigente } from '../saldos'
 
 export interface PacienteNuevo {
   ref: string
@@ -22,6 +23,8 @@ export interface PacienteNuevo {
   fecha_alta: string
   activo: boolean
   notas_admin: string | null
+  /** Solo lo trae la planilla de citas. */
+  obra_social?: string | null
 }
 
 /** Paciente ya existente (patient_id) o creado en esta misma importación (paciente_ref). */
@@ -30,6 +33,8 @@ type RefPaciente = { patient_id: string; paciente_ref?: undefined } | { patient_
 export type SesionNueva = RefPaciente & {
   ref?: string
   fecha: string
+  /** Hora de la cita 'HH:MM' (opcional). */
+  hora?: string | null
   horas: number
   tarifa_hora: number
   moneda: Moneda
@@ -437,6 +442,7 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
       monto: columna(hs, 'Monto'),
       moneda: columna(hs, 'Moneda'),
       horas: columna(hs, 'Horas'),
+      hora: columna(hs, 'Hora'),
       obs: columna(hs, 'Observaciones'),
       estado: columna(hs, 'Estado'),
     }
@@ -475,6 +481,7 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
         ...ref,
         ref: refSesion,
         fecha,
+        hora: c.hora >= 0 ? parseHora(v(c.hora)) : null,
         horas: horas > 0 ? horas : 1,
         tarifa_hora: redondear2(monto / (horas > 0 ? horas : 1)),
         moneda,
@@ -558,4 +565,181 @@ export function estadoImportado(valor: string | null): { estado?: 'ausente' | 'c
   if (v.startsWith('ausen')) return { estado: 'ausente' }
   if (v.startsWith('cancel')) return { estado: 'cancelada' }
   return {}
+}
+
+/**
+ * Hora de una celda: '18:30', '18.30', '18 hs', un número de Excel (fracción del día) o una fecha con hora.
+ * Devuelve 'HH:MM' o null si no se entiende.
+ */
+export function parseHora(c: Celda): string | null {
+  if (c == null) return null
+  let h: number
+  let m: number
+  if (c instanceof Date) {
+    h = c.getUTCHours()
+    m = c.getUTCMinutes()
+  } else if (typeof c === 'number') {
+    const minutos = Math.round((c % 1) * 24 * 60)
+    h = Math.floor(minutos / 60)
+    m = minutos % 60
+  } else {
+    const t = String(c)
+      .trim()
+      .toLowerCase()
+      .match(/^(\d{1,2})(?:[:.h ](\d{2}))?\s*(?:hs?|horas?)?$/)
+    if (!t) return null
+    h = Number(t[1])
+    m = Number(t[2] ?? 0)
+  }
+  if (h > 23 || m > 59) return null
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+// ---------------------------------------------------------------------
+// Planilla de una sola pestaña («Citas»): public/plantilla-cobros.xlsx
+// Cada fila es una cita: datos del paciente (se crea la primera vez que aparece), fecha, hora, monto y si pagó.
+// ---------------------------------------------------------------------
+
+/** true si el archivo tiene la pestaña «Citas» con paciente y fecha. */
+export function esPlanillaCitas(hojas: Hoja[]): boolean {
+  const h = hojaLlamada(hojas, 'Citas')
+  return !!h && columna(h, 'Paciente') >= 0 && columna(h, 'Fecha de la cita', 'Fecha') >= 0
+}
+
+export function prepararCitas(hojas: Hoja[], ctx: Contexto): Preparado {
+  const res: Preparado = { pacientes: [], sesiones: [], pagos: [], errores: [], duplicadas: 0, pacientesExistentes: 0 }
+  const h = hojaLlamada(hojas, 'Citas')
+  if (!h) return res
+  const idx = indicePacientes(ctx.pacientes)
+  const ya = clavesExistentes(ctx)
+  const porId = new Map(ctx.pacientes.map((p) => [p.id, p]))
+  const c = {
+    paciente: columna(h, 'Paciente'),
+    dni: columna(h, 'DNI'),
+    cuil: columna(h, 'CUIL / CUIT', 'CUIL/CUIT', 'CUIL', 'CUIT'),
+    iva: columna(h, 'Condición frente al IVA', 'Condición IVA'),
+    obra: columna(h, 'Obra social', 'Obra social o prepaga'),
+    tel: columna(h, 'Teléfono'),
+    fecha: columna(h, 'Fecha de la cita', 'Fecha'),
+    hora: columna(h, 'Hora de la cita', 'Hora'),
+    monto: columna(h, 'Monto', 'Honorario'),
+    moneda: columna(h, 'Moneda'),
+    pago: columna(h, 'Pagó', 'Pago'),
+    factura: columna(h, 'Nº de factura', 'Nro de factura', 'N° de factura', 'Factura'),
+  }
+  const nuevos = new Map<string, PacienteNuevo>()
+  const vistos = new Set<string>()
+  const enArchivo = { sesiones: new Set<string>(), pagos: new Set<string>() }
+
+  for (const { numero, celdas } of h.filas) {
+    if (esFilaEjemplo(celdas)) continue
+    const v = (i: number) => (i >= 0 ? celdas[i] : null)
+    const nombre = texto(v(c.paciente))
+    if (!nombre && v(c.fecha) == null && v(c.monto) == null) continue
+    if (!nombre) {
+      res.errores.push({ hoja: h.nombre, fila: numero, mensaje: 'Falta el paciente' })
+      continue
+    }
+    const clave = normalizar(nombre.replace(/\s+/g, ' '))
+
+    // Paciente: existente en la cuenta, o nuevo (con los datos de la primera fila en que aparece).
+    const existente = idx.porNombre.get(clave)
+    let ref: RefPaciente
+    if (existente) {
+      ref = { patient_id: existente }
+      if (!vistos.has(clave)) res.pacientesExistentes++
+    } else {
+      let p = nuevos.get(clave)
+      const docs = normalizarDocumentos(texto(v(c.dni)), texto(v(c.cuil)))
+      if (!p) {
+        p = {
+          ref: `p:${clave}`,
+          nombre,
+          apellido: null,
+          codigo: null,
+          dni: docs.dni,
+          cuil_cuit: docs.cuil_cuit,
+          condicion_iva: texto(v(c.iva)) ?? 'Consumidor final',
+          telefono: texto(v(c.tel)),
+          email: null,
+          domicilio: null,
+          frecuencia: null,
+          tipo_tarifa: 'estandar',
+          tarifa_personalizada: null,
+          moneda: ctx.monedaDefecto,
+          fecha_alta: hoyAR(),
+          activo: true,
+          notas_admin: null,
+          obra_social: texto(v(c.obra)),
+        }
+        nuevos.set(clave, p)
+        res.pacientes.push(p)
+      } else {
+        // Si en una fila anterior faltaba algún dato, se completa con esta.
+        p.dni ??= docs.dni
+        p.cuil_cuit ??= docs.cuil_cuit
+        p.telefono ??= texto(v(c.tel))
+        p.obra_social ??= texto(v(c.obra))
+      }
+      ref = { paciente_ref: p.ref }
+    }
+    vistos.add(clave)
+
+    // Cita (si tiene fecha). Sin monto, se usa el honorario del paciente o la tarifa estándar.
+    if (v(c.fecha) == null) continue
+    const fecha = parseFechaAR(v(c.fecha))
+    if (!fecha) {
+      res.errores.push({ hoja: h.nombre, fila: numero, mensaje: `Fecha inválida: “${texto(v(c.fecha))}”` })
+      continue
+    }
+    const hora = v(c.hora) == null ? null : parseHora(v(c.hora))
+    if (v(c.hora) != null && !hora) {
+      res.errores.push({ hoja: h.nombre, fila: numero, mensaje: `Hora inválida: “${texto(v(c.hora))}” (usá 18:30)` })
+      continue
+    }
+    const pacienteExistente = existente ? porId.get(existente) : undefined
+    const moneda = parseMoneda(v(c.moneda), pacienteExistente?.moneda ?? ctx.monedaDefecto)
+    if (moneda === 'invalida') {
+      res.errores.push({ hoja: h.nombre, fila: numero, mensaje: `Moneda “${texto(v(c.moneda))}” no soportada` })
+      continue
+    }
+    const tarifa = pacienteExistente ? tarifaVigente(pacienteExistente, ctx.tarifaEstandar) : ctx.tarifaEstandar
+    const monto = v(c.monto) == null ? tarifa : parseMontoAR(v(c.monto))
+    if (monto == null || monto <= 0) {
+      res.errores.push({
+        hoja: h.nombre,
+        fila: numero,
+        mensaje: v(c.monto) == null ? 'Falta el monto (o cargá tu tarifa estándar en Ajustes)' : `Monto inválido: “${texto(v(c.monto))}”`,
+      })
+      continue
+    }
+    const k = claveMovimiento(refDe(ref), fecha, monto, moneda)
+    if (ya.sesiones.has(k) || enArchivo.sesiones.has(k)) {
+      res.duplicadas++
+      continue
+    }
+    enArchivo.sesiones.add(k)
+    const refSesion = `s:fila${numero}`
+    res.sesiones.push({ ...ref, ref: refSesion, fecha, hora, horas: 1, tarifa_hora: monto, moneda, observaciones: null })
+
+    // Pago (si dice que pagó): mismo día y monto, imputado al mes de la cita.
+    if (parseSiNo(v(c.pago)) === true && !ya.pagos.has(k) && !enArchivo.pagos.has(k)) {
+      enArchivo.pagos.add(k)
+      const nro = texto(v(c.factura))
+      res.pagos.push({
+        ...ref,
+        sesion_ref: refSesion,
+        fecha,
+        periodo: periodoDe(fecha),
+        monto,
+        moneda,
+        medio: 'transferencia',
+        comprobante: nro ? 'factura_c' : 'sin_comprobante',
+        punto_venta: null,
+        nro_factura: nro,
+        observaciones: null,
+      })
+    }
+  }
+  return res
 }

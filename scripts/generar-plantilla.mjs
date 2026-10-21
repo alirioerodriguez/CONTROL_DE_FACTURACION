@@ -1,5 +1,7 @@
-// Genera public/plantilla-cobros.xlsx: la planilla simple que se baja desde la app para cargar datos e importarlos.
-// Solo lo elemental para que funcione y para facturar en ARCA (nada de domicilio, mail ni notas).
+// Genera public/plantilla-cobros.xlsx: la planilla que se baja desde la app para cargar datos e importarlos.
+// Una sola pestaña («Citas»): cada fila es una cita con lo que la profesional necesita del paciente, lo que pide
+// la app y lo que pide ARCA para facturar. El paciente se crea la primera vez que aparece; en las filas
+// siguientes alcanza con el nombre. Lo importa prepararCitas (src/lib/importar/preparar.ts).
 // Uso: node scripts/generar-plantilla.mjs
 import ExcelJS from 'exceljs'
 
@@ -8,89 +10,63 @@ const AMARILLO = 'FFFFF8DC'
 const libro = new ExcelJS.Workbook()
 libro.creator = 'honorapp'
 
-// Instrucciones
-const ayuda = libro.addWorksheet('Cómo completar')
-ayuda.columns = [{ width: 100 }]
-const lineas = [
-  ['Planilla de cobros de honorapp', { bold: true, size: 16 }],
-  [''],
-  ['1. En «Pacientes» va una fila por paciente: nombre y apellido, DNI o CUIT y su condición frente al IVA (lo que pide ARCA para la factura).'],
-  ['2. En «Sesiones» va una fila por sesión: paciente (escrito igual que en Pacientes), fecha y monto.'],
-  ['3. En «Pagos» va una fila por pago: paciente, fecha, monto y, si querés, de qué mes es y el número de factura.'],
-  ['4. Borrá las filas de ejemplo, guardá y subila en honorapp → Importar. Lo que ya estaba cargado no se duplica.'],
-  [''],
-  ['Fechas: dd/mm/aaaa · Montos: 25000 o 25.000,50 · Moneda: ARS o USD (si la dejás vacía, se usa la de Ajustes).'],
-  ['El teléfono es opcional: sirve para mandar recordatorios por WhatsApp desde la app.'],
+const COLUMNAS = [
+  { titulo: 'Paciente', ancho: 40, nota: 'Nombre y apellido. Escribilo siempre igual: así se juntan las citas de la misma persona.' },
+  { titulo: 'DNI', ancho: 12, nota: 'Solo números. Para la factura de ARCA.' },
+  { titulo: 'CUIL / CUIT', ancho: 16, nota: 'Opcional. Si el paciente necesita la factura a su CUIT.' },
+  {
+    titulo: 'Condición frente al IVA',
+    ancho: 24,
+    lista: ['Consumidor final', 'Monotributista', 'Responsable inscripto', 'Exento'],
+    nota: 'La pide ARCA. Si no sabés, dejá «Consumidor final».',
+  },
+  { titulo: 'Obra social', ancho: 18, nota: 'Opcional. Ej.: OSDE 310.' },
+  { titulo: 'Teléfono', ancho: 16, nota: 'Opcional. Para mandarle recordatorios por WhatsApp desde la app.' },
+  { titulo: 'Fecha de la cita', ancho: 15, tipo: 'fecha', nota: 'dd/mm/aaaa' },
+  { titulo: 'Hora de la cita', ancho: 14, tipo: 'hora', nota: 'Opcional. Ej.: 18:30.' },
+  { titulo: 'Monto', ancho: 14, tipo: 'monto', nota: 'Si lo dejás vacío, se usa tu tarifa estándar de Ajustes.' },
+  { titulo: 'Moneda', ancho: 10, lista: ['ARS', 'USD'], nota: 'ARS o USD. Vacía: la de Ajustes.' },
+  { titulo: 'Pagó', ancho: 8, lista: ['Sí', 'No'], nota: 'Sí, si ya te pagó esa cita.' },
+  { titulo: 'Nº de factura', ancho: 18, nota: 'Opcional. Si ya hiciste la factura en ARCA. Ej.: C 00002-00000123.' },
 ]
-for (const [texto, fuente] of lineas) {
-  const fila = ayuda.addRow([texto])
-  if (fuente) fila.font = fuente
-  fila.alignment = { wrapText: true }
-}
 
-/** Hoja con encabezado verde, celdas para completar en amarillo y una fila de ejemplo. */
-function hoja(nombre, columnas, ejemplo) {
-  const h = libro.addWorksheet(nombre)
-  h.columns = columnas.map((c) => ({ header: c.titulo, width: c.ancho ?? 18 }))
-  const enc = h.getRow(1)
-  enc.font = { bold: true, color: { argb: 'FFFFFFFF' } }
-  enc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: VERDE } }
-  h.views = [{ state: 'frozen', ySplit: 1 }]
-  // Fila de ejemplo: la app la saltea porque dice «fila de ejemplo».
-  const fila = h.addRow(ejemplo)
-  fila.font = { italic: true, color: { argb: 'FF8A8A8A' } }
-  columnas.forEach((c, i) => {
-    const col = h.getColumn(i + 1)
-    if (c.tipo === 'fecha') col.numFmt = 'dd/mm/yyyy'
-    if (c.tipo === 'monto') col.numFmt = '#,##0.00'
-    for (let r = 3; r <= 300; r++) {
-      const celda = h.getCell(r, i + 1)
-      celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AMARILLO } }
-      if (c.lista) celda.dataValidation = { type: 'list', allowBlank: true, formulae: [`"${c.lista.join(',')}"`] }
-    }
-  })
-  return h
-}
-
-const EJEMPLO = 'María Ejemplo — fila de ejemplo, borrala'
+const h = libro.addWorksheet('Citas')
+h.columns = COLUMNAS.map((c) => ({ header: c.titulo, width: c.ancho }))
+const enc = h.getRow(1)
+enc.font = { bold: true, color: { argb: 'FFFFFFFF' } }
+enc.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: VERDE } }
+enc.height = 30
+enc.alignment = { vertical: 'middle', wrapText: true }
+h.views = [{ state: 'frozen', ySplit: 1 }]
+COLUMNAS.forEach((c, i) => {
+  h.getCell(1, i + 1).note = c.nota
+})
 
 const fecha = (iso) => {
   const [a, m, d] = iso.split('-').map(Number)
   return new Date(Date.UTC(a, m - 1, d))
 }
+// Filas de ejemplo: la app las saltea porque dicen «fila de ejemplo».
+const EJEMPLO = 'María Ejemplo — fila de ejemplo, borrala'
+for (const fila of [
+  [EJEMPLO, '30123456', '27-30123456-4', 'Consumidor final', 'OSDE 310', '11 5555-1234', fecha('2026-10-06'), '18:30', 25000, 'ARS', 'Sí', 'C 00002-00000123'],
+  [EJEMPLO, null, null, null, null, null, fecha('2026-10-13'), '18:30', 25000, 'ARS', 'No', null],
+]) {
+  const r = h.addRow(fila)
+  r.font = { italic: true, color: { argb: 'FF8A8A8A' } }
+}
 
-hoja(
-  'Pacientes',
-  [
-    { titulo: 'Paciente', ancho: 40 },
-    { titulo: 'DNI o CUIT', ancho: 16 },
-    { titulo: 'Condición frente al IVA', ancho: 24, lista: ['Consumidor final', 'Monotributista', 'Responsable inscripto', 'Exento'] },
-    { titulo: 'Teléfono', ancho: 16 },
-  ],
-  [EJEMPLO, '30123456', 'Consumidor final', '11 5555-1234'],
-)
-hoja(
-  'Sesiones',
-  [
-    { titulo: 'Paciente', ancho: 40 },
-    { titulo: 'Fecha', ancho: 13, tipo: 'fecha' },
-    { titulo: 'Monto', ancho: 14, tipo: 'monto' },
-    { titulo: 'Moneda', ancho: 10, lista: ['ARS', 'USD'] },
-  ],
-  [EJEMPLO, fecha('2026-10-06'), 25000, 'ARS'],
-)
-hoja(
-  'Pagos',
-  [
-    { titulo: 'Paciente', ancho: 40 },
-    { titulo: 'Fecha de pago', ancho: 14, tipo: 'fecha' },
-    { titulo: 'Monto', ancho: 14, tipo: 'monto' },
-    { titulo: 'Moneda', ancho: 10, lista: ['ARS', 'USD'] },
-    { titulo: 'Mes que paga', ancho: 14, tipo: 'fecha' },
-    { titulo: 'Nº de factura', ancho: 18 },
-  ],
-  [EJEMPLO, fecha('2026-10-10'), 25000, 'ARS', fecha('2026-10-01'), 'C 00002-00000123'],
-)
+COLUMNAS.forEach((c, i) => {
+  const col = h.getColumn(i + 1)
+  if (c.tipo === 'fecha') col.numFmt = 'dd/mm/yyyy'
+  if (c.tipo === 'monto') col.numFmt = '#,##0.00'
+  if (c.tipo === 'hora') col.numFmt = '@'
+  for (let r = 4; r <= 500; r++) {
+    const celda = h.getCell(r, i + 1)
+    celda.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: AMARILLO } }
+    if (c.lista) celda.dataValidation = { type: 'list', allowBlank: true, formulae: [`"${c.lista.join(',')}"`] }
+  }
+})
 
 await libro.xlsx.writeFile(new URL('../public/plantilla-cobros.xlsx', import.meta.url))
 console.log('Plantilla generada: public/plantilla-cobros.xlsx')

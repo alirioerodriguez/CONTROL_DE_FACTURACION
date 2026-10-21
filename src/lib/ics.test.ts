@@ -23,4 +23,14 @@ describe('calendario .ics', () => {
     expect(ics).not.toContain('Lucía')
     expect(ics.match(/BEGIN:VEVENT/g)).toHaveLength(2)
   })
+
+  it('con hora, el evento va a esa hora y dura lo que dura la sesión (Argentina es UTC-3)', () => {
+    const ics = armarIcs(
+      [{ id: 's3', fecha: '2026-10-06', hora: '18:30:00', horas: 1.5, estado: 'normal', nombre: 'Ana', apellido: null }],
+      'Sesión',
+      new Date('2026-10-17T12:00:00Z'),
+    )
+    expect(ics).toContain('DTSTART:20261006T213000Z\r\nDTEND:20261006T230000Z')
+    expect(ics).not.toContain('VALUE=DATE')
+  })
 })

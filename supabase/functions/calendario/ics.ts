@@ -5,6 +5,8 @@ export interface SesionCalendario {
   id: string
   fecha: string // AAAA-MM-DD
   estado: string // 'normal' | 'ausente' (las canceladas no se mandan)
+  hora?: string | null // 'HH:MM' o 'HH:MM:SS'; sin hora, el evento es de todo el día
+  horas?: number | null // duración en horas
   nombre: string
   apellido: string | null
 }
@@ -27,6 +29,15 @@ function diaSiguiente(fecha: string): string {
   return d.toISOString().slice(0, 10)
 }
 
+/** Inicio y fin en UTC (Argentina es UTC-3 todo el año). 'AAAA-MM-DD' + 'HH:MM' → '20261006T210000Z'. */
+function horario(fecha: string, hora: string, horas: number): { inicio: string; fin: string } {
+  const [a, m, d] = fecha.split('-').map(Number)
+  const [hh, mm] = hora.split(':').map(Number)
+  const ini = Date.UTC(a, m - 1, d, hh + 3, mm)
+  const fmt = (t: number) => new Date(t).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
+  return { inicio: fmt(ini), fin: fmt(ini + Math.round((horas > 0 ? horas : 1) * 3600000)) }
+}
+
 /** Escapa texto según RFC 5545. */
 const escapar = (t: string) => t.replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n')
 
@@ -37,8 +48,12 @@ export function armarIcs(sesiones: SesionCalendario[], palabra: string, ahora: D
       'BEGIN:VEVENT',
       `UID:${s.id}@honorapp`,
       `DTSTAMP:${sello}`,
-      `DTSTART;VALUE=DATE:${sinGuiones(s.fecha)}`,
-      `DTEND;VALUE=DATE:${sinGuiones(diaSiguiente(s.fecha))}`,
+      ...(s.hora
+        ? (() => {
+            const h = horario(s.fecha, s.hora, Number(s.horas ?? 1))
+            return [`DTSTART:${h.inicio}`, `DTEND:${h.fin}`]
+          })()
+        : [`DTSTART;VALUE=DATE:${sinGuiones(s.fecha)}`, `DTEND;VALUE=DATE:${sinGuiones(diaSiguiente(s.fecha))}`]),
       `SUMMARY:${escapar(`${palabra} · ${inicialesDe(s.nombre, s.apellido)}${s.estado === 'ausente' ? ' (ausente)' : ''}`)}`,
       'TRANSP:TRANSPARENT',
       'END:VEVENT',

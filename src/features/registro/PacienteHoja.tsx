@@ -22,6 +22,8 @@ const DIAS: Opcion<number>[] = [
 ]
 const FRECUENCIAS = ['Semanal', 'Quincenal', 'Mensual'].map((f) => ({ v: f, l: f }))
 
+const CONDICIONES_IVA = ['Consumidor final', 'Monotributista', 'Responsable inscripto', 'Exento']
+
 /** Aviso que no impide guardar (ej. DNI repetido). */
 function Aviso({ children }: { children: ReactNode }) {
   return (
@@ -44,6 +46,8 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
   const [telefono, setTelefono] = useState(paciente?.telefono ?? '')
   const [dni, setDni] = useState(soloDigitos(paciente?.dni))
   const [cuil, setCuil] = useState(formatCuil(paciente?.cuil_cuit))
+  // Lo pide ARCA en cada factura. Casi todos los pacientes son consumidores finales.
+  const [iva, setIva] = useState(paciente?.condicion_iva || 'Consumidor final')
   const [tipo, setTipo] = useState<'estandar' | 'personalizada' | 'abono'>(
     paciente?.abono_mensual ? 'abono' : (paciente?.tipo_tarifa ?? 'estandar'),
   )
@@ -86,6 +90,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
       telefono: telefono.trim() || null,
       dni: dni || null,
       cuil_cuit: cuil ? formatCuil(cuil) : null,
+      condicion_iva: iva,
       // Con abono las sesiones guardan la tarifa estándar como referencia; lo que se cobra es el abono (ver abono.ts).
       tipo_tarifa: tipo === 'personalizada' ? 'personalizada' : 'estandar',
       tarifa_personalizada: tipo === 'personalizada' ? tarifa : null,
@@ -228,6 +233,21 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
       {avisos.map((a) => (
         <Aviso key={a}>{a}</Aviso>
       ))}
+      <label className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
+        Condición frente al IVA
+        <select
+          value={iva}
+          onChange={(e) => setIva(e.target.value)}
+          className="h-[3.25rem] rounded-[0.875rem] border border-line bg-fondo px-3.5 text-[1.0625rem] font-normal"
+        >
+          {[...new Set([...CONDICIONES_IVA, iva])].map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <span className="text-sm font-normal text-ink2">La pide ARCA para la factura. Si no sabés, dejá «Consumidor final».</span>
+      </label>
       {perfil?.usa_obras_sociales && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.4fr_1fr]">
           <Campo

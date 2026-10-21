@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
 
   const { data, error } = await db
     .from('sessions')
-    .select('id, fecha, estado, patients!inner(nombre, apellido)')
+    .select('id, fecha, hora, horas, estado, patients!inner(nombre, apellido)')
     .eq('user_id', perfil.id)
     .neq('estado', 'cancelada')
     .gte('fecha', corrimiento(-62))
@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
 
   const sesiones = (data ?? []).map((s) => {
     const p = s.patients as unknown as { nombre: string; apellido: string | null }
-    return { id: s.id, fecha: s.fecha, estado: s.estado, nombre: p.nombre, apellido: p.apellido }
+    return { id: s.id, fecha: s.fecha, hora: s.hora, horas: Number(s.horas), estado: s.estado, nombre: p.nombre, apellido: p.apellido }
   })
   const ics = armarIcs(sesiones, perfil.termino === 'consulta' ? 'Consulta' : 'Sesión')
   return new Response(ics, {
