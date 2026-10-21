@@ -28,7 +28,7 @@ Registro abierto: cualquier colega puede crearse una cuenta y ve solo sus datos.
 - Responsive real a 390px y 1440px. Estados vacío, cargando y error en cada pantalla.
 - Diseño: seguir el prototipo de Claude Design (verde salvia, esquinas redondeadas, títulos en serif). Referencia en `docs/diseno/`.
 - Marca: "honorapp", siempre en minúscula. Logo "h con tilde de cobro" (componente `Logo` en `src/components/Layout.tsx`, especificación en `docs/diseno/logo/README.md`).
-- La importación acepta la estructura de `public/plantilla-cobros.xlsx` (se descarga desde la pantalla Importar) (hojas Pacientes, Sesiones, Pagos; mismos nombres de columna).
+- La importación acepta dos estructuras (hojas Pacientes, Sesiones, Pagos): la plantilla simple `public/plantilla-cobros.xlsx` (se enlaza por la columna «Paciente»; solo lo elemental para facturar en ARCA; se regenera con `node scripts/generar-plantilla.mjs`) y el Excel completo de copia de seguridad (se enlaza por «ID paciente»).
 - Después de cambiar `supabase/schema.sql`, correr `supabase/tests/aislamiento.sql` en la base: tiene que devolver «Aislamiento OK».
 - Antes de cada commit: `npm run build`, `npm run lint` y `npm test` tienen que pasar. Commits chicos, en castellano.
 

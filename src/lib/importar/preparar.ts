@@ -306,12 +306,25 @@ function pacienteBasico(ref: string, nombre: string, moneda: Moneda, monto: numb
 
 const hojaLlamada = (hojas: Hoja[], nombre: string) => hojas.find((h) => normalizar(h.nombre) === normalizar(nombre))
 
-/** true si el archivo tiene la estructura de public/plantilla-cobros.xlsx. */
+/**
+ * true si el archivo tiene la estructura de la app. Hay dos:
+ * - la plantilla simple (public/plantilla-cobros.xlsx): se enlaza por la columna «Paciente», sin códigos;
+ * - el Excel completo de copia de seguridad (Descargar Excel): se enlaza por «ID paciente».
+ */
 export function esPlantilla(hojas: Hoja[]): boolean {
   const s = hojaLlamada(hojas, 'Sesiones')
   const p = hojaLlamada(hojas, 'Pacientes')
   const tiene = (h: Hoja | undefined, ...cols: string[]) => !!h && cols.every((c) => columna(h, c) >= 0)
-  return tiene(p, 'ID paciente', 'Nombre') && (tiene(s, 'ID paciente', 'Fecha', 'Monto') || !!hojaLlamada(hojas, 'Pagos'))
+  const completa = tiene(p, 'ID paciente', 'Nombre')
+  const simple = tiene(p, 'Paciente')
+  const conSesiones = !!s && columna(s, 'Fecha') >= 0 && columna(s, 'Monto') >= 0 && columna(s, 'ID paciente', 'Paciente') >= 0
+  return (completa || simple) && (conSesiones || !!hojaLlamada(hojas, 'Pagos'))
+}
+
+/** «DNI o CUIT» en una sola columna: con 11 dígitos es CUIT/CUIL; si no, DNI. */
+function separarDocumento(valor: string | null): { dni: string | null; cuil_cuit: string | null } {
+  if (!valor) return { dni: null, cuil_cuit: null }
+  return valor.replace(/\D/g, '').length === 11 ? { dni: null, cuil_cuit: valor } : { dni: valor, cuil_cuit: null }
 }
 
 export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
@@ -325,11 +338,13 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
   if (hp) {
     const c = {
       id: columna(hp, 'ID paciente'),
-      nombre: columna(hp, 'Nombre'),
+      // Plantilla simple: «Paciente» (nombre y apellido juntos) y «DNI o CUIT» en una sola columna.
+      nombre: columna(hp, 'Nombre', 'Paciente', 'Nombre y apellido'),
+      doc: columna(hp, 'DNI o CUIT'),
       apellido: columna(hp, 'Apellido'),
       dni: columna(hp, 'DNI'),
       cuil: columna(hp, 'CUIL / CUIT', 'CUIL', 'CUIT'),
-      iva: columna(hp, 'Condición IVA'),
+      iva: columna(hp, 'Condición IVA', 'Condición frente al IVA'),
       tel: columna(hp, 'Teléfono'),
       email: columna(hp, 'Email'),
       domicilio: columna(hp, 'Domicilio'),
@@ -347,8 +362,9 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
       const nombre = texto(v(celdas, c.nombre))
       const apellido = texto(v(celdas, c.apellido))
       if (!codigo && !nombre) continue
-      if (!codigo || !nombre) {
-        res.errores.push({ hoja: hp.nombre, fila: numero, mensaje: codigo ? 'Falta el nombre' : 'Falta el ID de paciente' })
+      // Sin columna de ID (plantilla simple), el paciente se identifica por su nombre.
+      if (!nombre || (c.id >= 0 && !codigo)) {
+        res.errores.push({ hoja: hp.nombre, fila: numero, mensaje: nombre ? 'Falta el ID de paciente' : 'Falta el nombre' })
         continue
       }
       const moneda = parseMoneda(v(celdas, c.moneda), ctx.monedaDefecto)
@@ -357,24 +373,30 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
         continue
       }
       const completo = [nombre, apellido].filter(Boolean).join(' ')
-      const existente = idx.porCodigo.get(normalizar(codigo)) ?? idx.porNombre.get(normalizar(completo))
+      const clave = normalizar(codigo ?? completo)
+      const existente = (codigo ? idx.porCodigo.get(normalizar(codigo)) : undefined) ?? idx.porNombre.get(normalizar(completo))
       if (existente) {
-        porCodigo.set(normalizar(codigo), { patient_id: existente })
+        porCodigo.set(clave, { patient_id: existente })
         res.pacientesExistentes++
         continue
       }
       const honorario = parseMontoAR(v(celdas, c.honorario))
       const esEstandar =
         honorario == null || (honorario === ctx.tarifaEstandar && moneda === ctx.monedaDefecto)
-      const ref = `p:${normalizar(codigo)}`
-      porCodigo.set(normalizar(codigo), { paciente_ref: ref })
+      const ref = `p:${clave}`
+      porCodigo.set(clave, { paciente_ref: ref })
+      const documento = c.doc >= 0 ? separarDocumento(texto(v(celdas, c.doc))) : null
       res.pacientes.push({
         ref,
         nombre,
         apellido,
         codigo,
-        ...normalizarDocumentos(texto(v(celdas, c.dni)), texto(v(celdas, c.cuil))),
-        condicion_iva: texto(v(celdas, c.iva)),
+        // Plantilla simple: «DNI o CUIT» en una sola columna; después se validan y se les da formato.
+        ...normalizarDocumentos(
+          documento ? documento.dni : texto(v(celdas, c.dni)),
+          documento ? documento.cuil_cuit : texto(v(celdas, c.cuil)),
+        ),
+        condicion_iva: texto(v(celdas, c.iva)) ?? (documento ? 'Consumidor final' : null),
         telefono: texto(v(celdas, c.tel)),
         email: texto(v(celdas, c.email)),
         domicilio: texto(v(celdas, c.domicilio)),
@@ -389,14 +411,15 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
     }
   }
 
+  /** El paciente de una fila de Sesiones o Pagos: por ID (Excel completo) o por nombre (plantilla simple). */
   const pacienteDe = (hoja: Hoja, numero: number, codigo: string | null): RefPaciente | null => {
     if (!codigo) {
-      res.errores.push({ hoja: hoja.nombre, fila: numero, mensaje: 'Falta el ID de paciente' })
+      res.errores.push({ hoja: hoja.nombre, fila: numero, mensaje: 'Falta el paciente' })
       return null
     }
     const enHoja = porCodigo.get(normalizar(codigo))
     if (enHoja) return enHoja
-    const existente = idx.porCodigo.get(normalizar(codigo))
+    const existente = idx.porCodigo.get(normalizar(codigo)) ?? idx.porNombre.get(normalizar(codigo))
     if (existente) return { patient_id: existente }
     res.errores.push({ hoja: hoja.nombre, fila: numero, mensaje: `El paciente “${codigo}” no está en la hoja Pacientes` })
     return null
@@ -410,7 +433,7 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
     const c = {
       id: columna(hs, 'ID sesión'),
       fecha: columna(hs, 'Fecha'),
-      paciente: columna(hs, 'ID paciente'),
+      paciente: columna(hs, 'ID paciente', 'Paciente'),
       monto: columna(hs, 'Monto'),
       moneda: columna(hs, 'Moneda'),
       horas: columna(hs, 'Horas'),
@@ -467,8 +490,8 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
   if (hg) {
     const c = {
       fecha: columna(hg, 'Fecha de pago', 'Fecha'),
-      mes: columna(hg, 'Mes imputado'),
-      paciente: columna(hg, 'ID paciente'),
+      mes: columna(hg, 'Mes imputado', 'Mes que paga'),
+      paciente: columna(hg, 'ID paciente', 'Paciente'),
       monto: columna(hg, 'Monto'),
       moneda: columna(hg, 'Moneda'),
       medio: columna(hg, 'Medio de pago'),

@@ -428,8 +428,9 @@ export function AjustesPage() {
       <Tarjeta className="flex flex-col gap-3 p-[1.375rem]">
         <h2 className="m-0 text-lg font-semibold">Tus datos en Excel</h2>
         <p className="m-0 text-[0.9375rem] leading-normal text-ink2">
-          Descargá todo (pacientes, sesiones y pagos) como copia de seguridad. El archivo tiene el mismo formato que la plantilla:
-          podés completarlo o corregirlo en Excel y volver a subirlo desde Importar, sin que se dupliquen datos.
+          Descargá todo (pacientes, sesiones y pagos) como copia de seguridad: podés corregirlo en Excel y volver a subirlo desde
+          Importar, sin que se dupliquen datos. La «Planilla vacía» es una versión simple, con solo lo necesario para cargar tus
+          pacientes, sesiones y pagos (y facturar en ARCA).
         </p>
         <div className="flex flex-wrap gap-2">
           <DescargarExcel etiqueta="Descargar Excel" />

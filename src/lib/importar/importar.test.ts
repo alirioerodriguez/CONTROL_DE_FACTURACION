@@ -189,3 +189,41 @@ describe('plantilla de la app', () => {
     expect(r).toMatchObject({ pacientes: [], sesiones: [], pagos: [], errores: [], duplicadas: 0 })
   })
 })
+
+describe('plantilla simple (para facturar)', () => {
+  const hojas = [
+    armarHoja('Pacientes', [
+      ['Paciente', 'DNI o CUIT', 'Condición frente al IVA', 'Teléfono'],
+      ['Ana Gómez', '30.123.456', '', '11 5555-0000'],
+      ['Estudio Pérez SRL', '30-71234567-8', 'Responsable inscripto', ''],
+    ]),
+    armarHoja('Sesiones', [
+      ['Paciente', 'Fecha', 'Monto', 'Moneda'],
+      ['ana gómez', '06/10/2026', '25.000', ''],
+      ['Lucía Fernández', '07/10/2026', 30000, 'ARS'],
+    ]),
+    armarHoja('Pagos', [
+      ['Paciente', 'Fecha de pago', 'Monto', 'Moneda', 'Mes que paga', 'Nº de factura'],
+      ['Ana Gómez', '10/10/2026', 25000, 'ARS', '01/09/2026', 'C 00002-00000123'],
+      ['Estudio Pérez SRL', '11/10/2026', 50000, 'ARS', '', ''],
+    ]),
+  ]
+
+  it('se reconoce y enlaza por el nombre del paciente', () => {
+    expect(esPlantilla(hojas)).toBe(true)
+    const lucia = { id: 'pac-lucia', nombre: 'Lucía', apellido: 'Fernández', codigo: null } as Paciente
+    const r = prepararPlantilla(hojas, { ...ctxVacio, pacientes: [lucia] })
+    expect(r.errores).toEqual([])
+    expect(r.pacientes.map((p) => [p.nombre, p.dni, p.cuil_cuit, p.condicion_iva, p.telefono])).toEqual([
+      ['Ana Gómez', '30123456', null, 'Consumidor final', '11 5555-0000'],
+      ['Estudio Pérez SRL', null, '30-71234567-8', 'Responsable inscripto', null],
+    ])
+    // «ana gómez» en minúscula y sin tilde de más: es la misma paciente. Lucía ya existía en la cuenta.
+    expect(r.sesiones.map((s) => [s.paciente_ref ?? s.patient_id, s.fecha])).toEqual([
+      ['p:ana gomez', '2026-10-06'],
+      ['pac-lucia', '2026-10-07'],
+    ])
+    expect(r.pagos[0]).toMatchObject({ paciente_ref: 'p:ana gomez', periodo: '2026-09-01', comprobante: 'factura_c', nro_factura: 'C 00002-00000123' })
+    expect(r.pagos[1]).toMatchObject({ periodo: '2026-10-01', comprobante: 'sin_comprobante' })
+  })
+})
