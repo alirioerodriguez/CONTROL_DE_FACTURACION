@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, ClipboardList, Eye, FileSpreadsheet, LogOut, Moon, Sparkles, Trash2, Upload } from 'lucide-react'
+import { ChevronRight, ClipboardList, Download, Eye, FileSpreadsheet, LogOut, Moon, Sparkles, Trash2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { DescargarExcel } from '../../components/DescargarExcel'
 import { FotoUsuario } from '../../components/FotoUsuario'
+import { GuiaInstalar } from '../../components/Instalar'
 import { Boton, Campo, Confirmar, EstadoError, Esqueleto, IC, Segmentado, Tarjeta } from '../../components/ui'
 import { useGuardar, usePacientes, usePerfil } from '../../lib/datos'
 import {
@@ -48,6 +49,7 @@ export function AjustesPage() {
   const [borrar, setBorrar] = useState(false)
   const [textoBorrar, setTextoBorrar] = useState('')
   const [borrando, setBorrando] = useState(false)
+  const [guiaInstalar, setGuiaInstalar] = useState(false)
   const pal = palabras(termino, modo)
 
   function cargarProfesion() {
@@ -405,6 +407,13 @@ export function AjustesPage() {
           </span>
           <ChevronRight {...IC} className="text-ink2" />
         </button>
+        <button type="button" onClick={() => setGuiaInstalar(true)} className={`${fila} border-t border-line`}>
+          <span className="flex items-center gap-3">
+            <Download {...IC} />
+            Instalar la app
+          </span>
+          <ChevronRight {...IC} className="text-ink2" />
+        </button>
         <button type="button" onClick={() => navegar('/pruebas')} className={`${fila} border-t border-line`}>
           <span className="flex items-center gap-3">
             <ClipboardList {...IC} />
@@ -450,6 +459,8 @@ export function AjustesPage() {
           Eliminar mi cuenta
         </button>
       </Tarjeta>
+
+      {guiaInstalar && <GuiaInstalar onCerrar={() => setGuiaInstalar(false)} />}
 
       {borrar && (
         <Confirmar

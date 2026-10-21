@@ -7,6 +7,7 @@ import {
 import { useRegistro } from '../features/registro/RegistroContext'
 import { FotoUsuario, useUsuario } from './FotoUsuario'
 import { Hoja, IC } from './ui'
+import { AvisoInstalar } from './Instalar'
 import { usePerfil } from '../lib/datos'
 
 interface Seccion {
@@ -140,6 +141,8 @@ export function Layout() {
         <div className="mx-auto max-w-[70rem] px-5 pt-6 pb-[11.25rem] md:px-12 md:pt-10 md:pb-16">
           {/* Con key: cada pantalla nueva entra con su animación. */}
           <div key={pathname} className="anim-pantalla">
+            {/* Invitación a instalar la app: solo en Inicio y si todavía se usa desde el navegador. */}
+            {pathname === '/' && <AvisoInstalar />}
             <Outlet />
           </div>
         </div>
