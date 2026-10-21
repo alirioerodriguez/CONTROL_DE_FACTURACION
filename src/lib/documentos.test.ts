@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Paciente } from './datos'
 import {
   coincideDocumento, cuilCoincideConDni, cuilValido, dniValido, formatCuil, formatDni, normalizarDocumentos, pacienteConMismoDocumento,
-  sugerirCuil,
+  documentosProfesional, sugerirCuil,
 } from './documentos'
 
 describe('DNI', () => {
@@ -89,5 +89,13 @@ describe('importar', () => {
   it('normaliza DNI y CUIL con forma correcta y deja el resto como vino', () => {
     expect(normalizarDocumentos('30.123.456', '27 30123456 8')).toEqual({ dni: '30123456', cuil_cuit: '27-30123456-8' })
     expect(normalizarDocumentos('pasaporte AB123', null)).toEqual({ dni: 'pasaporte AB123', cuil_cuit: null })
+  })
+})
+
+describe('profesional', () => {
+  it('CUIT y DNI para el reporte y el recibo', () => {
+    expect(documentosProfesional({ cuit: '20123456786', dni: '12345678' })).toBe('CUIT 20-12345678-6 · DNI 12.345.678')
+    expect(documentosProfesional({ cuit: null, dni: null })).toBe('')
+    expect(documentosProfesional(undefined)).toBe('')
   })
 })

@@ -89,6 +89,7 @@ export function RegistroHoja({
     }
   })
   const [fecha, setFecha] = useState(inicial.fecha)
+  const [hora, setHora] = useState(edSesion?.hora ?? '')
   const [verCalendario, setVerCalendario] = useState(false)
   const [horas, setHoras] = useState(inicial.horas)
   const [estado, setEstado] = useState<EstadoGuardado>(edSesion?.estado ?? 'normal')
@@ -168,7 +169,7 @@ export function RegistroHoja({
     const nombre = paciente.nombre.split(' ')[0]
     try {
       if (esSesion) {
-        const fila = { patient_id: pid, fecha, horas, tarifa_hora: redondear2(monto / horas), moneda, estado }
+        const fila = { patient_id: pid, fecha, hora: hora || null, horas, tarifa_hora: redondear2(monto / horas), moneda, estado }
         const conPago = pagado && estado !== 'cancelada'
         if (edSesion) {
           await guardar.mutateAsync([{ tipo: 'actualizar', tabla: 'sessions', id: edSesion.id, cambios: fila }])
@@ -356,6 +357,20 @@ export function RegistroHoja({
           />
         )}
       </div>
+
+      {esSesion && (
+        <label className="flex flex-wrap items-center justify-between gap-3 text-[0.9375rem] font-semibold">
+          <span>
+            Hora<span className="ml-2 text-sm font-normal text-ink2">Opcional</span>
+          </span>
+          <input
+            type="time"
+            value={hora}
+            onChange={(e) => setHora(e.target.value)}
+            className="h-12 w-[9rem] rounded-[0.875rem] border border-line bg-fondo px-3.5 text-[1.0625rem] font-normal"
+          />
+        </label>
+      )}
 
       {esSesion && pal.porHora && (
         <div className="flex flex-wrap items-center justify-between gap-3">

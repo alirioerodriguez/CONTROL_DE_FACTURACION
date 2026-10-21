@@ -16,6 +16,9 @@ export type Comprobante = 'factura_c' | 'recibo' | 'sin_comprobante'
 export interface Perfil {
   id: string
   nombre: string | null
+  /** DNI y CUIT de la profesional (opcionales): van en el reporte para la contadora y en el recibo. */
+  dni: string | null
+  cuit: string | null
   email: string | null
   tarifa_estandar: number
   moneda_default: Moneda
@@ -77,6 +80,8 @@ export interface Sesion {
   id: string
   patient_id: string
   fecha: string
+  /** Hora de la cita 'HH:MM' (opcional). */
+  hora: string | null
   horas: number
   tarifa_hora: number
   monto: number
@@ -167,6 +172,8 @@ export function useSesiones() {
     queryFn: async () =>
       (await traer<Sesion>('sessions', 'fecha')).map((s) => ({
         ...s,
+        // Postgres devuelve la hora como 'HH:MM:SS'.
+        hora: s.hora ? s.hora.slice(0, 5) : null,
         horas: n(s.horas),
         tarifa_hora: n(s.tarifa_hora),
         monto: n(s.monto),

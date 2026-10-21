@@ -3,6 +3,7 @@ import { nombreCompleto, type Comprobante, type Medio, type Paciente, type Pago,
 import { hoyAR, normalizar, parseFechaAR, parseMontoAR, periodoDe, redondear2, type Moneda } from '../formato'
 import type { Celda, Hoja } from './leer'
 import { normalizarDocumentos } from '../documentos'
+import { tarifaVigente } from '../saldos'
 
 export interface PacienteNuevo {
   ref: string
@@ -22,6 +23,8 @@ export interface PacienteNuevo {
   fecha_alta: string
   activo: boolean
   notas_admin: string | null
+  /** Solo lo trae la planilla de citas. */
+  obra_social?: string | null
 }
 
 /** Paciente ya existente (patient_id) o creado en esta misma importación (paciente_ref). */
@@ -30,6 +33,8 @@ type RefPaciente = { patient_id: string; paciente_ref?: undefined } | { patient_
 export type SesionNueva = RefPaciente & {
   ref?: string
   fecha: string
+  /** Hora de la cita 'HH:MM' (opcional). */
+  hora?: string | null
   horas: number
   tarifa_hora: number
   moneda: Moneda
@@ -306,12 +311,25 @@ function pacienteBasico(ref: string, nombre: string, moneda: Moneda, monto: numb
 
 const hojaLlamada = (hojas: Hoja[], nombre: string) => hojas.find((h) => normalizar(h.nombre) === normalizar(nombre))
 
-/** true si el archivo tiene la estructura de public/plantilla-cobros.xlsx. */
+/**
+ * true si el archivo tiene la estructura de la app. Hay dos:
+ * - la plantilla simple (public/plantilla-cobros.xlsx): se enlaza por la columna «Paciente», sin códigos;
+ * - el Excel completo de copia de seguridad (Descargar Excel): se enlaza por «ID paciente».
+ */
 export function esPlantilla(hojas: Hoja[]): boolean {
   const s = hojaLlamada(hojas, 'Sesiones')
   const p = hojaLlamada(hojas, 'Pacientes')
   const tiene = (h: Hoja | undefined, ...cols: string[]) => !!h && cols.every((c) => columna(h, c) >= 0)
-  return tiene(p, 'ID paciente', 'Nombre') && (tiene(s, 'ID paciente', 'Fecha', 'Monto') || !!hojaLlamada(hojas, 'Pagos'))
+  const completa = tiene(p, 'ID paciente', 'Nombre')
+  const simple = tiene(p, 'Paciente')
+  const conSesiones = !!s && columna(s, 'Fecha') >= 0 && columna(s, 'Monto') >= 0 && columna(s, 'ID paciente', 'Paciente') >= 0
+  return (completa || simple) && (conSesiones || !!hojaLlamada(hojas, 'Pagos'))
+}
+
+/** «DNI o CUIT» en una sola columna: con 11 dígitos es CUIT/CUIL; si no, DNI. */
+function separarDocumento(valor: string | null): { dni: string | null; cuil_cuit: string | null } {
+  if (!valor) return { dni: null, cuil_cuit: null }
+  return valor.replace(/\D/g, '').length === 11 ? { dni: null, cuil_cuit: valor } : { dni: valor, cuil_cuit: null }
 }
 
 export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
@@ -325,11 +343,13 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
   if (hp) {
     const c = {
       id: columna(hp, 'ID paciente'),
-      nombre: columna(hp, 'Nombre'),
+      // Plantilla simple: «Paciente» (nombre y apellido juntos) y «DNI o CUIT» en una sola columna.
+      nombre: columna(hp, 'Nombre', 'Paciente', 'Nombre y apellido'),
+      doc: columna(hp, 'DNI o CUIT'),
       apellido: columna(hp, 'Apellido'),
       dni: columna(hp, 'DNI'),
       cuil: columna(hp, 'CUIL / CUIT', 'CUIL', 'CUIT'),
-      iva: columna(hp, 'Condición IVA'),
+      iva: columna(hp, 'Condición IVA', 'Condición frente al IVA'),
       tel: columna(hp, 'Teléfono'),
       email: columna(hp, 'Email'),
       domicilio: columna(hp, 'Domicilio'),
@@ -347,8 +367,9 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
       const nombre = texto(v(celdas, c.nombre))
       const apellido = texto(v(celdas, c.apellido))
       if (!codigo && !nombre) continue
-      if (!codigo || !nombre) {
-        res.errores.push({ hoja: hp.nombre, fila: numero, mensaje: codigo ? 'Falta el nombre' : 'Falta el ID de paciente' })
+      // Sin columna de ID (plantilla simple), el paciente se identifica por su nombre.
+      if (!nombre || (c.id >= 0 && !codigo)) {
+        res.errores.push({ hoja: hp.nombre, fila: numero, mensaje: nombre ? 'Falta el ID de paciente' : 'Falta el nombre' })
         continue
       }
       const moneda = parseMoneda(v(celdas, c.moneda), ctx.monedaDefecto)
@@ -357,24 +378,30 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
         continue
       }
       const completo = [nombre, apellido].filter(Boolean).join(' ')
-      const existente = idx.porCodigo.get(normalizar(codigo)) ?? idx.porNombre.get(normalizar(completo))
+      const clave = normalizar(codigo ?? completo)
+      const existente = (codigo ? idx.porCodigo.get(normalizar(codigo)) : undefined) ?? idx.porNombre.get(normalizar(completo))
       if (existente) {
-        porCodigo.set(normalizar(codigo), { patient_id: existente })
+        porCodigo.set(clave, { patient_id: existente })
         res.pacientesExistentes++
         continue
       }
       const honorario = parseMontoAR(v(celdas, c.honorario))
       const esEstandar =
         honorario == null || (honorario === ctx.tarifaEstandar && moneda === ctx.monedaDefecto)
-      const ref = `p:${normalizar(codigo)}`
-      porCodigo.set(normalizar(codigo), { paciente_ref: ref })
+      const ref = `p:${clave}`
+      porCodigo.set(clave, { paciente_ref: ref })
+      const documento = c.doc >= 0 ? separarDocumento(texto(v(celdas, c.doc))) : null
       res.pacientes.push({
         ref,
         nombre,
         apellido,
         codigo,
-        ...normalizarDocumentos(texto(v(celdas, c.dni)), texto(v(celdas, c.cuil))),
-        condicion_iva: texto(v(celdas, c.iva)),
+        // Plantilla simple: «DNI o CUIT» en una sola columna; después se validan y se les da formato.
+        ...normalizarDocumentos(
+          documento ? documento.dni : texto(v(celdas, c.dni)),
+          documento ? documento.cuil_cuit : texto(v(celdas, c.cuil)),
+        ),
+        condicion_iva: texto(v(celdas, c.iva)) ?? (documento ? 'Consumidor final' : null),
         telefono: texto(v(celdas, c.tel)),
         email: texto(v(celdas, c.email)),
         domicilio: texto(v(celdas, c.domicilio)),
@@ -389,14 +416,15 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
     }
   }
 
+  /** El paciente de una fila de Sesiones o Pagos: por ID (Excel completo) o por nombre (plantilla simple). */
   const pacienteDe = (hoja: Hoja, numero: number, codigo: string | null): RefPaciente | null => {
     if (!codigo) {
-      res.errores.push({ hoja: hoja.nombre, fila: numero, mensaje: 'Falta el ID de paciente' })
+      res.errores.push({ hoja: hoja.nombre, fila: numero, mensaje: 'Falta el paciente' })
       return null
     }
     const enHoja = porCodigo.get(normalizar(codigo))
     if (enHoja) return enHoja
-    const existente = idx.porCodigo.get(normalizar(codigo))
+    const existente = idx.porCodigo.get(normalizar(codigo)) ?? idx.porNombre.get(normalizar(codigo))
     if (existente) return { patient_id: existente }
     res.errores.push({ hoja: hoja.nombre, fila: numero, mensaje: `El paciente “${codigo}” no está en la hoja Pacientes` })
     return null
@@ -410,10 +438,11 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
     const c = {
       id: columna(hs, 'ID sesión'),
       fecha: columna(hs, 'Fecha'),
-      paciente: columna(hs, 'ID paciente'),
+      paciente: columna(hs, 'ID paciente', 'Paciente'),
       monto: columna(hs, 'Monto'),
       moneda: columna(hs, 'Moneda'),
       horas: columna(hs, 'Horas'),
+      hora: columna(hs, 'Hora'),
       obs: columna(hs, 'Observaciones'),
       estado: columna(hs, 'Estado'),
     }
@@ -452,6 +481,7 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
         ...ref,
         ref: refSesion,
         fecha,
+        hora: c.hora >= 0 ? parseHora(v(c.hora)) : null,
         horas: horas > 0 ? horas : 1,
         tarifa_hora: redondear2(monto / (horas > 0 ? horas : 1)),
         moneda,
@@ -467,8 +497,8 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
   if (hg) {
     const c = {
       fecha: columna(hg, 'Fecha de pago', 'Fecha'),
-      mes: columna(hg, 'Mes imputado'),
-      paciente: columna(hg, 'ID paciente'),
+      mes: columna(hg, 'Mes imputado', 'Mes que paga'),
+      paciente: columna(hg, 'ID paciente', 'Paciente'),
       monto: columna(hg, 'Monto'),
       moneda: columna(hg, 'Moneda'),
       medio: columna(hg, 'Medio de pago'),
@@ -535,4 +565,181 @@ export function estadoImportado(valor: string | null): { estado?: 'ausente' | 'c
   if (v.startsWith('ausen')) return { estado: 'ausente' }
   if (v.startsWith('cancel')) return { estado: 'cancelada' }
   return {}
+}
+
+/**
+ * Hora de una celda: '18:30', '18.30', '18 hs', un número de Excel (fracción del día) o una fecha con hora.
+ * Devuelve 'HH:MM' o null si no se entiende.
+ */
+export function parseHora(c: Celda): string | null {
+  if (c == null) return null
+  let h: number
+  let m: number
+  if (c instanceof Date) {
+    h = c.getUTCHours()
+    m = c.getUTCMinutes()
+  } else if (typeof c === 'number') {
+    const minutos = Math.round((c % 1) * 24 * 60)
+    h = Math.floor(minutos / 60)
+    m = minutos % 60
+  } else {
+    const t = String(c)
+      .trim()
+      .toLowerCase()
+      .match(/^(\d{1,2})(?:[:.h ](\d{2}))?\s*(?:hs?|horas?)?$/)
+    if (!t) return null
+    h = Number(t[1])
+    m = Number(t[2] ?? 0)
+  }
+  if (h > 23 || m > 59) return null
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
+// ---------------------------------------------------------------------
+// Planilla de una sola pestaña («Citas»): public/plantilla-cobros.xlsx
+// Cada fila es una cita: datos del paciente (se crea la primera vez que aparece), fecha, hora, monto y si pagó.
+// ---------------------------------------------------------------------
+
+/** true si el archivo tiene la pestaña «Citas» con paciente y fecha. */
+export function esPlanillaCitas(hojas: Hoja[]): boolean {
+  const h = hojaLlamada(hojas, 'Citas')
+  return !!h && columna(h, 'Paciente') >= 0 && columna(h, 'Fecha de la cita', 'Fecha') >= 0
+}
+
+export function prepararCitas(hojas: Hoja[], ctx: Contexto): Preparado {
+  const res: Preparado = { pacientes: [], sesiones: [], pagos: [], errores: [], duplicadas: 0, pacientesExistentes: 0 }
+  const h = hojaLlamada(hojas, 'Citas')
+  if (!h) return res
+  const idx = indicePacientes(ctx.pacientes)
+  const ya = clavesExistentes(ctx)
+  const porId = new Map(ctx.pacientes.map((p) => [p.id, p]))
+  const c = {
+    paciente: columna(h, 'Paciente'),
+    dni: columna(h, 'DNI'),
+    cuil: columna(h, 'CUIL / CUIT', 'CUIL/CUIT', 'CUIL', 'CUIT'),
+    iva: columna(h, 'Condición frente al IVA', 'Condición IVA'),
+    obra: columna(h, 'Obra social', 'Obra social o prepaga'),
+    tel: columna(h, 'Teléfono'),
+    fecha: columna(h, 'Fecha de la cita', 'Fecha'),
+    hora: columna(h, 'Hora de la cita', 'Hora'),
+    monto: columna(h, 'Monto', 'Honorario'),
+    moneda: columna(h, 'Moneda'),
+    pago: columna(h, 'Pagó', 'Pago'),
+    factura: columna(h, 'Nº de factura', 'Nro de factura', 'N° de factura', 'Factura'),
+  }
+  const nuevos = new Map<string, PacienteNuevo>()
+  const vistos = new Set<string>()
+  const enArchivo = { sesiones: new Set<string>(), pagos: new Set<string>() }
+
+  for (const { numero, celdas } of h.filas) {
+    if (esFilaEjemplo(celdas)) continue
+    const v = (i: number) => (i >= 0 ? celdas[i] : null)
+    const nombre = texto(v(c.paciente))
+    if (!nombre && v(c.fecha) == null && v(c.monto) == null) continue
+    if (!nombre) {
+      res.errores.push({ hoja: h.nombre, fila: numero, mensaje: 'Falta el paciente' })
+      continue
+    }
+    const clave = normalizar(nombre.replace(/\s+/g, ' '))
+
+    // Paciente: existente en la cuenta, o nuevo (con los datos de la primera fila en que aparece).
+    const existente = idx.porNombre.get(clave)
+    let ref: RefPaciente
+    if (existente) {
+      ref = { patient_id: existente }
+      if (!vistos.has(clave)) res.pacientesExistentes++
+    } else {
+      let p = nuevos.get(clave)
+      const docs = normalizarDocumentos(texto(v(c.dni)), texto(v(c.cuil)))
+      if (!p) {
+        p = {
+          ref: `p:${clave}`,
+          nombre,
+          apellido: null,
+          codigo: null,
+          dni: docs.dni,
+          cuil_cuit: docs.cuil_cuit,
+          condicion_iva: texto(v(c.iva)) ?? 'Consumidor final',
+          telefono: texto(v(c.tel)),
+          email: null,
+          domicilio: null,
+          frecuencia: null,
+          tipo_tarifa: 'estandar',
+          tarifa_personalizada: null,
+          moneda: ctx.monedaDefecto,
+          fecha_alta: hoyAR(),
+          activo: true,
+          notas_admin: null,
+          obra_social: texto(v(c.obra)),
+        }
+        nuevos.set(clave, p)
+        res.pacientes.push(p)
+      } else {
+        // Si en una fila anterior faltaba algún dato, se completa con esta.
+        p.dni ??= docs.dni
+        p.cuil_cuit ??= docs.cuil_cuit
+        p.telefono ??= texto(v(c.tel))
+        p.obra_social ??= texto(v(c.obra))
+      }
+      ref = { paciente_ref: p.ref }
+    }
+    vistos.add(clave)
+
+    // Cita (si tiene fecha). Sin monto, se usa el honorario del paciente o la tarifa estándar.
+    if (v(c.fecha) == null) continue
+    const fecha = parseFechaAR(v(c.fecha))
+    if (!fecha) {
+      res.errores.push({ hoja: h.nombre, fila: numero, mensaje: `Fecha inválida: “${texto(v(c.fecha))}”` })
+      continue
+    }
+    const hora = v(c.hora) == null ? null : parseHora(v(c.hora))
+    if (v(c.hora) != null && !hora) {
+      res.errores.push({ hoja: h.nombre, fila: numero, mensaje: `Hora inválida: “${texto(v(c.hora))}” (usá 18:30)` })
+      continue
+    }
+    const pacienteExistente = existente ? porId.get(existente) : undefined
+    const moneda = parseMoneda(v(c.moneda), pacienteExistente?.moneda ?? ctx.monedaDefecto)
+    if (moneda === 'invalida') {
+      res.errores.push({ hoja: h.nombre, fila: numero, mensaje: `Moneda “${texto(v(c.moneda))}” no soportada` })
+      continue
+    }
+    const tarifa = pacienteExistente ? tarifaVigente(pacienteExistente, ctx.tarifaEstandar) : ctx.tarifaEstandar
+    const monto = v(c.monto) == null ? tarifa : parseMontoAR(v(c.monto))
+    if (monto == null || monto <= 0) {
+      res.errores.push({
+        hoja: h.nombre,
+        fila: numero,
+        mensaje: v(c.monto) == null ? 'Falta el monto (o cargá tu tarifa estándar en Ajustes)' : `Monto inválido: “${texto(v(c.monto))}”`,
+      })
+      continue
+    }
+    const k = claveMovimiento(refDe(ref), fecha, monto, moneda)
+    if (ya.sesiones.has(k) || enArchivo.sesiones.has(k)) {
+      res.duplicadas++
+      continue
+    }
+    enArchivo.sesiones.add(k)
+    const refSesion = `s:fila${numero}`
+    res.sesiones.push({ ...ref, ref: refSesion, fecha, hora, horas: 1, tarifa_hora: monto, moneda, observaciones: null })
+
+    // Pago (si dice que pagó): mismo día y monto, imputado al mes de la cita.
+    if (parseSiNo(v(c.pago)) === true && !ya.pagos.has(k) && !enArchivo.pagos.has(k)) {
+      enArchivo.pagos.add(k)
+      const nro = texto(v(c.factura))
+      res.pagos.push({
+        ...ref,
+        sesion_ref: refSesion,
+        fecha,
+        periodo: periodoDe(fecha),
+        monto,
+        moneda,
+        medio: 'transferencia',
+        comprobante: nro ? 'factura_c' : 'sin_comprobante',
+        punto_venta: null,
+        nro_factura: nro,
+        observaciones: null,
+      })
+    }
+  }
+  return res
 }

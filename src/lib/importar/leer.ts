@@ -37,10 +37,12 @@ export function normalizarCelda(valor: unknown): Celda {
 
 const vacia = (celdas: Celda[]) => celdas.every((c) => c === null || c === '')
 
-/** Separa encabezado y datos: el encabezado es la primera fila con contenido. */
-export function armarHoja(nombre: string, filasCrudas: unknown[][]): Hoja {
+/** Reconoce la fila de encabezado de una planilla. */
+export type EsEncabezado = (celdas: Celda[]) => boolean
+/** Separa encabezado y datos: el encabezado es la primera fila con contenido (o la primera que cumpla `esEncabezado`). */
+export function armarHoja(nombre: string, filasCrudas: unknown[][], esEncabezado: EsEncabezado = (c) => !vacia(c)): Hoja {
   const filas = filasCrudas.map((f, i) => ({ numero: i + 1, celdas: f.map(normalizarCelda) }))
-  const iEnc = filas.findIndex((f) => !vacia(f.celdas))
+  const iEnc = filas.findIndex((f) => esEncabezado(f.celdas))
   if (iEnc < 0) return { nombre, encabezados: [], filas: [] }
   const encabezados = filas[iEnc].celdas.map((c) => (c == null ? '' : String(c).trim()))
   const datos = filas
@@ -50,7 +52,7 @@ export function armarHoja(nombre: string, filasCrudas: unknown[][]): Hoja {
   return { nombre, encabezados, filas: datos }
 }
 
-export async function leerXlsx(datos: ArrayBuffer): Promise<Hoja[]> {
+export async function leerXlsx(datos: ArrayBuffer, esEncabezado?: EsEncabezado): Promise<Hoja[]> {
   const { default: ExcelJS } = await import('exceljs')
   const libro = new ExcelJS.Workbook()
   await libro.xlsx.load(datos)
@@ -62,20 +64,20 @@ export async function leerXlsx(datos: ArrayBuffer): Promise<Hoja[]> {
       filas[numero - 1] = (fila.values as unknown[]).slice(1)
     })
     for (let i = 0; i < filas.length; i++) filas[i] ??= []
-    hojas.push(armarHoja(hoja.name, filas))
+    hojas.push(armarHoja(hoja.name, filas, esEncabezado))
   })
   return hojas
 }
 
-export async function leerCsv(texto: string, nombre = 'CSV'): Promise<Hoja[]> {
+export async function leerCsv(texto: string, nombre = 'CSV', esEncabezado?: EsEncabezado): Promise<Hoja[]> {
   const { default: Papa } = await import('papaparse')
   const limpio = texto.charCodeAt(0) === 0xfeff ? texto.slice(1) : texto // saca el BOM de Excel
   const r = Papa.parse<string[]>(limpio, { skipEmptyLines: false, delimiter: '' }) // '' = detectar , o ;
-  return [armarHoja(nombre, r.data)]
+  return [armarHoja(nombre, r.data, esEncabezado)]
 }
 
 /** Lee un archivo elegido por la usuaria. Tira un Error con un mensaje para mostrar. */
-export async function leerArchivo(archivo: File): Promise<Hoja[]> {
+export async function leerArchivo(archivo: File, esEncabezado?: EsEncabezado): Promise<Hoja[]> {
   const nombre = archivo.name
   if (!/\.(xlsx|csv)$/i.test(nombre)) {
     throw new Error(`“${nombre}” no es un formato que podamos leer. Subí un .xlsx o .csv.`)
@@ -83,7 +85,7 @@ export async function leerArchivo(archivo: File): Promise<Hoja[]> {
   if (archivo.size > TAMANO_MAXIMO) throw new Error(`“${nombre}” pesa más de 5 MB.`)
   try {
     if (/\.csv$/i.test(nombre)) return await leerCsv(await archivo.text(), nombre.replace(/\.csv$/i, ''))
-    return await leerXlsx(await archivo.arrayBuffer())
+    return await leerXlsx(await archivo.arrayBuffer(), esEncabezado)
   } catch {
     throw new Error(`No pudimos leer “${nombre}”. Revisá que no esté protegido con contraseña y probá de nuevo.`)
   }

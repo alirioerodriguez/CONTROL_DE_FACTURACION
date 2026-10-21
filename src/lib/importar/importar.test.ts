@@ -6,6 +6,9 @@ import { armarHoja, leerCsv, leerXlsx, normalizarCelda } from './leer'
 import {
   camposFaltantes, esPlantilla, mapeoAutomatico, parseMedio, parseMoneda, parseSiNo, prepararGenerico,
   prepararPlantilla, type Contexto,
+  esPlanillaCitas,
+  parseHora,
+  prepararCitas,
 } from './preparar'
 
 const ctxVacio: Contexto = { pacientes: [], sesiones: [], pagos: [], monedaDefecto: 'ARS', tarifaEstandar: 50000 }
@@ -184,8 +187,91 @@ describe('plantilla de la app', () => {
     const archivo = readFileSync(new URL('../../../public/plantilla-cobros.xlsx', import.meta.url))
     const buf = archivo.buffer.slice(archivo.byteOffset, archivo.byteOffset + archivo.byteLength)
     const hojas = await leerXlsx(buf as ArrayBuffer)
-    expect(esPlantilla(hojas)).toBe(true)
-    const r = prepararPlantilla(hojas, ctxVacio)
+    // Una sola pestaña («Citas») con dos filas de ejemplo que se saltean.
+    expect(esPlanillaCitas(hojas)).toBe(true)
+    expect(hojas.map((h) => h.nombre)).toEqual(['Citas'])
+    const r = prepararCitas(hojas, ctxVacio)
     expect(r).toMatchObject({ pacientes: [], sesiones: [], pagos: [], errores: [], duplicadas: 0 })
+  })
+})
+
+describe('plantilla simple (para facturar)', () => {
+  const hojas = [
+    armarHoja('Pacientes', [
+      ['Paciente', 'DNI o CUIT', 'Condición frente al IVA', 'Teléfono'],
+      ['Ana Gómez', '30.123.456', '', '11 5555-0000'],
+      ['Estudio Pérez SRL', '30-71234567-8', 'Responsable inscripto', ''],
+    ]),
+    armarHoja('Sesiones', [
+      ['Paciente', 'Fecha', 'Monto', 'Moneda'],
+      ['ana gómez', '06/10/2026', '25.000', ''],
+      ['Lucía Fernández', '07/10/2026', 30000, 'ARS'],
+    ]),
+    armarHoja('Pagos', [
+      ['Paciente', 'Fecha de pago', 'Monto', 'Moneda', 'Mes que paga', 'Nº de factura'],
+      ['Ana Gómez', '10/10/2026', 25000, 'ARS', '01/09/2026', 'C 00002-00000123'],
+      ['Estudio Pérez SRL', '11/10/2026', 50000, 'ARS', '', ''],
+    ]),
+  ]
+
+  it('se reconoce y enlaza por el nombre del paciente', () => {
+    expect(esPlantilla(hojas)).toBe(true)
+    const lucia = { id: 'pac-lucia', nombre: 'Lucía', apellido: 'Fernández', codigo: null } as Paciente
+    const r = prepararPlantilla(hojas, { ...ctxVacio, pacientes: [lucia] })
+    expect(r.errores).toEqual([])
+    expect(r.pacientes.map((p) => [p.nombre, p.dni, p.cuil_cuit, p.condicion_iva, p.telefono])).toEqual([
+      ['Ana Gómez', '30123456', null, 'Consumidor final', '11 5555-0000'],
+      ['Estudio Pérez SRL', null, '30-71234567-8', 'Responsable inscripto', null],
+    ])
+    // «ana gómez» en minúscula y sin tilde de más: es la misma paciente. Lucía ya existía en la cuenta.
+    expect(r.sesiones.map((s) => [s.paciente_ref ?? s.patient_id, s.fecha])).toEqual([
+      ['p:ana gomez', '2026-10-06'],
+      ['pac-lucia', '2026-10-07'],
+    ])
+    expect(r.pagos[0]).toMatchObject({ paciente_ref: 'p:ana gomez', periodo: '2026-09-01', comprobante: 'factura_c', nro_factura: 'C 00002-00000123' })
+    expect(r.pagos[1]).toMatchObject({ periodo: '2026-10-01', comprobante: 'sin_comprobante' })
+  })
+})
+
+describe('planilla de una pestaña (Citas)', () => {
+  const hojas = [
+    armarHoja('Citas', [
+      ['Paciente', 'DNI', 'CUIL / CUIT', 'Condición frente al IVA', 'Obra social', 'Teléfono', 'Fecha de la cita', 'Hora de la cita', 'Monto', 'Moneda', 'Pagó', 'Nº de factura'],
+      ['María Ejemplo — fila de ejemplo, borrala', '30123456', null, null, null, null, '06/10/2026', '18:30', 25000, 'ARS', 'Sí', null],
+      ['Ana Gómez', '30.123.456', null, null, 'OSDE 310', '11 5555-0000', '06/10/2026', '18:30', 25000, null, 'Sí', 'C 00002-00000123'],
+      ['ana gómez', null, '27301234564', null, null, null, '13/10/2026', '18.30', null, null, 'No', null],
+      ['Lucía Fernández', null, null, null, null, null, '07/10/2026', null, 30000, 'ARS', null, null],
+      ['Pedro Paz', '20111222', null, 'Monotributista', null, null, null, null, null, null, null, null],
+    ]),
+  ]
+  const lucia = { id: 'pac-lucia', nombre: 'Lucía', apellido: 'Fernández', codigo: null, moneda: 'ARS', tipo_tarifa: 'estandar' } as Paciente
+
+  it('crea cada paciente una vez, con los datos para ARCA, y una cita por fila', () => {
+    expect(esPlanillaCitas(hojas)).toBe(true)
+    const r = prepararCitas(hojas, { ...ctxVacio, pacientes: [lucia] })
+    expect(r.errores).toEqual([])
+    expect(r.pacientesExistentes).toBe(1)
+    expect(r.pacientes.map((p) => [p.nombre, p.dni, p.cuil_cuit, p.condicion_iva, p.obra_social, p.telefono])).toEqual([
+      ['Ana Gómez', '30123456', '27-30123456-4', 'Consumidor final', 'OSDE 310', '11 5555-0000'],
+      ['Pedro Paz', '20111222', null, 'Monotributista', null, null],
+    ])
+    expect(r.sesiones.map((s) => [s.paciente_ref ?? s.patient_id, s.fecha, s.hora, s.tarifa_hora])).toEqual([
+      ['p:ana gomez', '2026-10-06', '18:30', 25000],
+      // Sin monto: la tarifa estándar de Ajustes.
+      ['p:ana gomez', '2026-10-13', '18:30', 50000],
+      ['pac-lucia', '2026-10-07', null, 30000],
+    ])
+    expect(r.pagos).toHaveLength(1)
+    expect(r.pagos[0]).toMatchObject({ paciente_ref: 'p:ana gomez', fecha: '2026-10-06', periodo: '2026-10-01', monto: 25000, comprobante: 'factura_c', nro_factura: 'C 00002-00000123' })
+  })
+
+  it('hora en varios formatos', () => {
+    expect(parseHora('18:30')).toBe('18:30')
+    expect(parseHora('9.05')).toBe('09:05')
+    expect(parseHora('18 hs')).toBe('18:00')
+    expect(parseHora(0.75)).toBe('18:00')
+    expect(parseHora(new Date(Date.UTC(1899, 11, 30, 14, 15)))).toBe('14:15')
+    expect(parseHora('25:00')).toBeNull()
+    expect(parseHora('tarde')).toBeNull()
   })
 })

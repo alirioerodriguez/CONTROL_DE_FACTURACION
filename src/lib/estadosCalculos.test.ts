@@ -8,7 +8,7 @@ const hoy = '2026-10-16'
 const paciente = { id: 'p', nombre: 'Lucía', apellido: 'Pérez', activo: true } as Paciente
 
 function sesion(id: string, fecha: string, estado: Sesion['estado'] = 'normal'): Sesion {
-  return { id, patient_id: 'p', fecha, horas: 1, tarifa_hora: 10000, monto: 10000, moneda: 'ARS', observaciones: null, estado }
+  return { id, patient_id: 'p', fecha, horas: 1, tarifa_hora: 10000, monto: 10000, moneda: 'ARS', observaciones: null, estado, hora: null }
 }
 
 // Octubre: una realizada, una ausente, una cancelada y una programada (después de hoy).

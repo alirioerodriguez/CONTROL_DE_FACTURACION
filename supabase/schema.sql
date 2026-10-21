@@ -300,6 +300,9 @@ create index if not exists patients_importacion_idx on public.patients (importac
 create index if not exists sessions_importacion_idx on public.sessions (importacion_id) where importacion_id is not null;
 create index if not exists payments_importacion_idx on public.payments (importacion_id) where importacion_id is not null;
 
+-- Hora de la cita (opcional). Solo la hora; la fecha sigue en `fecha`.
+alter table public.sessions add column if not exists hora time;
+
 create or replace function public.importar_datos(p_pacientes jsonb, p_sesiones jsonb, p_pagos jsonb)
 returns jsonb
 language plpgsql
@@ -326,7 +329,7 @@ begin
     insert into public.patients (
       user_id, importacion_id,
       codigo, nombre, apellido, dni, cuil_cuit, condicion_iva, telefono, email, domicilio, frecuencia,
-      tipo_tarifa, tarifa_personalizada, moneda, fecha_alta, activo, notas_admin
+      tipo_tarifa, tarifa_personalizada, moneda, fecha_alta, activo, notas_admin, obra_social
     ) values (
       yo, imp,
       nullif(r->>'codigo', ''), r->>'nombre', nullif(r->>'apellido', ''), nullif(r->>'dni', ''),
@@ -335,7 +338,7 @@ begin
       coalesce(r->>'tipo_tarifa', 'estandar'), (r->>'tarifa_personalizada')::numeric,
       coalesce(r->>'moneda', 'ARS'),
       coalesce((r->>'fecha_alta')::date, (now() at time zone 'America/Argentina/Buenos_Aires')::date),
-      coalesce((r->>'activo')::boolean, true), nullif(r->>'notas_admin', '')
+      coalesce((r->>'activo')::boolean, true), nullif(r->>'notas_admin', ''), nullif(r->>'obra_social', '')
     )
     returning id into nuevo;
     refs_pac := refs_pac || jsonb_build_object(r->>'ref', nuevo);
@@ -344,11 +347,11 @@ begin
 
   -- Los pacientes existentes se validan con la FK compuesta (patient_id, user_id): no se puede apuntar a uno ajeno.
   for r in select * from jsonb_array_elements(coalesce(p_sesiones, '[]'::jsonb)) loop
-    insert into public.sessions (user_id, importacion_id, patient_id, fecha, horas, tarifa_hora, moneda, observaciones, estado)
+    insert into public.sessions (user_id, importacion_id, patient_id, fecha, hora, horas, tarifa_hora, moneda, observaciones, estado)
     values (
       yo, imp,
       coalesce((r->>'patient_id')::uuid, (refs_pac->>(r->>'paciente_ref'))::uuid),
-      (r->>'fecha')::date, coalesce((r->>'horas')::numeric, 1), (r->>'tarifa_hora')::numeric,
+      (r->>'fecha')::date, nullif(r->>'hora', '')::time, coalesce((r->>'horas')::numeric, 1), (r->>'tarifa_hora')::numeric,
       r->>'moneda', nullif(r->>'observaciones', ''), coalesce(nullif(r->>'estado', ''), 'normal')
     )
     returning id into nuevo;

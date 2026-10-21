@@ -285,6 +285,7 @@ function GrupoMes({
                 <div className="text-base font-semibold">{pal.Sesion}{s.horas !== 1 ? ` · ${montoParaInput(s.horas)} h` : ''}</div>
                 <div className="mt-0.5 text-sm break-words text-ink2">
                   {etiquetaDia(s.fecha)}
+                  {s.hora ? ` · ${s.hora} h` : ''}
                   {visible === 'ausente' ? ' · ausente (se cobra)' : ''}
                   {conAbono && visible !== 'cancelada' ? ' · parte del abono' : ''}
                   {pagado > 0 && pagado < s.monto ? ` · abonó ${formatMonto(pagado, s.moneda)}` : ''}

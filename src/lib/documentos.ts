@@ -83,6 +83,11 @@ export function coincideDocumento(p: Pick<Paciente, 'dni' | 'cuil_cuit'>, busque
   return soloDigitos(p.dni).includes(q) || soloDigitos(p.cuil_cuit).includes(q)
 }
 
+/** 'CUIT 20-12345678-6 · DNI 12.345.678' de la profesional (vacío si no cargó ninguno). */
+export function documentosProfesional(p: { dni?: string | null; cuit?: string | null } | undefined): string {
+  return [p?.cuit && `CUIT ${formatCuil(p.cuit)}`, p?.dni && `DNI ${formatDni(p.dni)}`].filter(Boolean).join(' · ')
+}
+
 /** Para importar planillas: deja el DNI y el CUIL en el formato de la app si tienen la forma correcta; si no, como vinieron. */
 export function normalizarDocumentos(dni: string | null, cuil: string | null): { dni: string | null; cuil_cuit: string | null } {
   return {
