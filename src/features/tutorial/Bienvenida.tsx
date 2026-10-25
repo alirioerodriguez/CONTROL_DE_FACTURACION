@@ -70,6 +70,7 @@ export function CamposProfesion({
           opciones={[
             { v: 'sesion' as Termino, l: 'Sesión' },
             { v: 'consulta' as Termino, l: 'Consulta' },
+            { v: 'clase' as Termino, l: 'Clase' },
           ]}
           valor={termino}
           onCambio={setTermino}

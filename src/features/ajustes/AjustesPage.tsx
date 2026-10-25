@@ -22,6 +22,7 @@ import { CalendarioAjustes } from './CalendarioAjustes'
 import { OpcionesAjustes } from './OpcionesAjustes'
 import { OtraApp } from './OtraApp'
 import { DondeLaVeo } from './DondeLaVeo'
+import { DobleFactor } from './DobleFactor'
 import { useTutorial } from '../tutorial/Tutorial'
 import { etiquetaProfesion, palabras, PROFESIONES, type ModoCobro, type Termino } from '../../lib/terminos'
 
@@ -350,6 +351,8 @@ export function AjustesPage() {
       </Tarjeta>
 
       {perfil.data && <AumentoAjustes perfil={perfil.data} pacientes={pacientes} />}
+
+      <DobleFactor />
 
       {perfil.data && <MonotributoAjustes perfil={perfil.data} />}
 

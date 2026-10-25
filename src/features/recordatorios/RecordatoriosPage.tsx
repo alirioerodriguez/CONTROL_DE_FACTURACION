@@ -78,7 +78,7 @@ export function RecordatoriosPage() {
 
       {lista.length === 0 ? (
         <EstadoVacio icono={Check} titulo="Nadie te debe">
-          Cuando un paciente tenga {perfil?.termino === 'consulta' ? 'consultas' : 'sesiones'} sin pagar, aparece acá para mandarle el recordatorio.
+          Cuando un paciente tenga {perfil?.termino === 'consulta' ? 'consultas' : perfil?.termino === 'clase' ? 'clases' : 'sesiones'} sin pagar, aparece acá para mandarle el recordatorio.
         </EstadoVacio>
       ) : (
         <>

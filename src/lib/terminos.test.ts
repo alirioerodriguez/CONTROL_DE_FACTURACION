@@ -32,3 +32,15 @@ describe('profesiones', () => {
     expect(etiquetaProfesion(null)).toBe('')
   })
 })
+
+describe('clases particulares', () => {
+  it('profesoras de idiomas y música dicen «clase» y cobran por hora', () => {
+    expect(PROFESIONES.find((p) => p.v === 'idiomas')).toMatchObject({ termino: 'clase', modo: 'hora' })
+    expect(PROFESIONES.find((p) => p.v === 'musica')).toMatchObject({ termino: 'clase', modo: 'hora' })
+  })
+  it('las palabras de «clase»', () => {
+    const p = palabras('clase', 'sesion')
+    expect([p.sesion, p.sesiones, p.Sesion, p.Sesiones, p.porUnidad, p.sufijo]).toEqual(['clase', 'clases', 'Clase', 'Clases', 'por clase', '/clase'])
+    expect(palabras('clase', 'hora').porUnidad).toBe('por hora')
+  })
+})

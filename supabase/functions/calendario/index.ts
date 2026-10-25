@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     const p = s.patients as unknown as { nombre: string; apellido: string | null }
     return { id: s.id, fecha: s.fecha, hora: s.hora, horas: Number(s.horas), estado: s.estado, nombre: p.nombre, apellido: p.apellido }
   })
-  const ics = armarIcs(sesiones, perfil.termino === 'consulta' ? 'Consulta' : 'Sesión')
+  const ics = armarIcs(sesiones, perfil.termino === 'consulta' ? 'Consulta' : perfil.termino === 'clase' ? 'Clase' : 'Sesión')
   return new Response(ics, {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',

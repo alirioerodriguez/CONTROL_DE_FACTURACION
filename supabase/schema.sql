@@ -38,13 +38,12 @@ create table if not exists public.profiles (
 
 -- Columnas agregadas después de la primera versión (para bases ya creadas).
 alter table public.profiles add column if not exists tutorial_visto boolean not null default false;
--- Profesión y vocabulario: 'sesión' o 'consulta'; tarifa por hora o por sesión/consulta.
+-- Profesión y vocabulario: 'sesión', 'consulta' o 'clase' (profesoras particulares); tarifa por hora o por sesión/consulta/clase.
 alter table public.profiles add column if not exists profesion text;
 alter table public.profiles add column if not exists termino text not null default 'sesion';
 alter table public.profiles add column if not exists modo_cobro text not null default 'hora';
-do $$ begin
-  alter table public.profiles add constraint profiles_termino_check check (termino in ('sesion','consulta'));
-exception when duplicate_object then null; end $$;
+alter table public.profiles drop constraint if exists profiles_termino_check;
+alter table public.profiles add constraint profiles_termino_check check (termino in ('sesion','consulta','clase'));
 do $$ begin
   alter table public.profiles add constraint profiles_modo_cobro_check check (modo_cobro in ('hora','sesion'));
 exception when duplicate_object then null; end $$;
@@ -254,6 +253,42 @@ create policy payments_all on public.payments
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
 
+-- ---------------------------------------------------------------------------
+-- Doble factor (MFA con app autenticadora, TOTP de Supabase), optativo.
+-- Quien lo activa necesita el segundo paso (sesión «aal2») para leer o escribir sus datos:
+-- sin esto, alguien con la contraseña podría saltearse el paso extra hablándole directo a la base.
+-- Quien no lo activó sigue igual que siempre.
+-- ---------------------------------------------------------------------------
+create or replace function public.mfa_ok()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select coalesce(auth.jwt() ->> 'aal', '') = 'aal2'
+      or not exists (select 1 from auth.mfa_factors f where f.user_id = auth.uid() and f.status = 'verified');
+$$;
+revoke execute on function public.mfa_ok() from public, anon;
+grant execute on function public.mfa_ok() to authenticated;
+
+create or replace function public.exigir_mfa()
+returns void
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.mfa_ok() then
+    raise exception 'Falta el segundo paso de verificación' using errcode = '42501';
+  end if;
+end;
+$$;
+revoke execute on function public.exigir_mfa() from public, anon;
+grant execute on function public.exigir_mfa() to authenticated;
+
+
 -- ---------------------------------------------------------------------
 -- Importación "todo o nada": pacientes, sesiones y pagos en una sola
 -- transacción. Corre con los permisos de quien llama (RLS aplica igual).
@@ -320,6 +355,7 @@ declare
   n_ses int := 0;
   n_pag int := 0;
 begin
+  perform public.exigir_mfa(); -- con doble factor activado, sin el segundo paso no se puede
   if yo is null then
     raise exception 'Sin sesión';
   end if;
@@ -399,6 +435,7 @@ declare
   n_ses int;
   n_pac int;
 begin
+  perform public.exigir_mfa(); -- con doble factor activado, sin el segundo paso no se puede
   select * into imp from public.importaciones
   where id = p_importacion and user_id = yo
   for update;
@@ -438,6 +475,7 @@ security definer
 set search_path = ''
 as $$
 begin
+  perform public.exigir_mfa(); -- con doble factor activado, sin el segundo paso no se puede
   if auth.uid() is null then
     raise exception 'Sin sesión';
   end if;
@@ -511,6 +549,7 @@ security definer
 set search_path = ''
 as $$
 begin
+  perform public.exigir_mfa(); -- con doble factor activado, sin el segundo paso no se puede
   if not exists (select 1 from public.profiles where id = auth.uid() and es_admin) then
     raise exception 'Solo para administradores';
   end if;
@@ -836,3 +875,16 @@ end $$;
 insert into public.profiles (id, email)
 select id, email from auth.users
 on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------------------
+-- Doble factor: regla «restrictiva» sobre cada tabla con datos de la usuaria. Se suma (con AND) a las
+-- políticas de siempre: no da acceso a nadie nuevo, solo pide el segundo paso a quien lo activó.
+-- ---------------------------------------------------------------------------
+do $$
+declare t text;
+begin
+  foreach t in array array['profiles','patients','sessions','payments','importaciones','pruebas','recordatorios'] loop
+    execute format('drop policy if exists mfa_requerido on public.%I', t);
+    execute format('create policy mfa_requerido on public.%I as restrictive for all to authenticated using (public.mfa_ok()) with check (public.mfa_ok())', t);
+  end loop;
+end $$;

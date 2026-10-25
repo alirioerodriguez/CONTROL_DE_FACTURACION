@@ -156,6 +156,44 @@ begin
   perform public.deshacer_importacion('00000000-0000-4000-c000-00000000000a');
 end $$;
 
+-- ===================== Doble factor =====================
+-- A activa el doble factor. Con solo la contraseña (aal1) no ve ni cambia nada; con el segundo paso (aal2), todo.
+reset role;
+insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, created_at, updated_at, secret)
+values ('00000000-0000-4000-e000-00000000000a', '00000000-0000-4000-a000-00000000000a', 'prueba', 'totp', 'verified', now(), now(), 'secreto-de-prueba');
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "00000000-0000-4000-a000-00000000000a", "role": "authenticated", "aal": "aal1"}';
+
+do $$
+declare n int;
+begin
+  if (select count(*) from public.patients) <> 0 then raise exception 'Con doble factor y sin el segundo paso, A ve sus pacientes'; end if;
+  if (select count(*) from public.payments) <> 0 then raise exception 'Con doble factor y sin el segundo paso, A ve sus pagos'; end if;
+  update public.patients set nombre = 'cambiado' where id = '00000000-0000-4000-b000-00000000000a';
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'Con doble factor y sin el segundo paso, A pudo cambiar un paciente'; end if;
+  begin
+    perform public.importar_datos('[]'::jsonb, '[]'::jsonb, '[]'::jsonb);
+    raise exception 'FALLA: sin el segundo paso se pudo importar';
+  exception when others then
+    if sqlerrm like 'FALLA:%' then raise; end if;
+  end;
+end $$;
+
+set local request.jwt.claims = '{"sub": "00000000-0000-4000-a000-00000000000a", "role": "authenticated", "aal": "aal2"}';
+do $$
+begin
+  if (select count(*) from public.patients) <> 1 then raise exception 'Con el segundo paso, A no ve sus pacientes'; end if;
+end $$;
+
+-- B no activó el doble factor: con aal1 sigue viendo lo suyo como siempre (y nada de A).
+set local request.jwt.claims = '{"sub": "00000000-0000-4000-a000-00000000000b", "role": "authenticated", "aal": "aal1"}';
+do $$
+begin
+  if (select count(*) from public.profiles) <> 1 then raise exception 'Sin doble factor, B dejó de ver su perfil'; end if;
+  if (select count(*) from public.patients) <> 0 then raise exception 'B ve pacientes de A'; end if;
+end $$;
+
 rollback;
 
 select 'Aislamiento OK' as resultado;

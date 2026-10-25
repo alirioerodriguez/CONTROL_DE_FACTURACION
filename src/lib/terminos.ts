@@ -1,7 +1,7 @@
-// Vocabulario según la profesión: "sesión" o "consulta", tarifa por hora o por sesión/consulta.
-// Las dos palabras son femeninas, así que los artículos ("la", "una") no cambian.
+// Vocabulario según la profesión: "sesión", "consulta" o "clase", tarifa por hora o por sesión/consulta/clase.
+// Las tres palabras son femeninas, así que los artículos ("la", "una") no cambian.
 
-export type Termino = 'sesion' | 'consulta'
+export type Termino = 'sesion' | 'consulta' | 'clase'
 export type ModoCobro = 'hora' | 'sesion'
 
 export interface Profesion {
@@ -21,6 +21,8 @@ export const PROFESIONES: Profesion[] = [
   { v: 'terapia_ocupacional', l: 'Terapia ocupacional', termino: 'sesion', modo: 'sesion' },
   { v: 'medicina', l: 'Medicina', termino: 'consulta', modo: 'sesion' },
   { v: 'odontologia', l: 'Odontología', termino: 'consulta', modo: 'sesion' },
+  { v: 'idiomas', l: 'Clases de idiomas', termino: 'clase', modo: 'hora' },
+  { v: 'musica', l: 'Clases de música', termino: 'clase', modo: 'hora' },
   { v: 'otra', l: 'Otra', termino: 'sesion', modo: 'sesion' },
 ]
 
@@ -51,8 +53,8 @@ export interface Palabras {
 const capital = (t: string) => t.charAt(0).toUpperCase() + t.slice(1)
 
 export function palabras(termino: Termino = 'sesion', modo: ModoCobro = 'hora'): Palabras {
-  const sesion = termino === 'consulta' ? 'consulta' : 'sesión'
-  const sesiones = termino === 'consulta' ? 'consultas' : 'sesiones'
+  const sesion = termino === 'consulta' ? 'consulta' : termino === 'clase' ? 'clase' : 'sesión'
+  const sesiones = termino === 'consulta' ? 'consultas' : termino === 'clase' ? 'clases' : 'sesiones'
   const unidad = modo === 'hora' ? 'hora' : sesion
   return {
     sesion,

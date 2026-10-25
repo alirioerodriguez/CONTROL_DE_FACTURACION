@@ -8,6 +8,7 @@ import { FacturarPage } from './features/reportes/FacturarPage'
 import { useAuth } from './features/auth/AuthProvider'
 import { LoginPage } from './features/auth/LoginPage'
 import { NuevaClavePage } from './features/auth/NuevaClavePage'
+import { SegundoPasoPage } from './features/auth/SegundoPasoPage'
 import { RecuperarPage } from './features/auth/RecuperarPage'
 import { RegistroPage } from './features/auth/RegistroPage'
 import { InicioPage } from './features/inicio/InicioPage'
@@ -35,7 +36,7 @@ const cargandoPantalla = (
 )
 
 export default function App() {
-  const { session, cargando, recuperando } = useAuth()
+  const { session, cargando, recuperando, faltaSegundoPaso } = useAuth()
   const { pathname } = useLocation()
 
   // Páginas públicas: se ven con o sin sesión (Google las pide para publicar el ingreso).
@@ -52,6 +53,7 @@ export default function App() {
     )
   }
   if (recuperando) return <NuevaClavePage />
+  if (session && faltaSegundoPaso) return <SegundoPasoPage />
 
   if (!session) {
     return (
