@@ -4,7 +4,8 @@ import { TriangleAlert, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Alerta, Boton, Campo, CampoMonto, Confirmar, Hoja, IC, Segmentado, type Opcion } from '../../components/ui'
 import { nombreCompleto, useDatos, useGuardar, type Paciente } from '../../lib/datos'
-import { formatMonto, hoyAR, montoParaInput, parseMontoAR, type Moneda } from '../../lib/formato'
+import { hoyAR, montoParaInput, parseMontoAR, type Moneda } from '../../lib/formato'
+import { verMonto } from '../../lib/discreto'
 import {
   cuilCoincideConDni, cuilValido, dniValido, formatCuil, formatDni, pacienteConMismoDocumento, soloDigitos, sugerirCuil,
 } from '../../lib/documentos'
@@ -286,7 +287,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
         {tipo === 'estandar' ? (
           <div className="text-[0.9375rem] text-ink2">
             {tarifaEstandar > 0
-              ? `${formatMonto(tarifaEstandar, monedaEstandar)} ${pal.porUnidad}. Si cambiás la tarifa estándar en Ajustes, cambia para este paciente.`
+              ? `${verMonto(tarifaEstandar, monedaEstandar)} ${pal.porUnidad}. Si cambiás la tarifa estándar en Ajustes, cambia para este paciente.`
               : 'Todavía no cargaste tu tarifa estándar. Hacelo en Ajustes.'}
           </div>
         ) : (

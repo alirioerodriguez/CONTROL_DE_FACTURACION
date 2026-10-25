@@ -9,10 +9,8 @@ import {
 import {
   ETIQUETA_MEDIO, nombreCompleto, useDatos, useGuardar, type Medio, type Paciente, type Pagador, type Pago, type Perfil,
 } from '../../lib/datos'
-import {
-  capitalizar, etiquetaDia, formatMonto, formatPeriodo, hoyAR, montoParaInput, normalizar, parseMontoAR, periodoDe,
-  redondear2, sumarDias, sumarMeses, type Moneda,
-} from '../../lib/formato'
+import { capitalizar, etiquetaDia, formatPeriodo, hoyAR, montoParaInput, normalizar, parseMontoAR, periodoDe, redondear2, sumarDias, sumarMeses, type Moneda } from '../../lib/formato'
+import { verMonto } from '../../lib/discreto'
 import { coincideDocumento } from '../../lib/documentos'
 import { tieneAbono } from '../../lib/abono'
 import { deudaDe, debeAlgo, saldosDe, textoDeuda } from '../../lib/resumen'
@@ -154,8 +152,8 @@ export function RegistroHoja({
         const d = deudaDe(saldosDe(paciente.id, sesiones, pagos))
         const tarifa = tarifaVigente(paciente, tarifaEstandar)
         const honorario = tieneAbono(paciente)
-          ? `abono de ${formatMonto(paciente.abono_mensual ?? 0, paciente.moneda)} por mes`
-          : `${formatMonto(tarifa, paciente.moneda)}${pal.sufijo}`
+          ? `abono de ${verMonto(paciente.abono_mensual ?? 0, paciente.moneda)} por mes`
+          : `${verMonto(tarifa, paciente.moneda)}${pal.sufijo}`
         return `${debeAlgo(d) ? `Debe ${textoDeuda(d)}` : 'Al día'} · ${honorario}`
       })()
     : ''
@@ -189,7 +187,7 @@ export function RegistroHoja({
                 ]
               : []),
           ])
-          toast.success(`${pal.Sesion} guardada · ${nombre} · ${formatMonto(monto, moneda)} · ${pagado ? 'pagada' : 'pendiente'}`)
+          toast.success(`${pal.Sesion} guardada · ${nombre} · ${verMonto(monto, moneda)} · ${pagado ? 'pagada' : 'pendiente'}`)
         }
       } else {
         const nro = factura.trim()
@@ -210,7 +208,7 @@ export function RegistroHoja({
           toast.success('Pago actualizado')
         } else {
           await guardar.mutateAsync([{ tipo: 'insertar', tabla: 'payments', filas: [{ ...fila, id: ids.pago }] }])
-          toast.success(`Pago registrado · ${nombre} · ${formatMonto(monto, moneda)}`)
+          toast.success(`Pago registrado · ${nombre} · ${verMonto(monto, moneda)}`)
         }
       }
       onCerrar()
@@ -236,7 +234,7 @@ export function RegistroHoja({
   const titulo = edSesion ? `Editar ${pal.sesion}` : edPago ? 'Editar pago' : 'Registrar'
   const textoBoton = editando
     ? 'Guardar cambios'
-    : `${esSesion ? `Guardar ${pal.sesion}` : 'Guardar pago'}${monto > 0 ? ` · ${formatMonto(monto, moneda)}` : ''}`
+    : `${esSesion ? `Guardar ${pal.sesion}` : 'Guardar pago'}${monto > 0 ? ` · ${verMonto(monto, moneda)}` : ''}`
 
   if (confirmarBorrado) {
     return (
@@ -249,7 +247,7 @@ export function RegistroHoja({
       >
         {edSesion
           ? `Se borra la ${pal.sesion} del ${fecha.split('-').reverse().join('/')} de ${paciente ? nombreCompleto(paciente) : 'este paciente'}. No se puede deshacer.`
-          : `Se borra el pago de ${formatMonto(monto, moneda)}. No se puede deshacer.`}
+          : `Se borra el pago de ${verMonto(monto, moneda)}. No se puede deshacer.`}
       </Confirmar>
     )
   }

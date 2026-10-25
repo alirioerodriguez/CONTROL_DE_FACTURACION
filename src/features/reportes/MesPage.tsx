@@ -5,7 +5,8 @@ import { toast } from 'sonner'
 import { SelectorMes, useMesSeleccionado } from '../../components/SelectorMes'
 import { Avatar, Boton, EstadoError, EstadoVacio, Esqueleto, MontoGrande, Tarjeta } from '../../components/ui'
 import { useDatos } from '../../lib/datos'
-import { etiquetaDia, formatMonto, nombreMes, periodoDe, plural, redondear2 } from '../../lib/formato'
+import { etiquetaDia, nombreMes, periodoDe, plural, redondear2 } from '../../lib/formato'
+import { verMonto } from '../../lib/discreto'
 import { reporteMes } from '../../lib/reportes'
 import type { EstadoSesion } from '../../lib/saldos'
 import { mensajeError } from '../../lib/supabase'
@@ -117,12 +118,12 @@ export function MesPage() {
                     <div className="anim-progreso h-full rounded-full bg-acc transition-[width] duration-300" style={{ width: `${pct}%` }} />
                   </div>
                   <div className="flex flex-wrap justify-between gap-3 text-[0.9375rem]">
-                    <span className="text-ink2">de {formatMonto(t.facturado, t.moneda)} a cobrar</span>
-                    <span className="font-semibold text-bad">Pendiente {formatMonto(t.pendiente, t.moneda)}</span>
+                    <span className="text-ink2">de {verMonto(t.facturado, t.moneda)} a cobrar</span>
+                    <span className="font-semibold text-bad">Pendiente {verMonto(t.pendiente, t.moneda)}</span>
                   </div>
                   {deObrasSociales[t.moneda] > 0 && (
                     <div className="text-sm text-ink2">
-                      Pagos de obras sociales en {nombreMes(periodo)}: {formatMonto(deObrasSociales[t.moneda], t.moneda)}
+                      Pagos de obras sociales en {nombreMes(periodo)}: {verMonto(deObrasSociales[t.moneda], t.moneda)}
                     </div>
                   )}
                 </Tarjeta>
@@ -162,10 +163,10 @@ export function MesPage() {
                         </span>
                       ))}
                     </div>
-                    <div className="text-right">{formatMonto(f.facturado, f.moneda)}</div>
-                    <div className="text-right">{formatMonto(f.cobrado, f.moneda)}</div>
+                    <div className="text-right">{verMonto(f.facturado, f.moneda)}</div>
+                    <div className="text-right">{verMonto(f.cobrado, f.moneda)}</div>
                     <div className={`text-right font-semibold ${f.pendiente ? 'text-bad' : 'text-ink2'}`}>
-                      {f.pendiente ? formatMonto(f.pendiente, f.moneda) : '—'}
+                      {f.pendiente ? verMonto(f.pendiente, f.moneda) : '—'}
                     </div>
                   </button>
                 ))}
@@ -173,9 +174,9 @@ export function MesPage() {
                   <div key={t.moneda} className={`grid ${COLUMNAS} gap-3 bg-surface2 px-[1.375rem] py-4 text-base font-bold tabular`}>
                     <div>Total {t.moneda}</div>
                     <div className="font-medium text-ink2">{plural(t.sesiones, pal.sesion, pal.sesiones)}</div>
-                    <div className="text-right">{formatMonto(t.facturado, t.moneda)}</div>
-                    <div className="text-right">{formatMonto(t.cobrado, t.moneda)}</div>
-                    <div className="text-right text-bad">{formatMonto(t.pendiente, t.moneda)}</div>
+                    <div className="text-right">{verMonto(t.facturado, t.moneda)}</div>
+                    <div className="text-right">{verMonto(t.cobrado, t.moneda)}</div>
+                    <div className="text-right text-bad">{verMonto(t.pendiente, t.moneda)}</div>
                   </div>
                 ))}
               </div>

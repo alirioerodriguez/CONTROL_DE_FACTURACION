@@ -1,16 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { BellRing, Check, MessageCircle, Plus } from 'lucide-react'
+import { BellRing, Check, Eye, EyeOff, MessageCircle, Plus } from 'lucide-react'
 import { useUsuario } from '../../components/FotoUsuario'
 import { SelectorMes, useMesSeleccionado } from '../../components/SelectorMes'
 import {
   Avatar, Boton, Chip, EstadoError, Esqueleto, IC, MontoGrande, Segmentado, Tarjeta, type Tono,
 } from '../../components/ui'
 import { nombreCompleto, useDatos, type Paciente } from '../../lib/datos'
-import {
-  capitalizar, completarPlantilla, etiquetaDia, fechaLarga, formatCompacto, formatMonto, hoyAR, mesCorto, nombreMes,
-  numeroWhatsApp, periodoDe, plural, type Moneda,
-} from '../../lib/formato'
+import { capitalizar, completarPlantilla, etiquetaDia, fechaLarga, formatCompacto, formatMonto, hoyAR, mesCorto, nombreMes, numeroWhatsApp, periodoDe, plural, type Moneda } from '../../lib/formato'
+import { cambiarMontosOcultos, montosOcultos, useMontosOcultos, verMonto } from '../../lib/discreto'
 import { resumenMes, type SesionImpaga } from '../../lib/inicio'
 import { deudaDe, saldosDe } from '../../lib/resumen'
 import { usePalabras } from '../../components/usePalabras'
@@ -29,6 +27,7 @@ export function InicioPage() {
   const [periodo, setPeriodo] = useMesSeleccionado()
   const usuario = useUsuario()
   const pal = usePalabras()
+  const ocultos = useMontosOcultos()
   const [monedaGrafico, setMonedaGrafico] = useState<Moneda>('ARS')
 
   const r = useMemo(() => resumenMes(periodo, pacientes, sesiones, pagos), [periodo, pacientes, sesiones, pagos])
@@ -50,7 +49,7 @@ export function InicioPage() {
     const texto = completarPlantilla(perfil?.plantilla_whatsapp ?? '', {
       nombre: p.nombre.split(' ')[0],
       mes: nombreMes(periodoDe(s.sesion.fecha)),
-      monto: formatMonto(deuda || s.debe, s.sesion.moneda),
+      monto: formatMonto(deuda || s.debe, s.sesion.moneda), // el mensaje lleva el monto real aunque estén ocultos
       pago: perfil?.datos_pago,
     })
     return `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`
@@ -71,7 +70,19 @@ export function InicioPage() {
             Hola{primerNombre ? `, ${primerNombre}` : ''}
           </h1>
         </div>
-        <SelectorMes periodo={periodo} onCambio={setPeriodo} />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => cambiarMontosOcultos(!ocultos)}
+            aria-pressed={ocultos}
+            aria-label={ocultos ? 'Mostrar montos' : 'Ocultar montos'}
+            title={ocultos ? 'Mostrar montos' : 'Ocultar montos (por si te ve un paciente)'}
+            className="presionable grid size-12 shrink-0 place-items-center rounded-full border border-line bg-surface text-ink2 hover:bg-surface2"
+          >
+            {ocultos ? <EyeOff {...IC} /> : <Eye {...IC} />}
+          </button>
+          <SelectorMes periodo={periodo} onCambio={setPeriodo} />
+        </div>
       </div>
 
       <div data-tour="resumen" className="escalonado grid grid-cols-2 gap-3 max-md:letra-grande:grid-cols-1 md:grid-cols-[repeat(auto-fit,minmax(13.75rem,1fr))]">
@@ -96,7 +107,7 @@ export function InicioPage() {
           </div>
           <MontoGrande monto={r.pendiente.ARS} moneda="ARS" className="text-[clamp(1.75rem,3.2cqi,2.625rem)]" />
           <div className="text-sm text-ink2">
-            {r.pendiente.USD > 0 ? `+ ${formatMonto(r.pendiente.USD, 'USD')} · ` : ''}{pal.sesiones} de {mes}
+            {r.pendiente.USD > 0 ? `+ ${verMonto(r.pendiente.USD, 'USD')} · ` : ''}{pal.sesiones} de {mes}
           </div>
           {(r.programado.ARS > 0 || r.programado.USD > 0) && (
             <div className="text-sm text-ink2">
@@ -106,7 +117,7 @@ export function InicioPage() {
                 .map((m, i) => (
                   <span key={m} className="whitespace-nowrap">
                     {i > 0 && ' + '}
-                    {formatMonto(r.programado[m], m)}
+                    {verMonto(r.programado[m], m)}
                   </span>
                 ))}
             </div>
@@ -159,11 +170,11 @@ export function InicioPage() {
                     </div>
                     {/* Si la tarjeta es angosta, el monto va debajo para no tapar el nombre. */}
                     <div className="mt-1 text-base font-semibold break-words tabular @[30rem]:hidden">
-                      {formatMonto(i.debe, i.sesion.moneda)}
+                      {verMonto(i.debe, i.sesion.moneda)}
                     </div>
                   </div>
                   <div className="hidden text-[1.0625rem] font-semibold whitespace-nowrap tabular @[30rem]:block">
-                    {formatMonto(i.debe, i.sesion.moneda)}
+                    {verMonto(i.debe, i.sesion.moneda)}
                   </div>
                   {wa ? (
                     <a
@@ -211,7 +222,7 @@ export function InicioPage() {
             <div>
               <h2 className="m-0 text-xl font-semibold">Cobrado por mes</h2>
               <div className="mt-1 text-[0.9375rem] text-ink2">
-                En {mes}: {formatMonto(r.barras[5].cobrado[monedaGrafico], monedaGrafico)}
+                En {mes}: {verMonto(r.barras[5].cobrado[monedaGrafico], monedaGrafico)}
               </div>
             </div>
             <Segmentado
@@ -232,12 +243,12 @@ export function InicioPage() {
               return (
                 <div key={b.periodo} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-2">
                   <div className={`text-xs font-bold whitespace-nowrap ${elegido ? 'text-ink' : 'hidden text-ink2 md:block'}`}>
-                    {formatCompacto(valor, monedaGrafico)}
+                    {montosOcultos() ? '' : formatCompacto(valor, monedaGrafico)}
                   </div>
                   <div
                     className={`anim-barra min-h-1 w-full max-w-12 rounded-[0.625rem] transition-[height] duration-300 ${elegido ? 'bg-acc' : 'bg-acc-soft'}`}
                     style={{ height: `${Math.round((valor / max) * 82)}%`, animationDelay: `${i * 40}ms` }}
-                    title={`${capitalizar(nombreMes(b.periodo))}: ${formatMonto(valor, monedaGrafico)}`}
+                    title={`${capitalizar(nombreMes(b.periodo))}: ${verMonto(valor, monedaGrafico)}`}
                   />
                 </div>
               )

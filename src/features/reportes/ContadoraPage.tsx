@@ -4,7 +4,8 @@ import { ChevronDown, ChevronLeft, ChevronRight, Download, FileText, ReceiptText
 import { toast } from 'sonner'
 import { AjustarAncho, Alerta, Boton, EstadoError, Esqueleto, IC, MontoGrande, Pastilla, Tarjeta, Titulo } from '../../components/ui'
 import { ETIQUETA_MEDIO, nombreCompleto, useDatos, type Paciente } from '../../lib/datos'
-import { capitalizar, formatFecha, formatMonto, formatPeriodo, hoyAR, partesMonto, periodoDe, plural, sumarMeses, type Moneda } from '../../lib/formato'
+import { capitalizar, formatFecha, formatPeriodo, hoyAR, periodoDe, plural, sumarMeses, type Moneda } from '../../lib/formato'
+import { verMonto, verPartes } from '../../lib/discreto'
 import { pagosParaFacturar } from '../../lib/facturar'
 import { MEDIOS, mesesEntre, reporteContadora } from '../../lib/reportes'
 import { mensajeError } from '../../lib/supabase'
@@ -99,7 +100,7 @@ export function ContadoraPage() {
   }
 
   const etiquetaMes = (p: string) => capitalizar(formatPeriodo(p))
-  const guion = (n: number, m: Moneda) => (n ? formatMonto(n, m) : '—')
+  const guion = (n: number, m: Moneda) => (n ? verMonto(n, m) : '—')
 
   return (
     <section className="flex flex-col gap-6">
@@ -234,7 +235,7 @@ export function ContadoraPage() {
                     <div key={x} className="flex flex-col gap-1.5">
                       <div className="flex justify-between gap-2.5 text-[0.9375rem]">
                         <span className="text-ink2">{ETIQUETA_MEDIO[x]}</span>
-                        <span className="font-semibold tabular">{formatMonto(a.medios[x], m)}</span>
+                        <span className="font-semibold tabular">{verMonto(a.medios[x], m)}</span>
                       </div>
                       <div className="h-1.5 overflow-hidden rounded-full bg-surface2">
                         <div className="h-full rounded-full bg-acc" style={{ width: `${a.total ? Math.round((a.medios[x] / a.total) * 100) : 0}%` }} />
@@ -260,7 +261,7 @@ export function ContadoraPage() {
               </span>
             </div>
             {MONEDAS.map((m) => {
-              const p = partesMonto(r.ultimos12[m].total, m)
+              const p = verPartes(r.ultimos12[m].total, m)
               return (
                 <div key={m} className="flex items-baseline justify-between gap-3">
                   <span className="text-sm font-semibold text-acc-strong">{m}</span>
@@ -327,7 +328,7 @@ export function ContadoraPage() {
                                   {guion(m.porMoneda[moneda].medios[x], moneda)}
                                 </div>
                               ))}
-                              <div className="text-right font-bold">{formatMonto(m.porMoneda[moneda].total, moneda)}</div>
+                              <div className="text-right font-bold">{verMonto(m.porMoneda[moneda].total, moneda)}</div>
                               <div className="text-right text-ink2">
                                 {m.porMoneda[moneda].conFactura} / {m.porMoneda[moneda].cantidad}
                               </div>
@@ -358,7 +359,7 @@ export function ContadoraPage() {
                             <div className={p.nro_factura ? '' : 'text-ink2'}>
                               {[p.punto_venta, p.nro_factura].filter(Boolean).join('-') || 'Sin factura'}
                             </div>
-                            <div className="text-right font-semibold">{formatMonto(p.monto, p.moneda)}</div>
+                            <div className="text-right font-semibold">{verMonto(p.monto, p.moneda)}</div>
                           </div>
                         ))}
                       </div>
@@ -375,7 +376,7 @@ export function ContadoraPage() {
                       {guion(r.totales[m].medios[x], m)}
                     </div>
                   ))}
-                  <div className="text-right">{formatMonto(r.totales[m].total, m)}</div>
+                  <div className="text-right">{verMonto(r.totales[m].total, m)}</div>
                   <div className="text-right text-ink2">
                     {r.totales[m].conFactura} / {r.totales[m].cantidad}
                   </div>

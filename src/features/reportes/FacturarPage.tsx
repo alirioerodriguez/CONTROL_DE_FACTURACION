@@ -17,7 +17,8 @@ import {
   type Factura,
   type ParaFacturar,
 } from '../../lib/facturar'
-import { capitalizar, formatFecha, formatMonto, formatPeriodo, hoyAR, periodoDe, plural, sumarMeses, type Moneda } from '../../lib/formato'
+import { capitalizar, formatFecha, formatPeriodo, hoyAR, periodoDe, plural, sumarMeses, type Moneda } from '../../lib/formato'
+import { verMonto } from '../../lib/discreto'
 import type { ResultadoCruce } from '../../lib/facturitas'
 import type { ResultadoMisComprobantes } from '../../lib/misComprobantes'
 import { mensajeError } from '../../lib/supabase'
@@ -163,7 +164,7 @@ export function FacturarPage() {
               <div className="text-[0.9375rem] text-ink2 tabular">
                 {(['ARS', 'USD'] as Moneda[])
                   .filter((x) => m.total[x] > 0)
-                  .map((x) => formatMonto(m.total[x], x))
+                  .map((x) => verMonto(m.total[x], x))
                   .join(' + ')}{' '}
                 sin facturar
               </div>
@@ -224,10 +225,10 @@ function ItemFactura({ factura, pasoAPaso }: { factura: Factura; pasoAPaso: () =
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[1.0625rem] font-semibold">{nombreCompleto(paciente)}</span>
-          <span className="block text-base font-semibold tabular sm:hidden">{formatMonto(factura.monto, factura.moneda)}</span>
+          <span className="block text-base font-semibold tabular sm:hidden">{verMonto(factura.monto, factura.moneda)}</span>
           <span className="block text-sm text-ink2">{detallePago(factura)}</span>
         </span>
-        <span className="hidden text-[1.0625rem] font-semibold whitespace-nowrap tabular sm:inline">{formatMonto(factura.monto, factura.moneda)}</span>
+        <span className="hidden text-[1.0625rem] font-semibold whitespace-nowrap tabular sm:inline">{verMonto(factura.monto, factura.moneda)}</span>
         <ChevronDown {...IC} className={`shrink-0 text-ink2 transition-transform ${abierto ? 'rotate-180' : ''}`} />
       </button>
 
@@ -386,7 +387,7 @@ function ModoArca({ facturas, inicio, ultimoNumero, salir }: { facturas: Factura
       <Tarjeta className="flex flex-col gap-1 p-[1.375rem]">
         <div className="text-xl font-semibold">{nombreCompleto(factura.paciente)}</div>
         <div className="text-[0.9375rem] text-ink2">
-          {formatMonto(factura.monto, factura.moneda)} · {capitalizar(formatPeriodo(factura.periodo))}
+          {verMonto(factura.monto, factura.moneda)} · {capitalizar(formatPeriodo(factura.periodo))}
           {factura.pagos.length > 1 && ` · ${factura.pagos.length} pagos juntos`}
           {hechas[factura.clave] && ` · ya guardada (${hechas[factura.clave]})`}
         </div>
@@ -610,7 +611,7 @@ function DesdeMisComprobantes({ pendientes }: { pendientes: ParaFacturar[] }) {
                       {c.factura.pagos.length > 1 && ` (${c.factura.pagos.length} pagos)`}
                     </span>
                     <span className="text-ink2 tabular">
-                      {formatMonto(c.factura.monto, c.factura.moneda)} → <span className="whitespace-nowrap">{c.comprobante.numero}</span>
+                      {verMonto(c.factura.monto, c.factura.moneda)} → <span className="whitespace-nowrap">{c.comprobante.numero}</span>
                     </span>
                   </span>
                 </label>
@@ -731,7 +732,7 @@ function ConFacturitas({ visibles, pendientes }: { visibles: ParaFacturar[]; pen
                   {nombreCompleto(c.item.paciente)} · {formatFecha(c.item.pago.fecha)}
                 </span>
                 <span className="text-ink2 tabular">
-                  {formatMonto(c.item.pago.monto, c.item.pago.moneda)} → {c.numero}
+                  {verMonto(c.item.pago.monto, c.item.pago.moneda)} → {c.numero}
                 </span>
               </li>
             ))}

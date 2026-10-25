@@ -6,7 +6,8 @@ import {
   Avatar, Boton, Chip, EstadoError, EstadoVacio, Esqueleto, IC, Pastilla, Tarjeta, Titulo,
 } from '../../components/ui'
 import { nombreCompleto, useDatos } from '../../lib/datos'
-import { formatMonto, normalizar, plural } from '../../lib/formato'
+import { normalizar, plural } from '../../lib/formato'
+import { verMonto } from '../../lib/discreto'
 import { debeAlgo, deudaDe, saldosDe, textoDeuda } from '../../lib/resumen'
 import { tieneAbono } from '../../lib/abono'
 import { tarifaVigente } from '../../lib/saldos'
@@ -132,9 +133,9 @@ export function PacientesPage() {
                       <div className="truncate text-[1.0625rem] font-semibold">{nombre}</div>
                       <div className="mt-[0.1875rem] truncate text-sm text-ink2">
                         {tieneAbono(p)
-                          ? `Abono ${formatMonto(p.abono_mensual ?? 0, p.moneda)}/mes`
+                          ? `Abono ${verMonto(p.abono_mensual ?? 0, p.moneda)}/mes`
                           : tarifa > 0
-                            ? `${formatMonto(tarifa, p.moneda)}${pal.sufijo}`
+                            ? `${verMonto(tarifa, p.moneda)}${pal.sufijo}`
                             : 'Sin tarifa'}
                         {p.tipo_tarifa === 'personalizada' ? ' · personalizada' : ''}
                         {p.frecuencia ? ` · ${p.frecuencia}` : ''}

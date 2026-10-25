@@ -3,7 +3,8 @@ import {
   useCallback, useEffect, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode,
 } from 'react'
 import { CircleAlert, RefreshCw, X, type LucideIcon } from 'lucide-react'
-import { iniciales, partesMonto, type Moneda } from '../lib/formato'
+import { iniciales, type Moneda } from '../lib/formato'
+import { verPartes } from '../lib/discreto'
 
 /** Tamaño y trazo de íconos del diseño. */
 export const IC = { size: '1.25em', strokeWidth: 1.8 } as const
@@ -284,7 +285,7 @@ export function MontoGrande({
   className?: string
   colorDecimales?: string
 }) {
-  const p = partesMonto(useNumeroAnimado(monto), moneda)
+  const p = verPartes(useNumeroAnimado(monto), moneda)
   return (
     <AjustarAncho className={`num ${className}`}>
       {p.entero}

@@ -243,7 +243,7 @@ const INVALIDA: Record<Tabla, readonly (readonly string[])[]> = {
   profiles: [CLAVES.perfil],
 }
 
-type Operacion =
+export type Operacion =
   | { tipo: 'insertar'; tabla: Tabla; filas: Record<string, unknown>[] }
   | { tipo: 'actualizar'; tabla: Tabla; id: string; cambios: Record<string, unknown> }
   | { tipo: 'borrar'; tabla: Tabla; id: string }

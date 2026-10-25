@@ -6,7 +6,8 @@ import { toast } from 'sonner'
 import { DescargarExcel } from '../../components/DescargarExcel'
 import { Alerta, Boton, IC, Spinner, Tarjeta, Titulo } from '../../components/ui'
 import { useDatos } from '../../lib/datos'
-import { capitalizar, formatFecha, formatMonto, plural } from '../../lib/formato'
+import { capitalizar, formatFecha, plural } from '../../lib/formato'
+import { verMonto } from '../../lib/discreto'
 import { leerArchivo, type Celda, type Hoja } from '../../lib/importar/leer'
 import {
   CAMPOS, camposFaltantes, esPlanillaCitas, esPlantilla, mapeoAutomatico, prepararCitas, prepararGenerico, prepararPlantilla,
@@ -401,7 +402,7 @@ function Confirmacion({
     (['ARS', 'USD'] as const)
       .map((m) => [m, lista.filter((x) => x.moneda === m).reduce((t, x) => t + (x.monto ?? (x.tarifa_hora ?? 0) * (x.horas ?? 1)), 0)] as const)
       .filter(([, v]) => v > 0)
-      .map(([m, v]) => formatMonto(v, m))
+      .map(([m, v]) => verMonto(v, m))
       .join(' + ')
 
   const tarjeta = 'rounded-[1.375rem] border border-line bg-surface p-[1.375rem]'

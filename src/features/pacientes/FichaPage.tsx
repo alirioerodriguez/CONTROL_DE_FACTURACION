@@ -9,10 +9,8 @@ import {
 import {
   ETIQUETA_MEDIO, nombreCompleto, useDatos, useGuardar, type Paciente, type Pago, type Sesion,
 } from '../../lib/datos'
-import {
-  capitalizar, etiquetaDia, formatMonto, formatPeriodo, hoyAR, montoParaInput, nombreMes, NOMBRES_DIAS,
-  numeroWhatsApp, periodoDe, plural, sumarMeses,
-} from '../../lib/formato'
+import { capitalizar, etiquetaDia, formatPeriodo, hoyAR, montoParaInput, nombreMes, NOMBRES_DIAS, numeroWhatsApp, periodoDe, plural, sumarMeses } from '../../lib/formato'
+import { verMonto } from '../../lib/discreto'
 import { cobrables, estadoVisible } from '../../lib/estados'
 import { tieneAbono } from '../../lib/abono'
 import { formatCuil, formatDni } from '../../lib/documentos'
@@ -88,9 +86,9 @@ export function FichaPage() {
     {
       k: 'Honorario',
       v: tieneAbono(paciente)
-        ? `Abono · ${formatMonto(paciente.abono_mensual ?? 0, paciente.moneda)} por mes`
+        ? `Abono · ${verMonto(paciente.abono_mensual ?? 0, paciente.moneda)} por mes`
         : tarifa > 0
-          ? `${formatMonto(tarifa, paciente.moneda)}${pal.sufijo} · ${paciente.tipo_tarifa === 'estandar' ? 'estándar' : 'personalizado'}`
+          ? `${verMonto(tarifa, paciente.moneda)}${pal.sufijo} · ${paciente.tipo_tarifa === 'estandar' ? 'estándar' : 'personalizado'}`
           : 'Sin tarifa',
     },
     { k: 'Moneda', v: paciente.moneda === 'ARS' ? 'Pesos (ARS)' : 'Dólares (USD)' },
@@ -158,7 +156,7 @@ export function FichaPage() {
                 <div className="num text-[clamp(2.375rem,5cqi,3.375rem)] tracking-[-0.03em] text-acc-strong">Al día</div>
                 <div className="text-sm text-ink2">
                   {monedasAFavor.length
-                    ? `A favor ${monedasAFavor.map((m) => formatMonto(calculos.aFavor[m], m)).join(' + ')}`
+                    ? `A favor ${monedasAFavor.map((m) => verMonto(calculos.aFavor[m], m)).join(' + ')}`
                     : `No debe ninguna ${pal.sesion}`}
                 </div>
               </>
@@ -248,7 +246,7 @@ function GrupoMes({
   for (const i of items) if (i.pago) cobrado[i.pago.moneda] += i.pago.monto
   const textoCobrado = (['ARS', 'USD'] as const)
     .filter((m) => cobrado[m] > 0)
-    .map((m) => formatMonto(cobrado[m], m))
+    .map((m) => verMonto(cobrado[m], m))
     .join(' + ')
 
   return (
@@ -288,14 +286,14 @@ function GrupoMes({
                   {s.hora ? ` · ${s.hora} h` : ''}
                   {visible === 'ausente' ? ' · ausente (se cobra)' : ''}
                   {conAbono && visible !== 'cancelada' ? ' · parte del abono' : ''}
-                  {pagado > 0 && pagado < s.monto ? ` · abonó ${formatMonto(pagado, s.moneda)}` : ''}
+                  {pagado > 0 && pagado < s.monto ? ` · abonó ${verMonto(pagado, s.moneda)}` : ''}
                 </div>
               </div>
               <div className="flex flex-col items-end gap-1">
                 <div
                   className={`text-base font-semibold whitespace-nowrap tabular ${visible === 'cancelada' ? 'text-ink2 line-through' : visible === 'programada' ? 'text-ink2' : ''}`}
                 >
-                  {formatMonto(s.monto, s.moneda)}
+                  {verMonto(s.monto, s.moneda)}
                 </div>
                 <Chip tono={estado.tono}>{estado.texto}</Chip>
               </div>
@@ -325,7 +323,7 @@ function GrupoMes({
                 {p.nro_factura ? ` · Fact. ${p.nro_factura}` : ''}
               </div>
             </div>
-            <div className="text-base font-semibold whitespace-nowrap text-acc-strong tabular">+ {formatMonto(p.monto, p.moneda)}</div>
+            <div className="text-base font-semibold whitespace-nowrap text-acc-strong tabular">+ {verMonto(p.monto, p.moneda)}</div>
           </button>
         )
       })}
@@ -412,7 +410,7 @@ function GenerarSesiones({ paciente, tarifa, onCerrar }: { paciente: Paciente; t
             </div>
             <span>
               {nuevas.length
-                ? `${plural(nuevas.length, `${pal.sesion} nueva`, `${pal.sesiones} nuevas`)} · ${abono ? `el mes se cobra con el abono de ${formatMonto(paciente.abono_mensual ?? 0, paciente.moneda)}` : `${formatMonto(total, paciente.moneda)} en total`}.`
+                ? `${plural(nuevas.length, `${pal.sesion} nueva`, `${pal.sesiones} nuevas`)} · ${abono ? `el mes se cobra con el abono de ${verMonto(paciente.abono_mensual ?? 0, paciente.moneda)}` : `${verMonto(total, paciente.moneda)} en total`}.`
                 : 'Ya están todas cargadas.'}
               {nuevas.length < fechas.length && nuevas.length > 0 ? ' Las tachadas ya estaban.' : ''}
             </span>

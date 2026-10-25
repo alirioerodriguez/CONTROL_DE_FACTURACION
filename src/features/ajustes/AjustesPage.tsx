@@ -7,9 +7,8 @@ import { FotoUsuario } from '../../components/FotoUsuario'
 import { GuiaInstalar } from '../../components/Instalar'
 import { Boton, Campo, Confirmar, EstadoError, Esqueleto, IC, Segmentado, Tarjeta } from '../../components/ui'
 import { useGuardar, usePacientes, usePerfil } from '../../lib/datos'
-import {
-  completarPlantilla, formatMonto, montoParaInput, parseMontoAR, PLANTILLA_WHATSAPP_DEFECTO, type Moneda,
-} from '../../lib/formato'
+import { completarPlantilla, montoParaInput, parseMontoAR, PLANTILLA_WHATSAPP_DEFECTO, type Moneda } from '../../lib/formato'
+import { verMonto } from '../../lib/discreto'
 import { mensajeError, supabase } from '../../lib/supabase'
 import { cuilValido, dniValido, formatCuil, soloDigitos } from '../../lib/documentos'
 import {
@@ -17,6 +16,7 @@ import {
 } from '../../lib/tema'
 import { useAuth } from '../auth/AuthProvider'
 import { CamposProfesion } from '../tutorial/Bienvenida'
+import { AumentoAjustes } from './AumentoAjustes'
 import { MonotributoAjustes } from './MonotributoAjustes'
 import { CalendarioAjustes } from './CalendarioAjustes'
 import { OpcionesAjustes } from './OpcionesAjustes'
@@ -133,7 +133,7 @@ export function AjustesPage() {
         )
       }
       setTarifaTxt(tarifa ? montoParaInput(tarifa) : '')
-      toast.success(`Ajustes guardados · ${formatMonto(tarifa, moneda)} ${palGuardado.porUnidad}`)
+      toast.success(`Ajustes guardados · ${verMonto(tarifa, moneda)} ${palGuardado.porUnidad}`)
     } catch (e) {
       toast.error(`No se pudo guardar: ${mensajeError(e)}`)
     }
@@ -347,6 +347,8 @@ export function AjustesPage() {
           Guardar cambios
         </Boton>
       </Tarjeta>
+
+      {perfil.data && <AumentoAjustes perfil={perfil.data} pacientes={pacientes} />}
 
       {perfil.data && <MonotributoAjustes perfil={perfil.data} />}
 
