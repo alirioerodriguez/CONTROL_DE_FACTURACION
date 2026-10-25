@@ -21,6 +21,7 @@ import { MonotributoAjustes } from './MonotributoAjustes'
 import { CalendarioAjustes } from './CalendarioAjustes'
 import { OpcionesAjustes } from './OpcionesAjustes'
 import { OtraApp } from './OtraApp'
+import { DondeLaVeo } from './DondeLaVeo'
 import { useTutorial } from '../tutorial/Tutorial'
 import { etiquetaProfesion, palabras, PROFESIONES, type ModoCobro, type Termino } from '../../lib/terminos'
 
@@ -358,6 +359,8 @@ export function AjustesPage() {
       {perfil.data && <CalendarioAjustes perfil={perfil.data} />}
 
       <OtraApp />
+
+      <DondeLaVeo />
 
       <h2 className="m-0 mt-5 px-1 text-sm font-bold tracking-wide text-ink2 uppercase">Apariencia</h2>
       <Tarjeta data-tour="letra" className="flex flex-col gap-[1.125rem] p-[1.375rem]">
