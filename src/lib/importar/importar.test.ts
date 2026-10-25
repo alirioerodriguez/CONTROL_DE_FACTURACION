@@ -3,6 +3,7 @@ import ExcelJS from 'exceljs'
 import { describe, expect, it } from 'vitest'
 import type { Paciente, Pago, Sesion } from '../datos'
 import { armarHoja, leerCsv, leerXlsx, normalizarCelda } from './leer'
+import { aplicarArreglos, claveArreglo } from './arreglos'
 import {
   camposFaltantes, esPlantilla, mapeoAutomatico, parseMedio, parseMoneda, parseSiNo, prepararGenerico,
   prepararPlantilla, type Contexto,
@@ -273,5 +274,43 @@ describe('planilla de una pestaña (Citas)', () => {
     expect(parseHora(new Date(Date.UTC(1899, 11, 30, 14, 15)))).toBe('14:15')
     expect(parseHora('25:00')).toBeNull()
     expect(parseHora('tarde')).toBeNull()
+  })
+})
+
+describe('fechas mezcladas', () => {
+  it('importa las que se entienden, avisa cuáles se interpretaron y deja corregir las que no', () => {
+    const hoja = armarHoja('Hoja1', [
+      ['Paciente', 'Fecha', 'Monto'],
+      ['Ana López', '04/03/2026', '25000'],
+      ['Ana López', '4-mar-26 18:30', '25000'],
+      ['Ana López', '03/14/2026', '25000'],
+      ['Ana López', 'el lunes', '25000'],
+      ['Ana López', '18/03/2026', 'veinte mil'],
+    ])
+    const r = prepararGenerico(hoja, mapeoAutomatico(hoja.encabezados), ctxVacio)
+    expect(r.sesiones.map((s) => s.fecha)).toEqual(['2026-03-04', '2026-03-14'])
+    expect(r.duplicadas).toBe(1) // la segunda es la misma cita que la primera
+    expect(r.correcciones.map((c) => c.fila)).toEqual([3, 4])
+    expect(r.errores.map((e) => [e.fila, e.celda])).toEqual([
+      [5, { columna: 1, tipo: 'fecha' }],
+      [6, { columna: 2, tipo: 'monto' }],
+    ])
+  })
+})
+
+describe('corregir en pantalla', () => {
+  it('lo corregido se importa y el archivo original no cambia', () => {
+    const hoja = armarHoja('Hoja1', [
+      ['Paciente', 'Fecha', 'Monto'],
+      ['Ana López', 'el lunes', 'veinte mil'],
+    ])
+    const mapeo = mapeoAutomatico(hoja.encabezados)
+    expect(prepararGenerico(hoja, mapeo, ctxVacio).errores).toHaveLength(1)
+    const arreglos = { [claveArreglo('Hoja1', 2, 1)]: '2026-03-09', [claveArreglo('Hoja1', 2, 2)]: '20.000' }
+    const [arreglada] = aplicarArreglos([hoja], arreglos)
+    const r = prepararGenerico(arreglada, mapeo, ctxVacio)
+    expect(r.errores).toEqual([])
+    expect(r.sesiones.map((s) => [s.fecha, s.tarifa_hora])).toEqual([['2026-03-09', 20000]])
+    expect(hoja.filas[0].celdas[1]).toBe('el lunes')
   })
 })

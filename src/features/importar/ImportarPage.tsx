@@ -6,12 +6,14 @@ import { toast } from 'sonner'
 import { DescargarExcel } from '../../components/DescargarExcel'
 import { Alerta, Boton, IC, Spinner, Tarjeta, Titulo } from '../../components/ui'
 import { useDatos } from '../../lib/datos'
-import { capitalizar, formatFecha, plural } from '../../lib/formato'
+import { capitalizar, formatFecha, parseFechaAR, plural } from '../../lib/formato'
 import { verMonto } from '../../lib/discreto'
 import { leerArchivo, type Celda, type Hoja } from '../../lib/importar/leer'
+import { aplicarArreglos, claveArreglo, type Arreglos } from '../../lib/importar/arreglos'
 import {
   CAMPOS, camposFaltantes, esPlanillaCitas, esPlantilla, mapeoAutomatico, prepararCitas, prepararGenerico, prepararPlantilla,
   type CampoGenerico, type Mapeo, type Preparado,
+  type Correccion, type ErrorFila,
 } from '../../lib/importar/preparar'
 import { mensajeError, supabase } from '../../lib/supabase'
 import { usePalabras } from '../../components/usePalabras'
@@ -45,6 +47,7 @@ export function ImportarPage() {
   const [error, setError] = useState('')
   const [crearPacientes, setCrearPacientes] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [arreglos, setArreglos] = useState<Arreglos>({})
 
   const contexto = useMemo(
     () => ({
@@ -60,10 +63,11 @@ export function ImportarPage() {
   const hoja = hojas[indiceHoja]
   const preparado: Preparado | null = useMemo(() => {
     if (paso !== 3) return null
-    if (citas) return prepararCitas(hojas, contexto)
-    if (plantilla) return prepararPlantilla(hojas, contexto)
-    return hoja && mapeo ? prepararGenerico(hoja, mapeo, contexto) : null
-  }, [paso, citas, plantilla, hojas, hoja, mapeo, contexto])
+    const usadas = aplicarArreglos(hojas, arreglos)
+    if (citas) return prepararCitas(usadas, contexto)
+    if (plantilla) return prepararPlantilla(usadas, contexto)
+    return usadas[indiceHoja] && mapeo ? prepararGenerico(usadas[indiceHoja], mapeo, contexto) : null
+  }, [paso, citas, plantilla, hojas, indiceHoja, arreglos, mapeo, contexto])
 
   function reiniciar() {
     setPaso(1)
@@ -72,6 +76,7 @@ export function ImportarPage() {
     setMapeo(null)
     setError('')
     setCrearPacientes(false)
+    setArreglos({})
   }
 
   async function procesar(f: File | undefined) {
@@ -84,6 +89,7 @@ export function ImportarPage() {
       if (!conDatos.length) throw new Error(`“${f.name}” está vacío.`)
       setArchivo(f.name)
       setHojas(leidas)
+      setArreglos({})
       if (esPlanillaCitas(leidas)) {
         setCitas(true)
         setPlantilla(false)
@@ -350,6 +356,7 @@ export function ImportarPage() {
           onVolver={() => (formatoApp ? reiniciar() : setPaso(2))}
           onConfirmar={confirmar}
           onCambiar={reiniciar}
+          onArreglar={(hojaNombre, fila, columna, valor) => setArreglos((a) => ({ ...a, [claveArreglo(hojaNombre, fila, columna)]: valor }))}
         />
       )}
       {paso === 1 && <ImportacionesRecientes />}
@@ -384,6 +391,7 @@ function Confirmacion({
   onVolver,
   onConfirmar,
   onCambiar,
+  onArreglar,
 }: {
   archivo: string
   plantilla: boolean
@@ -394,6 +402,7 @@ function Confirmacion({
   onVolver: () => void
   onConfirmar: () => void
   onCambiar: () => void
+  onArreglar: (hoja: string, fila: number, columna: number, valor: string) => void
 }) {
   const pal = usePalabras()
   const total = p.sesiones.length + p.pagos.length + p.pacientes.length
@@ -449,16 +458,29 @@ function Confirmacion({
       {p.errores.length > 0 && (
         <Tarjeta className="px-[1.375rem] pt-2 pb-3">
           <div className="pt-3.5 pb-2 text-lg font-semibold">Filas con errores</div>
-          {p.errores.slice(0, 50).map((e, i) => (
-            <div key={i} className="flex gap-3.5 border-t border-line py-3 text-base">
-              <span className="min-w-[4rem] text-ink2">
-                {plantilla ? `${e.hoja} ` : ''}Fila {e.fila}
-              </span>
-              <span>{e.mensaje}</span>
-            </div>
+          {p.errores.some((e) => e.celda) && (
+            <div className="pb-1 text-[0.9375rem] text-ink2">Podés corregir la fecha o el monto acá mismo; tu archivo no cambia.</div>
+          )}
+          {p.errores.slice(0, 50).map((e) => (
+            <FilaArreglable key={`${e.hoja}|${e.fila}|${e.mensaje}`} etiqueta={`${plantilla ? `${e.hoja} ` : ''}Fila ${e.fila}`} texto={e.mensaje} error={e} onArreglar={onArreglar} />
           ))}
           {p.errores.length > 50 && (
             <div className="border-t border-line py-3 text-[0.9375rem] text-ink2">Y {p.errores.length - 50} más.</div>
+          )}
+        </Tarjeta>
+      )}
+
+      {p.correcciones.length > 0 && (
+        <Tarjeta className="px-[1.375rem] pt-2 pb-3">
+          <div className="pt-3.5 pb-1 text-lg font-semibold">
+            {plural(p.correcciones.length, 'fecha interpretada', 'fechas interpretadas')}: revisalas
+          </div>
+          <div className="pb-1 text-[0.9375rem] text-ink2">No venían como dd/mm/aaaa. Si alguna quedó mal, cambiala acá.</div>
+          {p.correcciones.slice(0, 50).map((c) => (
+            <FilaArreglable key={`${c.hoja}|${c.fila}`} etiqueta={`${plantilla ? `${c.hoja} ` : ''}Fila ${c.fila}`} texto={c.nota} correccion={c} onArreglar={onArreglar} />
+          ))}
+          {p.correcciones.length > 50 && (
+            <div className="border-t border-line py-3 text-[0.9375rem] text-ink2">Y {p.correcciones.length - 50} más.</div>
           )}
         </Tarjeta>
       )}
@@ -511,6 +533,66 @@ function Confirmacion({
       </div>
       {faltaConfirmarPacientes && total > 0 && (
         <div className="-mt-2 text-right text-sm text-ink2">Marcá la casilla para crear los pacientes nuevos.</div>
+      )}
+    </div>
+  )
+}
+
+/** Una fila con error (o una fecha interpretada) que se puede corregir escribiendo el valor bien. */
+function FilaArreglable({
+  etiqueta,
+  texto,
+  error,
+  correccion,
+  onArreglar,
+}: {
+  etiqueta: string
+  texto: string
+  error?: ErrorFila
+  correccion?: Correccion
+  onArreglar: (hoja: string, fila: number, columna: number, valor: string) => void
+}) {
+  const [abierta, setAbierta] = useState(false)
+  const [valor, setValor] = useState('')
+  const destino = error?.celda ? { ...error.celda, hoja: error.hoja, fila: error.fila } : correccion ? { tipo: 'fecha' as const, columna: correccion.columna, hoja: correccion.hoja, fila: correccion.fila } : null
+  return (
+    <div className="flex flex-col gap-2 border-t border-line py-3 text-base">
+      <div className="flex gap-3.5">
+        <span className="min-w-[4rem] text-ink2">{etiqueta}</span>
+        <span className="min-w-0 flex-1">{texto}</span>
+        {destino && !abierta && (
+          <button type="button" onClick={() => setAbierta(true)} className="presionable shrink-0 font-semibold text-acc-strong">
+            {error ? 'Corregir' : 'Cambiar'}
+          </button>
+        )}
+      </div>
+      {destino && abierta && (
+        <form
+          className="flex gap-2"
+          onSubmit={(ev) => {
+            ev.preventDefault()
+            if (!valor.trim()) return
+            // Lo que se escribe acá es dd/mm/aaaa: se guarda como AAAA-MM-DD para que no lo dé vuelta el orden de la columna.
+            onArreglar(destino.hoja, destino.fila, destino.columna, destino.tipo === 'fecha' ? (parseFechaAR(valor) ?? valor) : valor)
+            setAbierta(false)
+          }}
+        >
+          <input
+            autoFocus
+            value={valor}
+            onChange={(ev) => setValor(ev.target.value)}
+            inputMode={destino.tipo === 'monto' ? 'decimal' : 'text'}
+            placeholder={destino.tipo === 'monto' ? 'Ej.: 25.000' : 'dd/mm/aaaa'}
+            aria-label={destino.tipo === 'monto' ? 'Monto correcto' : 'Fecha correcta'}
+            className="h-11 min-w-0 flex-1 rounded-xl border border-line bg-fondo px-3 text-base outline-none focus:border-acc"
+          />
+          <Boton type="submit" alto="h-11">
+            Listo
+          </Boton>
+          <Boton variante="suave" alto="h-11" onClick={() => setAbierta(false)}>
+            Cancelar
+          </Boton>
+        </form>
       )}
     </div>
   )

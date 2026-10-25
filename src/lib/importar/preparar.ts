@@ -2,6 +2,7 @@
 import { nombreCompleto, type Comprobante, type Medio, type Paciente, type Pago, type Sesion } from '../datos'
 import { hoyAR, normalizar, parseFechaAR, parseMontoAR, periodoDe, redondear2, type Moneda } from '../formato'
 import type { Celda, Hoja } from './leer'
+import { leerFecha, pistaColumna } from './fechas'
 import { normalizarDocumentos } from '../documentos'
 import { tarifaVigente } from '../saldos'
 
@@ -60,6 +61,16 @@ export interface ErrorFila {
   hoja: string
   fila: number
   mensaje: string
+  /** Si el error es de una celda que se puede corregir en pantalla: cuál y de qué tipo. */
+  celda?: { columna: number; tipo: 'fecha' | 'monto' }
+}
+
+/** Fecha que no venía en dd/mm/aaaa y se interpretó: se muestra para revisarla antes de importar. */
+export interface Correccion {
+  hoja: string
+  fila: number
+  columna: number
+  nota: string
 }
 
 export interface Preparado {
@@ -67,6 +78,7 @@ export interface Preparado {
   sesiones: SesionNueva[]
   pagos: PagoNuevo[]
   errores: ErrorFila[]
+  correcciones: Correccion[]
   /** Filas que ya estaban cargadas (mismo paciente, fecha y monto): no se vuelven a insertar. */
   duplicadas: number
   /** Pacientes de la planilla que ya existían en la app. */
@@ -79,6 +91,16 @@ export interface Contexto {
   pagos: Pago[]
   monedaDefecto: Moneda
   tarifaEstandar: number
+}
+
+/** Lee las fechas de una columna con su pista (orden día/mes y año) y anota las que tuvo que interpretar. */
+function lectorFechas(hoja: Hoja, columna: number, res: Preparado) {
+  const pista = pistaColumna(hoja, columna, hoyAR())
+  return (valor: Celda, fila: number): string | null => {
+    const r = leerFecha(valor, pista)
+    if (r.iso && r.nota) res.correcciones.push({ hoja: hoja.nombre, fila, columna, nota: r.nota })
+    return r.iso
+  }
 }
 
 // ---------------------------------------------------------------------
@@ -200,17 +222,18 @@ export function camposFaltantes(mapeo: Mapeo): string[] {
 }
 
 export function prepararGenerico(hoja: Hoja, mapeo: Mapeo, ctx: Contexto): Preparado {
-  const res: Preparado = { pacientes: [], sesiones: [], pagos: [], errores: [], duplicadas: 0, pacientesExistentes: 0 }
+  const res: Preparado = { pacientes: [], sesiones: [], pagos: [], errores: [], correcciones: [], duplicadas: 0, pacientesExistentes: 0 }
   const idx = indicePacientes(ctx.pacientes)
   const ya = clavesExistentes(ctx)
   const enArchivo = new Set<string>()
   const nuevos = new Map<string, PacienteNuevo>()
   const existentesUsados = new Set<string>()
   const celda = (celdas: Celda[], k: CampoGenerico) => (mapeo[k] == null ? null : celdas[mapeo[k]!])
+  const leer = lectorFechas(hoja, mapeo.fecha ?? -1, res)
 
   for (const { numero, celdas } of hoja.filas) {
     if (esFilaEjemplo(celdas)) continue
-    const error = (mensaje: string) => res.errores.push({ hoja: hoja.nombre, fila: numero, mensaje })
+    const error = (mensaje: string, c?: ErrorFila['celda']) => res.errores.push({ hoja: hoja.nombre, fila: numero, mensaje, celda: c })
 
     const nombre = texto(celda(celdas, 'paciente'))?.replace(/\s+/g, ' ')
     if (!nombre) {
@@ -218,19 +241,19 @@ export function prepararGenerico(hoja: Hoja, mapeo: Mapeo, ctx: Contexto): Prepa
       continue
     }
     const crudaFecha = celda(celdas, 'fecha')
-    const fecha = parseFechaAR(crudaFecha)
+    const fecha = leer(crudaFecha, numero)
     if (!fecha) {
-      error(crudaFecha == null ? 'Fecha vacía' : `Fecha inválida: “${texto(crudaFecha)}”`)
+      error(crudaFecha == null ? 'Fecha vacía' : `Fecha inválida: “${texto(crudaFecha)}”`, mapeo.fecha == null ? undefined : { columna: mapeo.fecha, tipo: 'fecha' })
       continue
     }
     const crudoMonto = celda(celdas, 'monto')
     const monto = parseMontoAR(crudoMonto)
     if (crudoMonto == null) {
-      error('Monto vacío')
+      error('Monto vacío', mapeo.monto == null ? undefined : { columna: mapeo.monto, tipo: 'monto' })
       continue
     }
     if (monto == null || monto <= 0) {
-      error(`Monto inválido: “${texto(crudoMonto)}”`)
+      error(`Monto inválido: “${texto(crudoMonto)}”`, { columna: mapeo.monto!, tipo: 'monto' })
       continue
     }
     const moneda = parseMoneda(celda(celdas, 'moneda'), ctx.monedaDefecto)
@@ -333,7 +356,7 @@ function separarDocumento(valor: string | null): { dni: string | null; cuil_cuit
 }
 
 export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
-  const res: Preparado = { pacientes: [], sesiones: [], pagos: [], errores: [], duplicadas: 0, pacientesExistentes: 0 }
+  const res: Preparado = { pacientes: [], sesiones: [], pagos: [], errores: [], correcciones: [], duplicadas: 0, pacientesExistentes: 0 }
   const idx = indicePacientes(ctx.pacientes)
   const ya = clavesExistentes(ctx)
   const porCodigo = new Map<string, RefPaciente>()
@@ -446,15 +469,16 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
       obs: columna(hs, 'Observaciones'),
       estado: columna(hs, 'Estado'),
     }
+    const leer = lectorFechas(hs, c.fecha, res)
     for (const { numero, celdas } of hs.filas) {
       if (esFilaEjemplo(celdas)) continue
       const v = (i: number) => (i >= 0 ? celdas[i] : null)
       if (v(c.fecha) == null && v(c.paciente) == null && v(c.monto) == null) continue
       const ref = pacienteDe(hs, numero, texto(v(c.paciente)))
       if (!ref) continue
-      const fecha = parseFechaAR(v(c.fecha))
+      const fecha = leer(v(c.fecha), numero)
       if (!fecha) {
-        res.errores.push({ hoja: hs.nombre, fila: numero, mensaje: v(c.fecha) == null ? 'Fecha vacía' : `Fecha inválida: “${texto(v(c.fecha))}”` })
+        res.errores.push({ hoja: hs.nombre, fila: numero, mensaje: v(c.fecha) == null ? 'Fecha vacía' : `Fecha inválida: “${texto(v(c.fecha))}”`, celda: c.fecha >= 0 ? { columna: c.fecha, tipo: 'fecha' } : undefined })
         continue
       }
       const monto = parseMontoAR(v(c.monto))
@@ -508,6 +532,7 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
       sesion: columna(hg, 'ID sesión (opcional)', 'ID sesión'),
       obs: columna(hg, 'Observaciones'),
     }
+    const leer = lectorFechas(hg, c.fecha, res)
     for (const { numero, celdas } of hg.filas) {
       if (esFilaEjemplo(celdas)) continue
       const v = (i: number) => (i >= 0 ? celdas[i] : null)
@@ -515,14 +540,14 @@ export function prepararPlantilla(hojas: Hoja[], ctx: Contexto): Preparado {
       if (v(c.fecha) == null && v(c.paciente) == null && v(c.monto) == null) continue
       const ref = pacienteDe(hg, numero, texto(v(c.paciente)))
       if (!ref) continue
-      const fecha = parseFechaAR(v(c.fecha))
+      const fecha = leer(v(c.fecha), numero)
       if (!fecha) {
-        res.errores.push({ hoja: hg.nombre, fila: numero, mensaje: v(c.fecha) == null ? 'Fecha de pago vacía' : `Fecha inválida: “${texto(v(c.fecha))}”` })
+        res.errores.push({ hoja: hg.nombre, fila: numero, mensaje: v(c.fecha) == null ? 'Fecha de pago vacía' : `Fecha inválida: “${texto(v(c.fecha))}”`, celda: c.fecha >= 0 ? { columna: c.fecha, tipo: 'fecha' } : undefined })
         continue
       }
       const monto = parseMontoAR(v(c.monto))
       if (monto == null || monto <= 0) {
-        res.errores.push({ hoja: hg.nombre, fila: numero, mensaje: v(c.monto) == null ? 'Monto vacío' : `Monto inválido: “${texto(v(c.monto))}”` })
+        res.errores.push({ hoja: hg.nombre, fila: numero, mensaje: v(c.monto) == null ? 'Monto vacío' : `Monto inválido: “${texto(v(c.monto))}”`, celda: c.monto >= 0 ? { columna: c.monto, tipo: 'monto' } : undefined })
         continue
       }
       const moneda = parseMoneda(v(c.moneda), ctx.monedaDefecto)
@@ -607,7 +632,7 @@ export function esPlanillaCitas(hojas: Hoja[]): boolean {
 }
 
 export function prepararCitas(hojas: Hoja[], ctx: Contexto): Preparado {
-  const res: Preparado = { pacientes: [], sesiones: [], pagos: [], errores: [], duplicadas: 0, pacientesExistentes: 0 }
+  const res: Preparado = { pacientes: [], sesiones: [], pagos: [], errores: [], correcciones: [], duplicadas: 0, pacientesExistentes: 0 }
   const h = hojaLlamada(hojas, 'Citas')
   if (!h) return res
   const idx = indicePacientes(ctx.pacientes)
@@ -630,6 +655,7 @@ export function prepararCitas(hojas: Hoja[], ctx: Contexto): Preparado {
   const nuevos = new Map<string, PacienteNuevo>()
   const vistos = new Set<string>()
   const enArchivo = { sesiones: new Set<string>(), pagos: new Set<string>() }
+  const leer = lectorFechas(h, c.fecha, res)
 
   for (const { numero, celdas } of h.filas) {
     if (esFilaEjemplo(celdas)) continue
@@ -687,9 +713,9 @@ export function prepararCitas(hojas: Hoja[], ctx: Contexto): Preparado {
 
     // Cita (si tiene fecha). Sin monto, se usa el honorario del paciente o la tarifa estándar.
     if (v(c.fecha) == null) continue
-    const fecha = parseFechaAR(v(c.fecha))
+    const fecha = leer(v(c.fecha), numero)
     if (!fecha) {
-      res.errores.push({ hoja: h.nombre, fila: numero, mensaje: `Fecha inválida: “${texto(v(c.fecha))}”` })
+      res.errores.push({ hoja: h.nombre, fila: numero, mensaje: `Fecha inválida: “${texto(v(c.fecha))}”`, celda: { columna: c.fecha, tipo: 'fecha' } })
       continue
     }
     const hora = v(c.hora) == null ? null : parseHora(v(c.hora))
@@ -710,6 +736,7 @@ export function prepararCitas(hojas: Hoja[], ctx: Contexto): Preparado {
         hoja: h.nombre,
         fila: numero,
         mensaje: v(c.monto) == null ? 'Falta el monto (o cargá tu tarifa estándar en Ajustes)' : `Monto inválido: “${texto(v(c.monto))}”`,
+        celda: c.monto >= 0 ? { columna: c.monto, tipo: 'monto' } : undefined,
       })
       continue
     }
