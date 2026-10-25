@@ -1,0 +1,64 @@
+# Copia de seguridad diaria de la base de datos, sin el plan Pro de Supabase.
+# Vuelca el esquema public (pacientes, sesiones, pagos, perfiles…), lo comprime y lo cifra con age
+# usando la clave PÚBLICA de Alirio: solo quien tiene la clave privada puede abrirlo.
+# Se guarda 30 días como artefacto del workflow. Cómo configurarlo y restaurarlo: docs/respaldo-automatico.md
+name: Respaldo diario
+
+on:
+  schedule:
+    - cron: '0 7 * * *' # 04:00 de Argentina
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  respaldo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # Mientras no estén configurados, la corrida diaria se saltea sin dar error; la manual sí avisa.
+      - name: Revisar que estén los secretos
+        id: secretos
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          AGE_PUBLIC_KEY: ${{ secrets.AGE_PUBLIC_KEY }}
+        run: |
+          if [ -n "$SUPABASE_DB_URL" ] && [ -n "$AGE_PUBLIC_KEY" ]; then echo "listo=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "::error::Faltan los secretos SUPABASE_DB_URL o AGE_PUBLIC_KEY (ver docs/respaldo-automatico.md)."
+            exit 1
+          fi
+          echo "::notice::Respaldo sin configurar todavía (faltan los secretos). Se saltea."
+
+      # pg_dump tiene que ser de la misma versión que el servidor o más nueva: se instala la 17 del repositorio oficial.
+      - name: Instalar pg_dump 17 y age
+        if: steps.secretos.outputs.listo == '1'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common age
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Volcar, comprimir y cifrar
+        if: steps.secretos.outputs.listo == '1'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          AGE_PUBLIC_KEY: ${{ secrets.AGE_PUBLIC_KEY }}
+        run: |
+          set -o pipefail
+          ARCHIVO="honorapp-$(date -u +%Y-%m-%d).sql.gz.age"
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" --schema=public --no-owner --no-privileges \
+            | gzip -9 | age -r "$AGE_PUBLIC_KEY" -o "$ARCHIVO"
+          test -s "$ARCHIVO"
+          echo "ARCHIVO=$ARCHIVO" >> "$GITHUB_ENV"
+          ls -la "$ARCHIVO"
+
+      - name: Guardar el respaldo cifrado (30 días)
+        if: steps.secretos.outputs.listo == '1'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARCHIVO }}
+          path: ${{ env.ARCHIVO }}
+          retention-days: 30
+          if-no-files-found: error
