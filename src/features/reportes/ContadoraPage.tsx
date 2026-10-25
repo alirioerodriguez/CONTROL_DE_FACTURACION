@@ -140,7 +140,7 @@ export function ContadoraPage() {
                 setIniciales(e.target.checked)
                 guardarPreferencia('exportar-iniciales', e.target.checked ? 'si' : 'no')
               }}
-              className="size-5 accent-[var(--acc)]"
+              role="switch" className="interruptor"
             />
             Usar iniciales en lugar de los nombres de los pacientes
           </label>
@@ -461,7 +461,7 @@ function ElegirPacientes({
                 type="checkbox"
                 checked={!excluidos.has(p.id)}
                 onChange={() => alternar(p.id)}
-                className="size-5 shrink-0 accent-[var(--acc)]"
+                role="switch" className="interruptor shrink-0"
               />
               {nombreCompleto(p)}
             </label>

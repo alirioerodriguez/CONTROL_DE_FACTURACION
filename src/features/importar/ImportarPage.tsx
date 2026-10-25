@@ -491,7 +491,7 @@ function Confirmacion({
             type="checkbox"
             checked={crearPacientes}
             onChange={(e) => setCrearPacientes(e.target.checked)}
-            className="mt-1 size-5 shrink-0 accent-[var(--acc)]"
+            role="switch" className="interruptor mt-0.5 shrink-0"
           />
           <span>
             Crear {plural(p.pacientes.length, 'paciente nuevo', 'pacientes nuevos')}:{' '}

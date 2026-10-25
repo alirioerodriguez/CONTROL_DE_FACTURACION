@@ -603,7 +603,7 @@ function DesdeMisComprobantes({ pendientes }: { pendientes: ParaFacturar[] }) {
                     type="checkbox"
                     checked={!quitadas.has(c.factura.clave)}
                     onChange={() => alternar(c.factura.clave)}
-                    className="mt-0.5 size-5 shrink-0 accent-[var(--acc)]"
+                    role="switch" className="interruptor shrink-0"
                   />
                   <span className="flex min-w-0 flex-1 flex-wrap justify-between gap-x-3">
                     <span>

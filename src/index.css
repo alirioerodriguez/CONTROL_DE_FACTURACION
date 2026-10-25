@@ -315,3 +315,48 @@ html[data-colores='daltonismo'][data-theme='dark'] {
     transform: none !important;
   }
 }
+
+/* Casillas como interruptor (estilo iPhone). Siguen siendo checkbox: teclado y lector de pantalla igual. */
+.interruptor {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: none;
+  width: 3rem;
+  height: 1.75rem;
+  margin: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--ink2) 28%, transparent);
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.interruptor::after {
+  content: '';
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.25);
+  transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.2, 1);
+}
+.interruptor:checked {
+  background: var(--acc);
+  border-color: transparent;
+}
+.interruptor:checked::after {
+  transform: translateX(1.25rem);
+}
+.interruptor:focus-visible {
+  outline: 3px solid var(--acc);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .interruptor,
+  .interruptor::after {
+    transition: none;
+  }
+}

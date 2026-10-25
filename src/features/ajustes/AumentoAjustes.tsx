@@ -75,7 +75,7 @@ export function AumentoAjustes({ perfil, pacientes }: { perfil: Perfil; paciente
 
   const casilla = (clave: keyof QueSube, texto: string) => (
     <label className="flex cursor-pointer items-center gap-2.5 text-base">
-      <input type="checkbox" checked={que[clave]} onChange={(e) => setQue({ ...que, [clave]: e.target.checked })} className="size-5 accent-[var(--acc)]" />
+      <input type="checkbox" checked={que[clave]} onChange={(e) => setQue({ ...que, [clave]: e.target.checked })} role="switch" className="interruptor" />
       {texto}
     </label>
   )
