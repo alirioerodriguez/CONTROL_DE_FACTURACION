@@ -125,4 +125,11 @@ describe('ticketDeImputacion', () => {
       expect(t.aFavor).toBe(Math.max(0, -d.saldo))
     }
   })
+  it('con «ocultar montos» las frases usan el formateador que se le pasa y no muestran la plata', () => {
+    const tapado = (_n: number, m: 'ARS' | 'USD') => `${m === 'USD' ? 'US$' : '$'} •••••`
+    const t = ticketDeImputacion(trimestre, [], pago('2026-03-01', 100000), tapado)
+    expect(t.frases.join(' ')).not.toMatch(/\d{2}\.\d{3}/)
+    expect(t.frases[0]).toBe('Pago de $ ••••• para marzo 2026.')
+    expect(t.aFavor).toBe(10000) // los números siguen siendo los reales
+  })
 })

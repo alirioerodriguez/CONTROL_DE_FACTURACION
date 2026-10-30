@@ -47,8 +47,14 @@ function resumenMeses(sesiones: SesionSaldo[], pagos: PagoSaldo[], moneda: Moned
 /**
  * Qué pasó con `pago` (de la moneda `pago.moneda`) al sumarlo a `pagosPrevios`.
  * `sesiones`: las que cuentan para el saldo (las cobrables); `pagosPrevios`: los pagos ya cargados, sin este.
+ * `ver`: cómo se escriben los montos en las frases (en pantalla se puede tapar con «ocultar montos»).
  */
-export function ticketDeImputacion(sesiones: SesionSaldo[], pagosPrevios: PagoSaldo[], pago: PagoSaldo): TicketImputacion {
+export function ticketDeImputacion(
+  sesiones: SesionSaldo[],
+  pagosPrevios: PagoSaldo[],
+  pago: PagoSaldo,
+  ver: (monto: number, moneda: Moneda) => string = formatMonto,
+): TicketImputacion {
   const { moneda, periodo } = pago
   const antes = resumenMeses(sesiones, pagosPrevios, moneda)
   const despues = resumenMeses(sesiones, [...pagosPrevios, pago], moneda)
@@ -70,7 +76,7 @@ export function ticketDeImputacion(sesiones: SesionSaldo[], pagosPrevios: PagoSa
   const debiaAntes = Math.max(0, antes.saldo)
   const debeDespues = Math.max(0, despues.saldo)
 
-  const f = (n: number) => formatMonto(n, moneda)
+  const f = (n: number) => ver(n, moneda)
   const frases: string[] = [`Pago de ${f(pago.monto)} para ${formatPeriodo(periodo)}.`]
   for (const p of pasos) {
     const mes = formatPeriodo(p.periodo)

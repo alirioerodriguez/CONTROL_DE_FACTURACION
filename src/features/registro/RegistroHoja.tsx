@@ -19,6 +19,7 @@ import { mensajeError } from '../../lib/supabase'
 import { guardarPreferencia, preferencia } from '../../lib/tema'
 import { usePalabras } from '../../components/usePalabras'
 import { opcionesHoras } from './opciones'
+import { TicketPago } from './TicketPago'
 import type { Apertura } from './RegistroContext'
 
 const MEDIOS: Opcion<Medio>[] = (['efectivo', 'transferencia', 'mercadopago', 'otro'] as const).map((v) => ({
@@ -483,6 +484,10 @@ export function RegistroHoja({
             placeholder="C 0002-00000123"
           />
         </>
+      )}
+
+      {!esSesion && pid && (
+        <TicketPago pacienteId={pid} sesiones={sesiones} pagos={pagos} monto={monto} moneda={moneda} periodo={periodo} ignorarPagoId={edPago?.id} />
       )}
 
       {error && <Alerta>{error}</Alerta>}
