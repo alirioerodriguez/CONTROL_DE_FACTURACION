@@ -194,6 +194,77 @@ begin
   if (select count(*) from public.patients) <> 0 then raise exception 'B ve pacientes de A'; end if;
 end $$;
 
+-- ===================== Modo Estudio Contable =====================
+-- A (profesional, con doble factor) le da acceso a B (contadora). B solo ve lo de A por las funciones estudio_*.
+set local request.jwt.claims = '{"sub": "00000000-0000-4000-a000-00000000000a", "role": "authenticated", "aal": "aal2"}';
+insert into public.estudio_vinculos (solo_iniciales) values (false);
+do $$
+begin
+  begin
+    update public.estudio_vinculos set contadora_id = '00000000-0000-4000-a000-00000000000b';
+    raise exception 'FALLA: la profesional pudo elegir a la contadora sin que acepte';
+  exception when others then
+    if sqlerrm like 'FALLA:%' then raise; end if;
+  end;
+  begin
+    perform public.estudio_aceptar((select token from public.estudio_vinculos limit 1));
+    raise exception 'FALLA: la profesional aceptó su propio link';
+  exception when others then
+    if sqlerrm like 'FALLA:%' then raise; end if;
+  end;
+end $$;
+reset role;
+select set_config('prueba.token', (select token::text from public.estudio_vinculos limit 1), true);
+set local role authenticated;
+
+set local request.jwt.claims = '{"sub": "00000000-0000-4000-a000-00000000000b", "role": "authenticated", "aal": "aal1"}';
+do $$
+declare d jsonb;
+begin
+  if (select count(*) from public.estudio_vinculos) <> 0 then raise exception 'B ve vínculos ajenos antes de aceptar'; end if;
+  if (select count(*) from public.estudio_clientes()) <> 0 then raise exception 'B ve clientas sin aceptar'; end if;
+  begin
+    perform public.estudio_datos('00000000-0000-4000-a000-00000000000a');
+    raise exception 'FALLA: B leyó datos de A sin vínculo';
+  exception when others then
+    if sqlerrm like 'FALLA:%' then raise; end if;
+  end;
+
+  perform public.estudio_aceptar(current_setting('prueba.token')::uuid);
+  if (select count(*) from public.estudio_clientes()) <> 1 then raise exception 'B no ve a su clienta después de aceptar'; end if;
+  d := public.estudio_datos('00000000-0000-4000-a000-00000000000a');
+  if jsonb_array_length(d->'pacientes') <> 1 or d->'pacientes'->0->>'nombre' <> 'Paciente de A' then raise exception 'B no recibe los pacientes de A'; end if;
+  if jsonb_array_length(d->'pagos') <> 1 then raise exception 'B no recibe los pagos de A'; end if;
+  if (d->'pacientes'->0) ? 'telefono' or (d->'pagos'->0) ? 'observaciones' then raise exception 'B recibe datos de más'; end if;
+  -- Igual no puede leer ni tocar las tablas de A directamente.
+  if (select count(*) from public.patients) <> 0 or (select count(*) from public.payments) <> 0 then raise exception 'B lee tablas de A'; end if;
+  begin
+    perform public.estudio_aceptar(current_setting('prueba.token')::uuid);
+    raise exception 'FALLA: el link se pudo usar dos veces';
+  exception when others then
+    if sqlerrm like 'FALLA:%' then raise; end if;
+  end;
+end $$;
+
+-- A elige «solo iniciales»: B deja de ver nombres, DNI y CUIT.
+set local request.jwt.claims = '{"sub": "00000000-0000-4000-a000-00000000000a", "role": "authenticated", "aal": "aal2"}';
+update public.estudio_vinculos set solo_iniciales = true;
+set local request.jwt.claims = '{"sub": "00000000-0000-4000-a000-00000000000b", "role": "authenticated", "aal": "aal1"}';
+do $$
+declare d jsonb;
+begin
+  d := public.estudio_datos('00000000-0000-4000-a000-00000000000a');
+  if d->'pacientes'->0->>'nombre' <> 'P.' then raise exception 'Con solo iniciales, B ve el nombre del paciente'; end if;
+  -- La contadora se va: pierde el acceso.
+  delete from public.estudio_vinculos;
+  begin
+    perform public.estudio_datos('00000000-0000-4000-a000-00000000000a');
+    raise exception 'FALLA: B sigue leyendo después de irse';
+  exception when others then
+    if sqlerrm like 'FALLA:%' then raise; end if;
+  end;
+end $$;
+
 rollback;
 
 select 'Aislamiento OK' as resultado;

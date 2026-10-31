@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { Spinner } from './components/ui'
 import { AjustesPage } from './features/ajustes/AjustesPage'
@@ -21,6 +21,9 @@ import { PruebasPage } from './features/pruebas/PruebasPage'
 import { PortadaPage } from './features/portada/PortadaPage'
 import { errorDeRedireccion } from './features/auth/AuthLayout'
 import { supabaseConfigurado } from './lib/supabase'
+import { AuthLayout } from './features/auth/AuthLayout'
+import { EstudioPage } from './features/estudio/EstudioPage'
+import { guardarInvitacion, invitacionPendiente } from './lib/estudio'
 
 const ImportarPage = lazy(() => import('./features/importar/ImportarPage').then((m) => ({ default: m.ImportarPage })))
 const MesPage = lazy(() => import('./features/reportes/MesPage').then((m) => ({ default: m.MesPage })))
@@ -58,6 +61,7 @@ export default function App() {
   if (!session) {
     return (
       <Routes>
+        <Route path="/estudio" element={<EstudioIngreso />} />
         <Route path="/registro" element={<RegistroPage />} />
         <Route path="/recuperar" element={<RecuperarPage />} />
         <Route path="/ingresar" element={<LoginPage />} />
@@ -67,6 +71,10 @@ export default function App() {
       </Routes>
     )
   }
+
+  // Modo Estudio Contable: el panel de la contadora va aparte, sin el menú de la profesional.
+  if (pathname === '/estudio') return <EstudioPage />
+  if (invitacionPendiente()) return <Navigate to="/estudio" replace />
 
   return (
     <RegistroProvider>
@@ -93,6 +101,27 @@ export default function App() {
       </PruebaProvider>
       </TutorialProvider>
     </RegistroProvider>
+  )
+}
+
+/** La contadora abrió el link de invitación sin haber ingresado: se guarda y se le pide entrar o crear su cuenta. */
+function EstudioIngreso() {
+  const token = new URLSearchParams(window.location.search).get('invitacion')
+  if (token) guardarInvitacion(token)
+  return (
+    <AuthLayout titulo="Te dieron acceso a sus cobros" sub="Una profesional que usa honorapp te comparte sus cobros para que bajes el reporte cuando lo necesites.">
+      <p className="text-[1.0625rem] leading-normal text-ink2">
+        Es gratis y solo para ver: no podés cambiar nada. Entrá con tu cuenta o creá una (alcanza con tu mail) y queda listo.
+      </p>
+      <div className="flex flex-col gap-2.5">
+        <Link to="/ingresar" className="flex h-[3.25rem] items-center justify-center rounded-full bg-acc font-semibold text-on-acc">
+          Ya tengo cuenta: ingresar
+        </Link>
+        <Link to="/registro" className="flex h-[3.25rem] items-center justify-center rounded-full border border-line font-semibold">
+          Crear mi cuenta
+        </Link>
+      </div>
+    </AuthLayout>
   )
 }
 

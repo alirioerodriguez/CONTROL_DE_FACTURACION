@@ -871,6 +871,155 @@ begin
   end loop;
 end $$;
 
+-- ---------------------------------------------------------------------------
+-- Modo Estudio Contable: la profesional le da a su contadora acceso de SOLO LECTURA a lo que va en el
+-- reporte para contadora (cobros, pacientes con sus datos de facturación y sus datos fiscales).
+-- 1. La profesional crea un vínculo y le manda el link /estudio?invitacion=<token>.
+-- 2. La contadora entra con su cuenta y lo acepta (estudio_aceptar): el token se cambia, así el link
+--    sirve una sola vez.
+-- 3. La contadora ve sus clientas con estudio_clientes() y baja los datos con estudio_datos().
+-- La profesional puede quitar el acceso cuando quiera (borra el vínculo); la contadora también puede irse.
+-- La contadora nunca lee las tablas directo: solo por estas funciones, que devuelven lo justo.
+-- ---------------------------------------------------------------------------
+create table if not exists public.estudio_vinculos (
+  id              uuid primary key default gen_random_uuid(),
+  user_id         uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  token           uuid not null unique default gen_random_uuid(),
+  contadora_id    uuid references auth.users (id) on delete cascade,
+  contadora_email text,
+  -- true: la contadora ve iniciales en vez del nombre de cada paciente, sin DNI ni CUIT.
+  solo_iniciales  boolean not null default false,
+  created_at      timestamptz not null default now(),
+  aceptado_at     timestamptz,
+  constraint estudio_vinculos_otra_persona check (contadora_id is null or contadora_id <> user_id)
+);
+create index if not exists estudio_vinculos_user_idx on public.estudio_vinculos (user_id);
+create index if not exists estudio_vinculos_contadora_idx on public.estudio_vinculos (contadora_id);
+drop trigger if exists estudio_vinculos_user_id_inmutable on public.estudio_vinculos;
+create trigger estudio_vinculos_user_id_inmutable before update of user_id on public.estudio_vinculos
+  for each row execute function public.user_id_inmutable();
+create unique index if not exists estudio_vinculos_par_idx on public.estudio_vinculos (user_id, contadora_id)
+  where contadora_id is not null;
+
+alter table public.estudio_vinculos enable row level security;
+drop policy if exists "vinculos de la profesional" on public.estudio_vinculos;
+create policy "vinculos de la profesional" on public.estudio_vinculos
+  for all to authenticated
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+drop policy if exists "vinculos de la contadora" on public.estudio_vinculos;
+create policy "vinculos de la contadora" on public.estudio_vinculos
+  for select to authenticated using (contadora_id = (select auth.uid()));
+drop policy if exists "la contadora se puede ir" on public.estudio_vinculos;
+create policy "la contadora se puede ir" on public.estudio_vinculos
+  for delete to authenticated using (contadora_id = (select auth.uid()));
+
+-- Desde la app solo se elige «solo iniciales». Quién es la contadora lo pone estudio_aceptar.
+revoke insert, update on public.estudio_vinculos from anon, authenticated;
+grant select, delete on public.estudio_vinculos to authenticated;
+grant insert (solo_iniciales), update (solo_iniciales) on public.estudio_vinculos to authenticated;
+
+create or replace function public.estudio_aceptar(p_token uuid)
+returns text
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v public.estudio_vinculos;
+  nombre text;
+begin
+  if auth.uid() is null then raise exception 'Tenés que ingresar con tu cuenta' using errcode = '42501'; end if;
+  perform public.exigir_mfa();
+  select * into v from public.estudio_vinculos where token = p_token for update;
+  if not found or v.contadora_id is not null then
+    raise exception 'El link no existe o ya se usó. Pedile uno nuevo a tu clienta.' using errcode = 'P0002';
+  end if;
+  if v.user_id = auth.uid() then
+    raise exception 'Este link es para tu contadora: tiene que abrirlo con su cuenta.' using errcode = '22023';
+  end if;
+  -- Si ya tenía acceso a esta clienta, se descarta el link repetido.
+  if exists (select 1 from public.estudio_vinculos where user_id = v.user_id and contadora_id = auth.uid()) then
+    delete from public.estudio_vinculos where id = v.id;
+  else
+    update public.estudio_vinculos
+       set contadora_id = auth.uid(),
+           contadora_email = (select u.email from auth.users u where u.id = auth.uid()),
+           aceptado_at = now(),
+           token = gen_random_uuid()
+     where id = v.id;
+  end if;
+  select coalesce(nullif(trim(p.nombre), ''), p.email, 'tu clienta') into nombre from public.profiles p where p.id = v.user_id;
+  return nombre;
+end;
+$$;
+revoke execute on function public.estudio_aceptar(uuid) from public, anon;
+grant execute on function public.estudio_aceptar(uuid) to authenticated;
+
+create or replace function public.estudio_clientes()
+returns table (profesional_id uuid, nombre text, email text, cuit text, monotributo_categoria text,
+               solo_iniciales boolean, aceptado_at timestamptz)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select v.user_id, p.nombre, p.email, p.cuit, p.monotributo_categoria, v.solo_iniciales, v.aceptado_at
+    from public.estudio_vinculos v
+    join public.profiles p on p.id = v.user_id
+   where v.contadora_id = auth.uid() and public.mfa_ok()
+   order by lower(coalesce(p.nombre, p.email));
+$$;
+revoke execute on function public.estudio_clientes() from public, anon;
+grant execute on function public.estudio_clientes() to authenticated;
+
+-- Lo justo para armar el reporte para contadora: datos fiscales de la profesional, pacientes con sus
+-- datos de facturación (sin teléfono, mail, domicilio ni notas) y pagos (sin observaciones).
+create or replace function public.estudio_datos(p_profesional uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  iniciales boolean;
+begin
+  perform public.exigir_mfa();
+  select v.solo_iniciales into iniciales
+    from public.estudio_vinculos v
+   where v.user_id = p_profesional and v.contadora_id = auth.uid();
+  if not found then
+    raise exception 'No tenés acceso a los datos de esta profesional' using errcode = '42501';
+  end if;
+  return jsonb_build_object(
+    'solo_iniciales', iniciales,
+    'perfil', (
+      select jsonb_build_object('id', p.id, 'nombre', p.nombre, 'dni', p.dni, 'cuit', p.cuit, 'email', p.email,
+               'condicion_iva', p.condicion_iva, 'monotributo_categoria', p.monotributo_categoria,
+               'actividad', p.actividad, 'domicilio_fiscal', p.domicilio_fiscal, 'punto_venta', p.punto_venta,
+               'matricula', p.matricula, 'profesion', p.profesion, 'termino', p.termino, 'modo_cobro', p.modo_cobro,
+               'tipo_cambio_usd', p.tipo_cambio_usd, 'moneda_default', p.moneda_default)
+        from public.profiles p where p.id = p_profesional),
+    'pacientes', coalesce((
+      select jsonb_agg(jsonb_build_object(
+               'id', x.id, 'codigo', x.codigo,
+               'nombre', case when iniciales then upper(left(trim(x.nombre), 1)) || '.' else x.nombre end,
+               'apellido', case when iniciales then nullif(upper(left(trim(coalesce(x.apellido, '')), 1)) || '.', '.') else x.apellido end,
+               'dni', case when iniciales then null else x.dni end,
+               'cuil_cuit', case when iniciales then null else x.cuil_cuit end,
+               'condicion_iva', x.condicion_iva, 'moneda', x.moneda, 'activo', x.activo, 'fecha_alta', x.fecha_alta)
+             order by x.nombre)
+        from public.patients x where x.user_id = p_profesional), '[]'::jsonb),
+    'pagos', coalesce((
+      select jsonb_agg((to_jsonb(g) - 'observaciones' - 'user_id' - 'created_at') order by g.fecha)
+        from public.payments g where g.user_id = p_profesional), '[]'::jsonb)
+  );
+end;
+$$;
+revoke execute on function public.estudio_datos(uuid) from public, anon;
+grant execute on function public.estudio_datos(uuid) to authenticated;
+
 -- Perfiles para usuarias que ya existían antes de correr este script.
 insert into public.profiles (id, email)
 select id, email from auth.users
@@ -883,7 +1032,7 @@ on conflict (id) do nothing;
 do $$
 declare t text;
 begin
-  foreach t in array array['profiles','patients','sessions','payments','importaciones','pruebas','recordatorios'] loop
+  foreach t in array array['profiles','patients','sessions','payments','importaciones','pruebas','recordatorios','estudio_vinculos'] loop
     execute format('drop policy if exists mfa_requerido on public.%I', t);
     execute format('create policy mfa_requerido on public.%I as restrictive for all to authenticated using (public.mfa_ok()) with check (public.mfa_ok())', t);
   end loop;

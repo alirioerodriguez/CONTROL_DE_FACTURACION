@@ -10,6 +10,7 @@ import { pagosParaFacturar } from '../../lib/facturar'
 import { MEDIOS, mesesEntre, reporteContadora } from '../../lib/reportes'
 import { mensajeError } from '../../lib/supabase'
 import { guardarPreferencia, preferencia } from '../../lib/tema'
+import { AccesoContadora } from '../estudio/AccesoContadora'
 
 const MONEDAS: Moneda[] = ['ARS', 'USD']
 const COLUMNAS = 'grid-cols-[minmax(7.5rem,1.2fr)_4rem_repeat(5,minmax(7.25rem,1fr))_5.25rem]'
@@ -386,6 +387,7 @@ export function ContadoraPage() {
           </div>
         </Tarjeta>
       )}
+      <AccesoContadora mailContadora={perfil?.contadora_email ?? null} />
     </section>
   )
 }
