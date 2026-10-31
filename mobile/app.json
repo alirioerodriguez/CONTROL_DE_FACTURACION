@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "honorapp",
+    "slug": "honorapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "honorapp",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F5F4F0",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "ar.alirio.honorapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "ar.alirio.honorapp",
+      "adaptiveIcon": {
+        "backgroundColor": "#557F69",
+        "foregroundImage": "./assets/android-icon.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 120,
+          "resizeMode": "contain",
+          "backgroundColor": "#557F69"
+        }
+      ]
+    ]
+  }
+}

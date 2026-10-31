@@ -4,6 +4,7 @@ import { Check, Eye, EyeOff } from 'lucide-react'
 import { Logo } from '../../components/Layout'
 import { IC, Spinner } from '../../components/ui'
 import { mensajeError, supabase } from '../../lib/supabase'
+import { enLaApp, pedirGoogleALaApp } from '../../lib/puenteApp'
 
 const QUE_HACE = [
   'Anotás sesiones y pagos, en pesos y en dólares.',
@@ -121,6 +122,8 @@ export function IngresoGoogle({ onError }: { onError: (mensaje: string) => void 
   const [cargando, setCargando] = useState(false)
 
   async function entrar() {
+    // En la app del celular, Google no deja entrar desde la vista web: lo hace la app (ver lib/puenteApp)
+    if (enLaApp()) return pedirGoogleALaApp()
     setCargando(true)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
