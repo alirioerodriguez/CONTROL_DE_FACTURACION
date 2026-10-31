@@ -9,6 +9,7 @@ import './index.css'
 import App from './App.tsx'
 import { SinConexion } from './components/SinConexion'
 import { AuthProvider } from './features/auth/AuthProvider'
+import { manejarIngresoApp } from './lib/puenteApp'
 
 // Cuando hay una versión nueva publicada, la app se actualiza sola.
 registerSW({ immediate: true })
@@ -28,7 +29,8 @@ const icono = (ok: boolean) => (
   </span>
 )
 
-createRoot(document.getElementById('root')!).render(
+// Si esta carga es parte del ingreso con Google desde la app del celular, no se muestra la página
+if (!manejarIngresoApp()) createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
