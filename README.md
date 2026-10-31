@@ -24,6 +24,7 @@ App publicada: **https://control-de-facturacion-eight.vercel.app**
 - **Recibos**: desde un pago se descarga el recibo en PDF o se comparte por WhatsApp o mail (en el celular con el menú de compartir; en la computadora se descarga y se abre el mensaje).
 - **Abono mensual**: un paciente puede pagar un monto fijo por mes; se reparte entre las sesiones del mes (`src/lib/abono.ts`) y los meses sin sesiones no se cobran.
 - **Para facturar** (`/facturar`, desde Contadora): pagos sin Factura C con los datos que pide ARCA para copiar, y «Ya la hice» para anotar el número.
+- **Modo Estudio Contable** (`/estudio`): desde el reporte para contadora, la profesional crea un link de un solo uso; la contadora entra gratis con su cuenta y baja el reporte (Excel o PDF) de cada clienta cuando lo necesita. Solo lectura y solo lo del reporte (sin teléfonos, mails, notas ni sesiones); opción «solo iniciales». Lo arma `supabase/schema.sql` (tabla `estudio_vinculos` y funciones `estudio_*`), con pruebas en `supabase/tests/aislamiento.sql`.
 - **Enviar a mi contadora**: manda el PDF del reporte; el mail de la contadora es opcional (Ajustes).
 - **Calendario en Google**: link privado (Ajustes) que muestra las sesiones con solo las iniciales. Lo sirve la función `calendario`.
 - **Funciones opcionales** (Ajustes, apagadas de entrada): pantalla Recordatorios (quién debe, WhatsApp y marca de enviado por mes), resumen mensual por mail y obras sociales/prepagas (obra social y afiliado del paciente, quién pagó cada pago).
