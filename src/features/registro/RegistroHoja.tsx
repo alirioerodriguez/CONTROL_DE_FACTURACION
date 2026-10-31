@@ -12,6 +12,7 @@ import {
 import { capitalizar, etiquetaDia, formatPeriodo, hoyAR, montoParaInput, normalizar, parseMontoAR, periodoDe, redondear2, sumarDias, sumarMeses, type Moneda } from '../../lib/formato'
 import { verMonto } from '../../lib/discreto'
 import { coincideDocumento } from '../../lib/documentos'
+import type { DatosComprobante } from '../../lib/conciliar'
 import { tieneAbono } from '../../lib/abono'
 import { deudaDe, debeAlgo, saldosDe, textoDeuda } from '../../lib/resumen'
 import { periodoSugerido, tarifaVigente } from '../../lib/saldos'
@@ -20,6 +21,7 @@ import { guardarPreferencia, preferencia } from '../../lib/tema'
 import { usePalabras } from '../../components/usePalabras'
 import { opcionesHoras } from './opciones'
 import { TicketPago } from './TicketPago'
+import { PegarComprobante } from './PegarComprobante'
 import type { Apertura } from './RegistroContext'
 
 const MEDIOS: Opcion<Medio>[] = (['efectivo', 'transferencia', 'mercadopago', 'otro'] as const).map((v) => ({
@@ -117,6 +119,20 @@ export function RegistroHoja({
     setPeriodo(s.periodo)
     setMontoTocado(false)
     setError('')
+  }
+
+  // Un comprobante pegado: elige al paciente y completa monto, moneda y fecha (la profesional los revisa antes de guardar).
+  function aplicarComprobante(p: Paciente, c: DatosComprobante) {
+    const f = c.fecha ?? fecha
+    const s = sugeridos(p, f)
+    setPid(p.id)
+    setFecha(f)
+    setMoneda(c.moneda ?? s.moneda)
+    setMontoTxt(c.monto !== null ? montoParaInput(c.monto) : s.monto)
+    setPeriodo(s.periodo)
+    setMontoTocado(c.monto !== null)
+    setError('')
+    toast.success(`Comprobante leído · ${nombreCompleto(p)}`)
   }
 
   function cambiarHoras(h: number) {
@@ -265,6 +281,8 @@ export function RegistroHoja({
           onCambio={(m) => onCambiarModo({ modo: m as 'sesion' | 'pago', pacienteId: pid ?? undefined })}
         />
       )}
+
+      {!editando && !esSesion && <PegarComprobante pacientes={pacientes} sesiones={sesiones} pagos={pagos} onAplicar={aplicarComprobante} />}
 
       <div className="flex flex-col gap-2.5">
         <div className="text-[0.9375rem] font-semibold">Paciente</div>
