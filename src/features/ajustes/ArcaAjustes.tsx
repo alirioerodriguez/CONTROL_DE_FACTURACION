@@ -63,6 +63,30 @@ export function ArcaAjustes({ perfil }: { perfil: Perfil }) {
           <Check {...IC} />
           Conectado · punto de venta {perfil.arca_punto_venta} · desde el {formatFecha(perfil.arca_conectado_at!.slice(0, 10))}
         </div>
+      ) : null}
+
+      {conectado ? (
+        <label className="flex cursor-pointer items-start gap-3 text-[0.9375rem] leading-snug">
+          <input
+            type="checkbox"
+            className="mt-1 size-5"
+            checked={!!perfil.arca_auto}
+            disabled={guardar.isPending}
+            onChange={async (e) => {
+              const valor = e.target.checked
+              try {
+                await guardar.mutateAsync([{ tipo: 'actualizar', tabla: 'profiles', id: perfil.id, cambios: { arca_auto: valor } }])
+                toast.success(valor ? 'Listo: cada pago nuevo se factura solo' : 'Facturación automática apagada')
+              } catch (err) {
+                toast.error(`No se pudo guardar: ${mensajeError(err)}`)
+              }
+            }}
+          />
+          <span>
+            <b>Facturar sola cada pago nuevo</b>
+            <span className="block text-ink2">Apenas registrás un pago, honorapp hace la Factura C en ARCA y te avisa el número. Las de obras sociales quedan para hacer a mano.</span>
+          </span>
+        </label>
       ) : !CUIT_HONORAPP ? (
         <p className="m-0 rounded-[1rem] bg-surface2 px-4 py-3 text-[0.9375rem] text-ink2">
           Muy pronto: estamos terminando el alta de honorapp en ARCA. Mientras tanto, seguí usando «Para facturar» con los datos listos para copiar.

@@ -51,6 +51,8 @@ export interface Perfil {
   arca_punto_venta?: number | null
   /** Cuándo se comprobó que honorapp puede facturar por ella (función arca-factura). */
   arca_conectado_at?: string | null
+  /** Factura sola cada pago nuevo (Ajustes → Facturar con ARCA). */
+  arca_auto?: boolean
 }
 
 export interface Paciente {
@@ -291,6 +293,15 @@ export function useGuardar() {
     onSettled: (_d, _e, ops) => {
       const claves = new Set(ops.flatMap((op) => INVALIDA[op.tabla].map((k) => k.join('/'))))
       claves.forEach((k) => qc.invalidateQueries({ queryKey: k.split('/') }))
+    },
+    // Facturación automática: si está activada, los pagos nuevos se facturan solos en ARCA.
+    onSuccess: (resultados, ops) => {
+      const perfil = qc.getQueryData<Perfil>(CLAVES.perfil)
+      if (!perfil?.arca_auto || !perfil.arca_punto_venta || !perfil.arca_conectado_at) return
+      const nuevos = ops.flatMap((op, i) =>
+        op.tipo === 'insertar' && op.tabla === 'payments' ? ((resultados[i] ?? []) as Pago[]).filter((p) => p.pagador !== 'obra_social' && p.comprobante !== 'factura_c') : [],
+      )
+      if (nuevos.length) import('./facturaAuto').then((m) => m.facturarSolos(nuevos, () => qc.invalidateQueries()))
     },
   })
 }

@@ -1027,6 +1027,8 @@ grant execute on function public.estudio_datos(uuid) to authenticated;
 -- ---------------------------------------------------------------------------
 alter table public.profiles add column if not exists arca_punto_venta integer;
 alter table public.profiles add column if not exists arca_conectado_at timestamptz;
+-- true: cada pago nuevo del paciente se factura solo apenas se registra.
+alter table public.profiles add column if not exists arca_auto boolean not null default false;
 do $$ begin
   alter table public.profiles add constraint profiles_arca_pv_check check (arca_punto_venta between 1 and 99998);
 exception when duplicate_object then null; end $$;
