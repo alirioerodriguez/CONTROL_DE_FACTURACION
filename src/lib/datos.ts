@@ -47,6 +47,10 @@ export interface Perfil {
   calendario_token: string | null
   /** Ve los resultados de las pruebas con usuarias. Solo se cambia por SQL. */
   es_admin?: boolean
+  /** Factura electrónica: punto de venta de web services de ARCA (null = no conectado). */
+  arca_punto_venta?: number | null
+  /** Cuándo se comprobó que honorapp puede facturar por ella (función arca-factura). */
+  arca_conectado_at?: string | null
 }
 
 export interface Paciente {
@@ -106,6 +110,9 @@ export interface Pago {
   observaciones: string | null
   /** Quién pagó: el paciente o su obra social / prepaga. */
   pagador: Pagador
+  /** CAE de ARCA si la factura la hizo honorapp. */
+  cae?: string | null
+  factura_id?: string | null
 }
 
 export type Pagador = 'paciente' | 'obra_social'

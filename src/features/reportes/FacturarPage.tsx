@@ -1,4 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
+import { BotonFacturaArca, FacturarTodas, FacturasHechas } from './FacturarConArca'
+import { arcaListo } from '../../lib/facturaArca'
 import { useNavigate } from 'react-router-dom'
 import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, ExternalLink, ListChecks, ReceiptText, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -56,7 +58,8 @@ function BotonArca({ className = '' }: { className?: string }) {
 /** Pagos sin factura con los datos listos para cargar la Factura C en ARCA, y marcarlos cuando ya se hizo. */
 export function FacturarPage() {
   const navegar = useNavigate()
-  const { pacientes, pagos, sesiones, cargando, error, reintentar } = useDatos()
+  const { perfil, pacientes, pagos, sesiones, cargando, error, reintentar } = useDatos()
+  const conArca = arcaListo(perfil)
   const actual = periodoDe(hoyAR())
   const [meses, setMeses] = useState(3)
   const [porMes, setPorMes] = useState(() => preferencia<'mes' | 'pago'>('facturarPor', 'pago') === 'mes')
@@ -126,6 +129,8 @@ export function FacturarPage() {
         </div>
       </div>
 
+      {conArca && facturas.length > 0 && <FacturarTodas facturas={facturas} />}
+
       {facturas.length > 0 && (
         <Tarjeta className="flex flex-col gap-3 p-[1.375rem]">
           <h2 className="m-0 text-lg font-semibold">
@@ -171,16 +176,19 @@ export function FacturarPage() {
             </div>
             <Tarjeta className="p-2">
               {m.facturas.map((f) => (
-                <ItemFactura key={f.clave} factura={f} pasoAPaso={() => setGuiado({ facturas, inicio: facturas.indexOf(f) })} />
+                <ItemFactura key={f.clave} factura={f} conArca={conArca} pasoAPaso={() => setGuiado({ facturas, inicio: facturas.indexOf(f) })} />
               ))}
             </Tarjeta>
           </div>
         ))
       )}
 
+      <FacturasHechas perfil={perfil} />
+
       <p className="m-0 px-1 text-sm leading-normal text-ink2">
-        En ARCA: Comprobantes en línea → Generar comprobantes → Factura C. honorapp no emite la factura: te deja los datos listos para
-        copiar. Cuando la hagas, tocá «Ya la hice» y anotá el número, o subí después el archivo de Mis Comprobantes.
+        {conArca
+          ? 'Con ARCA conectado, «Hacer Factura C» la emite al instante y marca el pago. Las de obras sociales y las que hiciste en la web de ARCA se anotan con «Ya la hice».'
+          : 'En ARCA: Comprobantes en línea → Generar comprobantes → Factura C. honorapp te deja los datos listos para copiar; cuando la hagas, tocá «Ya la hice» y anotá el número, o subí después el archivo de Mis Comprobantes. Para que honorapp la haga sola, conectá ARCA en Ajustes.'}
       </p>
     </section>
   )
@@ -193,7 +201,7 @@ function detallePago(f: Factura): string {
   return `${quien} ${f.pagos.length > 1 ? 'del' : 'el'} ${fechasDePago(f)}${cuantos}`
 }
 
-function ItemFactura({ factura, pasoAPaso }: { factura: Factura; pasoAPaso: () => void }) {
+function ItemFactura({ factura, pasoAPaso, conArca }: { factura: Factura; pasoAPaso: () => void; conArca: boolean }) {
   const pal = usePalabras()
   const guardar = useGuardar()
   const [abierto, setAbierto] = useState(false)
@@ -272,7 +280,8 @@ function ItemFactura({ factura, pasoAPaso }: { factura: Factura; pasoAPaso: () =
               <Boton variante="borde" icono={Copy} onClick={() => copiar(textoFactura(factura, pal), 'Todo')}>
                 Copiar todo
               </Boton>
-              <Boton icono={Check} onClick={() => setMarcando(true)}>
+              {conArca && <BotonFacturaArca factura={factura} />}
+              <Boton variante={conArca ? 'borde' : 'primario'} icono={Check} onClick={() => setMarcando(true)}>
                 Ya la hice
               </Boton>
             </div>
