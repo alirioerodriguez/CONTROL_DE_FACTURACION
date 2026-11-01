@@ -1077,6 +1077,28 @@ create table if not exists public.arca_tickets (
 alter table public.arca_tickets enable row level security;
 revoke all on public.arca_tickets from anon, authenticated;
 
+-- Mail del día 1 a la contadora con las facturas del mes anterior (función facturas-contadora).
+alter table public.profiles add column if not exists arca_mail_contadora boolean not null default false;
+create table if not exists public.facturas_contadora_enviadas (
+  user_id  uuid not null references auth.users (id) on delete cascade,
+  periodo  date not null,
+  enviado  timestamptz not null default now(),
+  primary key (user_id, periodo)
+);
+alter table public.facturas_contadora_enviadas enable row level security;
+-- Sin políticas: solo la función (service_role) la usa.
+select cron.unschedule('facturas-contadora')
+where exists (select 1 from cron.job where jobname = 'facturas-contadora');
+select cron.schedule(
+  'facturas-contadora',
+  '30 12 1 * *',
+  $$select net.http_post(
+      url := 'https://uxcpfnupwetwtpqhoqvd.supabase.co/functions/v1/facturas-contadora',
+      headers := '{"Content-Type": "application/json"}'::jsonb,
+      body := '{}'::jsonb
+    )$$
+);
+
 -- Perfiles para usuarias que ya existían antes de correr este script.
 insert into public.profiles (id, email)
 select id, email from auth.users

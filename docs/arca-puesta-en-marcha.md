@@ -10,6 +10,7 @@ Detalle técnico y fuentes: `docs/investigacion/arca.md`.
 | Mensajes de ARCA (WSAA, WSFEv1, QR) | `supabase/functions/arca-factura/wsfe.ts` (pruebas: `src/lib/wsfe.test.ts`) |
 | Función que habla con ARCA | `supabase/functions/arca-factura/index.ts` (`probar` y `emitir`) |
 | Tablas | `supabase/schema.sql`: `facturas_arca`, `arca_tickets`, columnas `arca_*` en profiles y `cae`/`factura_id` en payments |
+| Mail del día 1 a la contadora | `supabase/functions/facturas-contadora` (tabla + planilla CSV; pruebas: `src/lib/mailContadora.test.ts`) |
 | Pantallas | Ajustes → «Facturar con ARCA» (`ArcaAjustes.tsx`); Para facturar (`FacturarConArca.tsx`) |
 | PDF con QR | `src/lib/facturaArca.ts` |
 
@@ -23,7 +24,8 @@ Detalle técnico y fuentes: `docs/investigacion/arca.md`.
    certificado con el `.csr` → bajar el `.crt` → «Crear autorización a servicio» para **wsfe**.
 3. Secretos de la función (Supabase → Edge Functions → Secrets): `ARCA_ENTORNO=homo`, `ARCA_CERT` (contenido del
    `.crt`) y `ARCA_KEY` (contenido del `.key`). **El `.key` no se sube a GitHub ni se manda por chat.**
-4. Desplegar: `supabase functions deploy arca-factura`.
+4. Desplegar: `supabase functions deploy arca-factura` y `supabase functions deploy facturas-contadora --no-verify-jwt`
+   (la segunda la llama pg_cron el día 1 y usa el mismo secreto `SMTP_PASS` que `aviso-mensual`).
 5. En Vercel: `VITE_ARCA_CUIT` con el CUIT de honorapp. En homologación se puede probar con el mismo CUIT del
    certificado como profesional (sin delegar) y un punto de venta cualquiera.
 6. En la app: Ajustes → Facturar con ARCA → número de punto de venta → **Conectar**. Después, en Para facturar,

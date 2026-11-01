@@ -53,6 +53,8 @@ export interface Perfil {
   arca_conectado_at?: string | null
   /** Factura sola cada pago nuevo (Ajustes → Facturar con ARCA). */
   arca_auto?: boolean
+  /** El día 1 le manda a la contadora las facturas del mes anterior. */
+  arca_mail_contadora?: boolean
 }
 
 export interface Paciente {

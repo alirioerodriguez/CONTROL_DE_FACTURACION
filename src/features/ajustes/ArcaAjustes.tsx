@@ -15,6 +15,15 @@ const LOGIN_ARCA = 'https://auth.afip.gob.ar/contribuyente_/login.xhtml'
 export function ArcaAjustes({ perfil }: { perfil: Perfil }) {
   const guardar = useGuardar()
   const qc = useQueryClient()
+
+  async function cambiar(cambios: Partial<Perfil>, ok: string) {
+    try {
+      await guardar.mutateAsync([{ tipo: 'actualizar', tabla: 'profiles', id: perfil.id, cambios }])
+      toast.success(ok)
+    } catch (e) {
+      toast.error(`No se pudo guardar: ${mensajeError(e)}`)
+    }
+  }
   const [pv, setPv] = useState(perfil.arca_punto_venta ? String(perfil.arca_punto_venta) : '')
   const [probando, setProbando] = useState(false)
   const conectado = !!perfil.arca_conectado_at && !!perfil.arca_punto_venta
@@ -66,27 +75,26 @@ export function ArcaAjustes({ perfil }: { perfil: Perfil }) {
       ) : null}
 
       {conectado ? (
-        <label className="flex cursor-pointer items-start gap-3 text-[0.9375rem] leading-snug">
-          <input
-            type="checkbox"
-            className="mt-1 size-5"
-            checked={!!perfil.arca_auto}
-            disabled={guardar.isPending}
-            onChange={async (e) => {
-              const valor = e.target.checked
-              try {
-                await guardar.mutateAsync([{ tipo: 'actualizar', tabla: 'profiles', id: perfil.id, cambios: { arca_auto: valor } }])
-                toast.success(valor ? 'Listo: cada pago nuevo se factura solo' : 'Facturación automática apagada')
-              } catch (err) {
-                toast.error(`No se pudo guardar: ${mensajeError(err)}`)
-              }
-            }}
+        <div className="flex flex-col gap-3">
+          <Interruptor
+            activo={!!perfil.arca_auto}
+            deshabilitado={guardar.isPending}
+            titulo="Facturar sola cada pago nuevo"
+            detalle="Apenas registrás un pago, honorapp hace la Factura C en ARCA y te avisa el número. Las de obras sociales quedan para hacer a mano."
+            cambiar={(v) => cambiar({ arca_auto: v }, v ? 'Listo: cada pago nuevo se factura solo' : 'Facturación automática apagada')}
           />
-          <span>
-            <b>Facturar sola cada pago nuevo</b>
-            <span className="block text-ink2">Apenas registrás un pago, honorapp hace la Factura C en ARCA y te avisa el número. Las de obras sociales quedan para hacer a mano.</span>
-          </span>
-        </label>
+          <Interruptor
+            activo={!!perfil.arca_mail_contadora}
+            deshabilitado={guardar.isPending || !perfil.contadora_email}
+            titulo="Mandarle a mi contadora las facturas del mes"
+            detalle={
+              perfil.contadora_email
+                ? `El día 1 de cada mes le llega a ${perfil.contadora_email} un mail con las facturas del mes anterior y una planilla con el CAE de cada una.`
+                : 'Primero cargá el mail de tu contadora más arriba, en tus datos.'
+            }
+            cambiar={(v) => cambiar({ arca_mail_contadora: v }, v ? 'Listo: el día 1 le llegan las facturas a tu contadora' : 'Mail a la contadora apagado')}
+          />
+        </div>
       ) : !CUIT_HONORAPP ? (
         <p className="m-0 rounded-[1rem] bg-surface2 px-4 py-3 text-[0.9375rem] text-ink2">
           Muy pronto: estamos terminando el alta de honorapp en ARCA. Mientras tanto, seguí usando «Para facturar» con los datos listos para copiar.
@@ -141,5 +149,17 @@ function Paso({ n, titulo, children }: { n: number; titulo: string; children: Re
         <div className="mt-0.5 text-ink2">{children}</div>
       </div>
     </li>
+  )
+}
+
+function Interruptor({ activo, deshabilitado, titulo, detalle, cambiar }: { activo: boolean; deshabilitado: boolean; titulo: string; detalle: string; cambiar: (v: boolean) => void }) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 text-[0.9375rem] leading-snug">
+      <input type="checkbox" className="mt-1 size-5" checked={activo} disabled={deshabilitado} onChange={(e) => cambiar(e.target.checked)} />
+      <span>
+        <b>{titulo}</b>
+        <span className="block text-ink2">{detalle}</span>
+      </span>
+    </label>
   )
 }
