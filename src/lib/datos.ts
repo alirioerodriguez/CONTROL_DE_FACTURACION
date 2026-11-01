@@ -55,6 +55,8 @@ export interface Perfil {
   arca_auto?: boolean
   /** El día 1 le manda a la contadora las facturas del mes anterior. */
   arca_mail_contadora?: boolean
+  /** No facturar los cobros en dólares. */
+  no_facturar_usd?: boolean
 }
 
 export interface Paciente {
@@ -77,6 +79,8 @@ export interface Paciente {
   abono_mensual: number | null
   /** Obra social o prepaga (solo si la profesional prendió la función). */
   obra_social: string | null
+  /** La profesional eligió no facturarle a este paciente. */
+  no_facturar?: boolean
   nro_afiliado: string | null
   moneda: Moneda
   fecha_alta: string
@@ -117,6 +121,8 @@ export interface Pago {
   /** CAE de ARCA si la factura la hizo honorapp. */
   cae?: string | null
   factura_id?: string | null
+  /** La profesional eligió no facturar este pago. */
+  no_facturar?: boolean
 }
 
 export type Pagador = 'paciente' | 'obra_social'
@@ -300,8 +306,9 @@ export function useGuardar() {
     onSuccess: (resultados, ops) => {
       const perfil = qc.getQueryData<Perfil>(CLAVES.perfil)
       if (!perfil?.arca_auto || !perfil.arca_punto_venta || !perfil.arca_conectado_at) return
+      const excluidos = new Set((qc.getQueryData<Paciente[]>(CLAVES.pacientes) ?? []).filter((p) => p.no_facturar).map((p) => p.id))
       const nuevos = ops.flatMap((op, i) =>
-        op.tipo === 'insertar' && op.tabla === 'payments' ? ((resultados[i] ?? []) as Pago[]).filter((p) => p.pagador !== 'obra_social' && p.comprobante !== 'factura_c') : [],
+        op.tipo === 'insertar' && op.tabla === 'payments' ? ((resultados[i] ?? []) as Pago[]).filter((p) => p.pagador !== 'obra_social' && p.comprobante !== 'factura_c' && !p.no_facturar && !excluidos.has(p.patient_id) && !(perfil.no_facturar_usd && p.moneda === 'USD')) : [],
       )
       if (nuevos.length) import('./facturaAuto').then((m) => m.facturarSolos(nuevos, () => qc.invalidateQueries()))
     },

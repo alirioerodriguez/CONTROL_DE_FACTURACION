@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
     return json({ error: 'Pedido inválido' }, 400)
   }
 
-  const { data: perfil, error: errPerfil } = await usuaria.from('profiles').select('nombre, cuit, arca_punto_venta').eq('id', u.user.id).single()
+  const { data: perfil, error: errPerfil } = await usuaria.from('profiles').select('nombre, cuit, arca_punto_venta, no_facturar_usd').eq('id', u.user.id).single()
   if (errPerfil || !perfil) return json({ error: 'No se pudo leer tu perfil' }, 403)
   const cuit = (perfil.cuit ?? '').replace(/\D/g, '')
   if (cuit.length !== 11) return json({ error: 'Cargá tu CUIT en Ajustes para facturar' }, 400)
@@ -124,12 +124,15 @@ Deno.serve(async (req) => {
         if (!ids.length) throw new Error('Factura sin pagos')
         const { data: pagos, error } = await usuaria
           .from('payments')
-          .select('id, patient_id, fecha, periodo, monto, moneda, comprobante, pagador, patients!inner(id, nombre, apellido, dni, cuil_cuit, condicion_iva)')
+          .select('id, patient_id, fecha, periodo, monto, moneda, comprobante, pagador, no_facturar, patients!inner(id, nombre, apellido, dni, cuil_cuit, condicion_iva, no_facturar)')
           .in('id', ids)
         if (error || !pagos || pagos.length !== ids.length) throw new Error('No se encontraron todos los pagos')
         if (pagos.some((p) => p.comprobante === 'factura_c')) throw new Error('Algún pago ya tiene factura')
         if (new Set(pagos.map((p) => `${p.patient_id}|${p.moneda}`)).size > 1) throw new Error('Una factura no puede juntar pacientes ni monedas distintas')
         if (pagos.some((p) => p.pagador === 'obra_social')) throw new Error('Las facturas a obras sociales todavía se hacen en ARCA a mano')
+        // Lo que la profesional eligió no facturar no se factura, aunque llegue el pedido
+        if (pagos.some((p) => p.no_facturar || (p.patients as unknown as { no_facturar: boolean }).no_facturar)) throw new Error('Elegiste no facturar este pago o a este paciente')
+        if (perfil.no_facturar_usd && pagos.some((p) => p.moneda === 'USD')) throw new Error('Elegiste no facturar los cobros en dólares')
 
         const pac = pagos[0].patients as unknown as { id: string; nombre: string; apellido: string | null; dni: string | null; cuil_cuit: string | null; condicion_iva: string | null }
         const moneda = pagos[0].moneda as 'ARS' | 'USD'

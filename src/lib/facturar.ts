@@ -15,13 +15,14 @@ export interface MesParaFacturar {
 }
 
 /** Pagos sin Factura C desde un mes (por fecha de pago), agrupados por mes de pago, el más nuevo primero. */
-export function pagosParaFacturar(pagos: Pago[], pacientes: Paciente[], desde: string): MesParaFacturar[] {
+/** `sinUsd`: la profesional eligió no facturar los cobros en dólares. */
+export function pagosParaFacturar(pagos: Pago[], pacientes: Paciente[], desde: string, sinUsd = false): MesParaFacturar[] {
   const porId = new Map(pacientes.map((p) => [p.id, p]))
   const meses = new Map<string, MesParaFacturar>()
   for (const pago of pagos) {
-    if (pago.comprobante === 'factura_c' || pago.fecha < desde) continue
+    if (pago.comprobante === 'factura_c' || pago.fecha < desde || pago.no_facturar || (sinUsd && pago.moneda === 'USD')) continue
     const paciente = porId.get(pago.patient_id)
-    if (!paciente) continue
+    if (!paciente || paciente.no_facturar) continue
     const periodo = `${pago.fecha.slice(0, 7)}-01`
     const mes = meses.get(periodo) ?? { periodo, items: [], total: { ARS: 0, USD: 0 } }
     mes.items.push({ pago, paciente })
@@ -247,4 +248,14 @@ export function numeroSiguiente(numero: string): string {
   if (!m) return ''
   const siguiente = String(Number(m[2]) + 1).padStart(m[2].length, '0')
   return `${m[1]}${siguiente}`
+}
+
+/** Pagos que la profesional eligió no facturar (por pago o por paciente), desde un mes. Para poder deshacerlo. */
+export function pagosQueNoSeFacturan(pagos: Pago[], pacientes: Paciente[], desde: string, sinUsd = false): ParaFacturar[] {
+  const porId = new Map(pacientes.map((p) => [p.id, p]))
+  return pagos
+    .filter((p) => p.comprobante !== 'factura_c' && p.fecha >= desde)
+    .map((pago) => ({ pago, paciente: porId.get(pago.patient_id)! }))
+    .filter((x) => x.paciente && (x.pago.no_facturar || x.paciente.no_facturar || (sinUsd && x.pago.moneda === 'USD')))
+    .sort((a, b) => b.pago.fecha.localeCompare(a.pago.fecha))
 }

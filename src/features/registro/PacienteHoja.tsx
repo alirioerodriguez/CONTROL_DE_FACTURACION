@@ -67,6 +67,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
   const [notas, setNotas] = useState(paciente?.notas_admin ?? '')
   const [obraSocial, setObraSocial] = useState(paciente?.obra_social ?? '')
   const [afiliado, setAfiliado] = useState(paciente?.nro_afiliado ?? '')
+  const [noFacturar, setNoFacturar] = useState(paciente?.no_facturar ?? false)
   const [error, setError] = useState('')
   const [confirmarBorrado, setConfirmarBorrado] = useState(false)
   // Id fijo mientras la hoja está abierta: reintentar después de un corte no crea el paciente dos veces.
@@ -103,6 +104,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
       frecuencia,
       activo,
       notas_admin: notas.trim() || null,
+      no_facturar: noFacturar,
       ...(perfil?.usa_obras_sociales
         ? { obra_social: obraSocial.trim() || null, nro_afiliado: obraSocial.trim() ? afiliado.trim() || null : null }
         : {}),
@@ -248,6 +250,13 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
           ))}
         </select>
         <span className="text-sm font-normal text-ink2">La pide ARCA para la factura. Si no sabés, dejá «Consumidor final».</span>
+      </label>
+      <label className="flex cursor-pointer items-start gap-3 text-[0.9375rem] leading-snug">
+        <input type="checkbox" className="mt-1 size-5" checked={noFacturar} onChange={(e) => setNoFacturar(e.target.checked)} />
+        <span>
+          <b>No facturarle</b>
+          <span className="block text-ink2">Sus pagos no aparecen en «Para facturar» y no se facturan solos. Los cobros se siguen registrando igual.</span>
+        </span>
       </label>
       {perfil?.usa_obras_sociales && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.4fr_1fr]">

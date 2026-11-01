@@ -8,6 +8,7 @@ import {
   montoParaArca,
   numeroSiguiente,
   pagosParaFacturar,
+  pagosQueNoSeFacturan,
   pantallasArca,
   textoFactura,
 } from './facturar'
@@ -152,5 +153,30 @@ describe('modo ARCA', () => {
     expect(numeroSiguiente('C 00002-00000123')).toBe('C 00002-00000124')
     expect(numeroSiguiente('C 0002-00000999')).toBe('C 0002-00001000')
     expect(numeroSiguiente('sin número')).toBe('')
+  })
+})
+
+describe('lo que no se factura', () => {
+  const ids = (l: ReturnType<typeof pagosParaFacturar>) => l.flatMap((m) => m.items.map((i) => i.pago.id)).sort()
+
+  it('un pago marcado «No facturar» sale de la lista y queda en «No se facturan»', () => {
+    const conMarca = pagos.map((p) => (p.id === '3' ? { ...p, no_facturar: true } : p))
+    expect(ids(pagosParaFacturar(conMarca, pacientes, '2026-09-01'))).toEqual(['1', '4'])
+    expect(pagosQueNoSeFacturan(conMarca, pacientes, '2026-09-01').map((x) => x.pago.id)).toEqual(['3'])
+  })
+
+  it('un paciente con «No facturarle» no aparece', () => {
+    const sinB = pacientes.map((p) => (p.id === 'b' ? { ...p, no_facturar: true } : p))
+    expect(ids(pagosParaFacturar(pagos, sinB, '2026-09-01'))).toEqual(['1'])
+    expect(pagosQueNoSeFacturan(pagos, sinB, '2026-09-01').map((x) => x.pago.id)).toEqual(['4', '3'])
+  })
+
+  it('con «No facturar los cobros en dólares», los USD no aparecen', () => {
+    expect(ids(pagosParaFacturar(pagos, pacientes, '2026-09-01', true))).toEqual(['1', '3'])
+    expect(pagosQueNoSeFacturan(pagos, pacientes, '2026-09-01', true).map((x) => x.pago.id)).toEqual(['4'])
+  })
+
+  it('lo ya facturado no aparece en ninguna de las dos listas', () => {
+    expect(pagosQueNoSeFacturan(pagos.map((p) => ({ ...p, no_facturar: true })), pacientes, '2026-09-01').map((x) => x.pago.id)).not.toContain('2')
   })
 })

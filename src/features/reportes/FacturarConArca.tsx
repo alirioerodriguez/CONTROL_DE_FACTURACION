@@ -51,16 +51,24 @@ export function BotonFacturaArca({ factura }: { factura: Factura }) {
   )
 }
 
-/** «Hacer las N facturas»: todas de una, con confirmación y resumen. */
+/** «Hacer las N facturas»: todas de una, eligiendo cuáles (se pueden destildar), con confirmación y resumen. */
 export function FacturarTodas({ facturas }: { facturas: Factura[] }) {
   const { emitir, emitiendo } = useEmitir()
   const [confirmando, setConfirmando] = useState(false)
+  const [afuera, setAfuera] = useState<Set<string>>(new Set())
   const [resultado, setResultado] = useState<{ hechas: number; errores: string[] } | null>(null)
-  const lista = facturas.filter(automatizable)
-  const manuales = facturas.length - lista.length
-  if (!lista.length) return null
+  const posibles = facturas.filter(automatizable)
+  const manuales = facturas.length - posibles.length
+  if (!posibles.length) return null
+  const lista = posibles.filter((f) => !afuera.has(f.clave))
   const total = (m: Moneda) => lista.filter((f) => f.moneda === m).reduce((s, f) => s + f.monto, 0)
-  const totales = (['ARS', 'USD'] as Moneda[]).filter((m) => total(m) > 0).map((m) => formatMonto(total(m), m)).join(' + ')
+  const totales = (['ARS', 'USD'] as Moneda[]).filter((m) => total(m) > 0).map((m) => formatMonto(total(m), m)).join(' + ') || formatMonto(0, 'ARS')
+  const cambiar = (clave: string) => {
+    const n = new Set(afuera)
+    if (n.has(clave)) n.delete(clave)
+    else n.add(clave)
+    setAfuera(n)
+  }
 
   async function hacerTodas() {
     try {
@@ -71,6 +79,7 @@ export function FacturarTodas({ facturas }: { facturas: Factura[] }) {
       if (hechas) toast.success(`${plural(hechas, 'factura hecha', 'facturas hechas')} en ARCA`)
       if (errores.length) toast.error(`${plural(errores.length, 'factura no salió', 'facturas no salieron')}: mirá el detalle`)
       setConfirmando(false)
+      setAfuera(new Set())
     } catch (e) {
       toast.error(`No se pudieron hacer las facturas: ${mensajeError(e)}`)
     }
@@ -80,11 +89,11 @@ export function FacturarTodas({ facturas }: { facturas: Factura[] }) {
     <Tarjeta className="flex flex-col gap-3 border-acc p-[1.375rem]">
       <h2 className="m-0 text-lg font-semibold">Hacelas con ARCA en un toque</h2>
       <p className="m-0 text-[0.9375rem] leading-normal text-ink2">
-        {plural(lista.length, 'factura', 'facturas')} por {totales}. honorapp las hace en ARCA por vos, una por una, y marca cada pago con su número.
+        {plural(posibles.length, 'factura', 'facturas')} para hacer. Antes de confirmar elegís cuáles: destildá las que no quieras facturar.
         {manuales > 0 && ` ${plural(manuales, 'factura a obra social queda', 'facturas a obras sociales quedan')} para hacer a mano.`}
       </p>
       <Boton icono={Zap} className="self-start" onClick={() => setConfirmando(true)}>
-        Hacer {plural(lista.length, 'factura', 'facturas')}
+        Elegir y hacer facturas
       </Boton>
       {resultado && resultado.errores.length > 0 && (
         <ul className="m-0 flex flex-col gap-1 rounded-[0.875rem] bg-bad-soft p-3 pl-7 text-[0.9375rem] text-bad">
@@ -95,14 +104,25 @@ export function FacturarTodas({ facturas }: { facturas: Factura[] }) {
       )}
       {confirmando && (
         <Confirmar
-          titulo={`Hacer ${plural(lista.length, 'factura', 'facturas')} en ARCA`}
-          textoConfirmar="Hacerlas"
+          titulo={lista.length ? `Hacer ${plural(lista.length, 'factura', 'facturas')} en ARCA` : 'Elegí al menos una'}
+          textoConfirmar={lista.length ? `Hacer ${lista.length}` : 'Hacerlas'}
           peligroso={false}
           cargando={emitiendo}
           onCancelar={() => setConfirmando(false)}
-          onConfirmar={hacerTodas}
+          onConfirmar={() => (lista.length ? hacerTodas() : toast.error('No elegiste ninguna factura'))}
         >
-          Son Facturas C reales por {totales}, con la fecha de hoy. Una vez hechas no se borran: si alguna está mal, se anula con una nota de crédito en ARCA.
+          <div className="flex max-h-[45vh] flex-col overflow-y-auto">
+            {posibles.map((f) => (
+              <label key={f.clave} className="flex cursor-pointer items-center gap-3 border-b border-line py-2 text-[0.9375rem] text-ink last:border-b-0">
+                <input type="checkbox" className="size-5 shrink-0" checked={!afuera.has(f.clave)} onChange={() => cambiar(f.clave)} />
+                <span className="min-w-0 flex-1 truncate">{f.paciente.nombre}{f.paciente.apellido ? ` ${f.paciente.apellido}` : ''}</span>
+                <span className="font-semibold whitespace-nowrap tabular">{formatMonto(f.monto, f.moneda)}</span>
+              </label>
+            ))}
+          </div>
+          <p className="mt-3 mb-0">
+            {lista.length ? `Son Facturas C reales por ${totales}, con la fecha de hoy.` : 'Tildá las que quieras facturar.'} Una vez hechas no se borran: si alguna está mal, se anula con una nota de crédito en ARCA.
+          </p>
         </Confirmar>
       )}
     </Tarjeta>

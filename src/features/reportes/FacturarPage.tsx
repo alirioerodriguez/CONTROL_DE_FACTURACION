@@ -1,8 +1,9 @@
 import { useMemo, useRef, useState } from 'react'
 import { BotonFacturaArca, FacturarTodas, FacturasHechas } from './FacturarConArca'
 import { arcaListo } from '../../lib/facturaArca'
+import { NoSeFacturan } from './NoSeFacturan'
 import { useNavigate } from 'react-router-dom'
-import { Check, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, ExternalLink, ListChecks, ReceiptText, Upload, X } from 'lucide-react'
+import { Ban, Check, ChevronDown, ChevronLeft, ChevronRight, Copy, Download, ExternalLink, ListChecks, ReceiptText, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Boton, Campo, EstadoError, EstadoVacio, Esqueleto, IC, Pastilla, Tarjeta, Titulo } from '../../components/ui'
 import { usePalabras } from '../../components/usePalabras'
@@ -64,11 +65,11 @@ export function FacturarPage() {
   const [meses, setMeses] = useState(3)
   const [porMes, setPorMes] = useState(() => preferencia<'mes' | 'pago'>('facturarPor', 'pago') === 'mes')
   const [guiado, setGuiado] = useState<{ facturas: Factura[]; inicio: number } | null>(null)
-  const lista = useMemo(() => pagosParaFacturar(pagos, pacientes, sumarMeses(actual, -(meses - 1))), [pagos, pacientes, actual, meses])
+  const lista = useMemo(() => pagosParaFacturar(pagos, pacientes, sumarMeses(actual, -(meses - 1)), !!perfil?.no_facturar_usd), [pagos, pacientes, actual, meses, perfil?.no_facturar_usd])
   const facturasPorMes = useMemo(() => lista.map((m) => ({ ...m, facturas: armarFacturas(m.items, porMes, sesiones) })), [lista, porMes, sesiones])
   const facturas = useMemo(() => facturasPorMes.flatMap((m) => m.facturas), [facturasPorMes])
   // Los archivos de ARCA y de Facturitas se cruzan con todo lo pendiente del último año, no solo con lo que se ve.
-  const pendientesAnio = useMemo(() => pagosParaFacturar(pagos, pacientes, sumarMeses(actual, -11)).flatMap((m) => m.items), [pagos, pacientes, actual])
+  const pendientesAnio = useMemo(() => pagosParaFacturar(pagos, pacientes, sumarMeses(actual, -11), !!perfil?.no_facturar_usd).flatMap((m) => m.items), [pagos, pacientes, actual, perfil?.no_facturar_usd])
   // El último número cargado, para proponer el siguiente.
   const ultimoNumero = useMemo(
     () =>
@@ -183,6 +184,8 @@ export function FacturarPage() {
         ))
       )}
 
+      <NoSeFacturan desde={sumarMeses(actual, -(meses - 1))} />
+
       <FacturasHechas perfil={perfil} />
 
       <p className="m-0 px-1 text-sm leading-normal text-ink2">
@@ -281,6 +284,21 @@ function ItemFactura({ factura, pasoAPaso, conArca }: { factura: Factura; pasoAP
                 Copiar todo
               </Boton>
               {conArca && <BotonFacturaArca factura={factura} />}
+              <Boton
+                variante="texto"
+                icono={Ban}
+                cargando={guardar.isPending}
+                onClick={async () => {
+                  try {
+                    await guardar.mutateAsync(factura.pagos.map((p) => ({ tipo: 'actualizar' as const, tabla: 'payments' as const, id: p.id, cambios: { no_facturar: true } })))
+                    toast.success('Listo: no se factura. Lo podés deshacer abajo, en «No se facturan».')
+                  } catch (e) {
+                    toast.error(`No se pudo guardar: ${mensajeError(e)}`)
+                  }
+                }}
+              >
+                No facturar
+              </Boton>
               <Boton variante={conArca ? 'borde' : 'primario'} icono={Check} onClick={() => setMarcando(true)}>
                 Ya la hice
               </Boton>

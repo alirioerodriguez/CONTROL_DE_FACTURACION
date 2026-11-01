@@ -1065,6 +1065,12 @@ create policy "facturas propias" on public.facturas_arca for select to authentic
 revoke insert, update, delete on public.facturas_arca from anon, authenticated;
 
 alter table public.payments add column if not exists cae text;
+-- Lo que la profesional decide NO facturar: un paciente entero o un pago suelto. No aparece en «Para facturar»,
+-- no se factura solo y la función se niega a facturarlo.
+alter table public.patients add column if not exists no_facturar boolean not null default false;
+alter table public.payments add column if not exists no_facturar boolean not null default false;
+-- true: ningún cobro en dólares se factura (ni aparece en «Para facturar»).
+alter table public.profiles add column if not exists no_facturar_usd boolean not null default false;
 alter table public.payments add column if not exists factura_id uuid references public.facturas_arca (id) on delete set null;
 
 -- Ticket de acceso de honorapp a ARCA (dura 12 horas). Solo lo usa la función; nadie más lo ve.
