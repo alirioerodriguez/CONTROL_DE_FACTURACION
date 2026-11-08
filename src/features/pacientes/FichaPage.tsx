@@ -9,6 +9,7 @@ import {
 import {
   ETIQUETA_MEDIO, nombreCompleto, useDatos, useGuardar, type Paciente, type Pago, type Sesion,
 } from '../../lib/datos'
+import { faltasEnElAnio } from '../../lib/agendaHoy'
 import { capitalizar, etiquetaDia, formatPeriodo, hoyAR, montoParaInput, nombreMes, NOMBRES_DIAS, numeroWhatsApp, periodoDe, plural, sumarMeses } from '../../lib/formato'
 import { verMonto } from '../../lib/discreto'
 import { cobrables, estadoVisible } from '../../lib/estados'
@@ -101,6 +102,7 @@ export function FichaPage() {
     },
     { k: 'Frecuencia', v: paciente.frecuencia || '—' },
     { k: pal.Sesiones, v: String(calculos.ses.length) },
+    { k: `Faltas en ${hoyAR().slice(0, 4)}`, v: String(faltasEnElAnio(calculos.ses, Number(hoyAR().slice(0, 4))).get(paciente.id) ?? 0) },
   ]
   if (pal.porHora) datos.splice(datos.findIndex((d) => d.k === 'Moneda') + 1, 0,{ k: 'Duración', v: `${montoParaInput(paciente.horas_por_sesion)} h por ${pal.sesion}` })
   if (paciente.notas_admin) datos.push({ k: 'Notas', v: paciente.notas_admin })

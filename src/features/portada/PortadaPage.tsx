@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Banknote, CalendarDays, Check, FileSpreadsheet, MessageCircle, ShieldCheck, Users, type LucideIcon } from 'lucide-react'
 import { Logo } from '../../components/Layout'
 import { IC } from '../../components/ui'
+import { formatMonto, parseMontoAR } from '../../lib/formato'
 
 // Textos: docs/investigacion/presentacion.md
 
@@ -77,6 +79,8 @@ export function PortadaPage() {
           </div>
           <Muestra />
         </section>
+
+        <Simulador />
 
         <section className="flex flex-col gap-6">
           <h2 className="m-0 font-serif text-[clamp(2rem,4vw,2.75rem)] leading-tight font-normal">Qué hace por vos</h2>
@@ -167,5 +171,59 @@ function Muestra() {
         ))}
       </div>
     </div>
+  )
+}
+
+/**
+ * Cuenta de ejemplo con los números de quien visita: cuánto factura en el mes y cuánto le quedaría por cobrar
+ * si una parte de los pacientes paga tarde. Solo multiplica lo que se escribe; no inventa ahorros.
+ */
+function Simulador() {
+  const [pacientes, setPacientes] = useState('12')
+  const [valor, setValor] = useState('25.000')
+  const [tarde, setTarde] = useState(25)
+  const n = Math.max(0, Math.min(500, Math.round(parseMontoAR(pacientes) ?? 0)))
+  const precio = Math.max(0, parseMontoAR(valor) ?? 0)
+  const mes = n * 4 * precio
+  const deben = Math.round((mes * tarde) / 100)
+  const campo =
+    'h-[3.25rem] w-full rounded-[0.875rem] border border-line bg-fondo px-4 text-[1.0625rem] outline-none focus:border-acc focus:shadow-[0_0_0_3px_var(--acc-soft)]'
+
+  return (
+    <section className="grid gap-6 rounded-[1.75rem] border border-line bg-surface p-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:p-10">
+      <div className="flex flex-col gap-4">
+        <h2 className="m-0 font-serif text-[clamp(2rem,4vw,2.75rem)] leading-tight font-normal">¿Cuánto te deben este mes?</h2>
+        <p className="m-0 text-[0.9375rem] text-ink2">Una cuenta rápida con tus números. No se guarda nada.</p>
+        <label className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
+          Pacientes por semana
+          <input className={campo} inputMode="numeric" value={pacientes} onChange={(e) => setPacientes(e.target.value)} />
+        </label>
+        <label className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
+          Valor de cada sesión ($)
+          <input className={campo} inputMode="decimal" value={valor} onChange={(e) => setValor(e.target.value)} />
+        </label>
+        <label className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
+          Pacientes que pagan tarde: {tarde} %
+          <input type="range" min={0} max={100} step={5} value={tarde} onChange={(e) => setTarde(Number(e.target.value))} className="accent-[var(--acc)]" />
+        </label>
+      </div>
+      <div className="flex flex-col justify-center gap-5 rounded-[1.375rem] bg-acc-soft p-6" aria-live="polite">
+        <div>
+          <div className="text-sm font-semibold text-ink2">En el mes atendés por</div>
+          <div className="num text-[2.25rem] leading-tight">{formatMonto(mes, 'ARS')}</div>
+          <div className="text-sm text-ink2">{n * 4} sesiones (4 semanas)</div>
+        </div>
+        <div>
+          <div className="text-sm font-semibold text-ink2">Si nadie te recuerda nada, quedarían por cobrar</div>
+          <div className="num text-[2.25rem] leading-tight text-bad">{formatMonto(deben, 'ARS')}</div>
+        </div>
+        <div className="flex items-start gap-3 rounded-2xl bg-surface p-4">
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-acc text-sm font-bold text-on-acc">0 %</span>
+          <p className="m-0 text-[0.9375rem] leading-snug">
+            <strong>0 % datos clínicos.</strong> honorapp guarda solo lo de los cobros: nombre, teléfono, sesiones y pagos. Nada de lo que pasa en el consultorio.
+          </p>
+        </div>
+      </div>
+    </section>
   )
 }

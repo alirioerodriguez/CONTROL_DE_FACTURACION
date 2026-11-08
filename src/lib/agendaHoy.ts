@@ -60,3 +60,62 @@ export function faltasEnElAnio(sesiones: Pick<Sesion, 'patient_id' | 'fecha' | '
   }
   return conteo
 }
+
+// ---------------------------------------------------------------------
+// Pantalla «Agenda de hoy»: qué reconfirmar, qué huecos se liberaron y lo que se guarda en el teléfono.
+// ---------------------------------------------------------------------
+
+type ConPaciente = Pick<Sesion, 'id' | 'patient_id' | 'fecha' | 'hora' | 'estado'>
+
+const porHora = (a: ConPaciente, b: ConPaciente) => (a.hora ?? '99:99').localeCompare(b.hora ?? '99:99')
+
+/** Sesiones de mañana para reconfirmar: las que no están canceladas, en orden de hora. */
+export function paraReconfirmar<T extends ConPaciente>(sesiones: T[], manana: string): T[] {
+  return sesiones.filter((s) => s.fecha === manana && s.estado !== 'cancelada').sort(porHora)
+}
+
+/** Huecos liberados: sesiones canceladas con hora, de hoy a 7 días, para ofrecérselas a la lista de espera. */
+export function huecosLiberados<T extends ConPaciente>(sesiones: T[], hoy: string, hasta: string): T[] {
+  return sesiones
+    .filter((s) => s.estado === 'cancelada' && s.hora && s.fecha >= hoy && s.fecha <= hasta)
+    .sort((a, b) => a.fecha.localeCompare(b.fecha) || porHora(a, b))
+}
+
+// La lista de espera y las reconfirmaciones quedan en este dispositivo (no van a la base): son datos de
+// personas que todavía no son pacientes y marcas que solo sirven por un día.
+type Almacen = Pick<Storage, 'getItem' | 'setItem'>
+const CLAVE_ESPERA = 'honorapp_espera_v1'
+const CLAVE_CONFIRMADAS = 'honorapp_confirmadas_v1'
+
+function leerJson<T>(st: Almacen, clave: string, vacio: T): T {
+  try {
+    const v = JSON.parse(st.getItem(clave) ?? 'null')
+    return v && typeof v === 'object' ? (v as T) : vacio
+  } catch {
+    return vacio
+  }
+}
+
+export function leerEspera(userId: string, st: Almacen): EnEspera[] {
+  const todo = leerJson<Record<string, EnEspera[]>>(st, CLAVE_ESPERA, {})
+  return Array.isArray(todo[userId]) ? todo[userId] : []
+}
+
+export function guardarEspera(userId: string, lista: EnEspera[], st: Almacen): void {
+  const todo = leerJson<Record<string, EnEspera[]>>(st, CLAVE_ESPERA, {})
+  st.setItem(CLAVE_ESPERA, JSON.stringify({ ...todo, [userId]: lista }))
+}
+
+/** Ids de sesión marcadas como confirmadas. Se guardan con su fecha y se olvidan solas las de días pasados. */
+export function leerConfirmadas(userId: string, hoy: string, st: Almacen): Set<string> {
+  const todo = leerJson<Record<string, Record<string, string>>>(st, CLAVE_CONFIRMADAS, {})
+  return new Set(Object.entries(todo[userId] ?? {}).filter(([, fecha]) => fecha >= hoy).map(([id]) => id))
+}
+
+export function marcarConfirmada(userId: string, sesionId: string, fecha: string, confirmada: boolean, hoy: string, st: Almacen): void {
+  const todo = leerJson<Record<string, Record<string, string>>>(st, CLAVE_CONFIRMADAS, {})
+  const mias = Object.fromEntries(Object.entries(todo[userId] ?? {}).filter(([, f]) => f >= hoy))
+  if (confirmada) mias[sesionId] = fecha
+  else delete mias[sesionId]
+  st.setItem(CLAVE_CONFIRMADAS, JSON.stringify({ ...todo, [userId]: mias }))
+}
