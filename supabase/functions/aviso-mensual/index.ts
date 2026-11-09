@@ -23,7 +23,11 @@ Deno.serve(async () => {
   const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
   const { data: filas, error } = await db.rpc('resumen_aviso_mensual', { p_hoy: hoy })
-  if (error) return json({ ok: false, mensaje: error.message }, 500)
+  // La función es pública: el detalle de los errores (que puede traer mails) va al registro de Supabase, no a la respuesta.
+  if (error) {
+    console.error(error.message)
+    return json({ ok: false, mensaje: 'No se pudo armar el resumen.' }, 500)
+  }
   const { data: yaEnviados } = await db.from('avisos_enviados').select('user_id').eq('periodo', periodo)
   const enviados = new Set((yaEnviados ?? []).map((f) => f.user_id))
 
@@ -48,5 +52,6 @@ Deno.serve(async () => {
       errores.push(e instanceof Error ? e.message : String(e))
     }
   }
-  return json({ ok: errores.length === 0, mandados, errores: errores.slice(0, 3) }, errores.length ? 500 : 200)
+  errores.slice(0, 3).forEach((e) => console.error(e))
+  return json({ ok: errores.length === 0, mandados, errores: errores.length }, errores.length ? 500 : 200)
 })

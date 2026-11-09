@@ -1,7 +1,28 @@
 # Pruebas de seguridad
 
-Última revisión: 17/10/2026, sobre la app publicada (control-de-facturacion-eight.vercel.app) y el proyecto de Supabase.
+Última revisión: 09/11/2026 (la primera fue el 17/10/2026), sobre la app publicada (control-de-facturacion-eight.vercel.app) y el proyecto de Supabase.
 Se probó como lo haría un atacante: sin cuenta (solo con la clave pública que trae la página) y con una cuenta ajena.
+
+## Revisión del 09/11/2026
+
+Se repasó todo lo que se sumó desde octubre (doble factor, Modo Estudio Contable, enlace con Mis Cuentas, agenda de hoy):
+
+| Prueba | Resultado |
+|---|---|
+| `aislamiento.sql` sobre la base real (incluye doble factor y Estudio Contable) | ✅ «Aislamiento OK», sin restos (las cuentas de prueba se deshacen). |
+| Reglas de la base: RLS en las 11 tablas, `mfa_requerido` es restrictiva (se suma a las demás, no las reemplaza) | ✅ |
+| Funciones con permisos elevados (importar, deshacer, eliminar cuenta, estudio_*) | ✅ Todas toman la identidad de la sesión y piden el segundo paso si está activado. Los avisos de Supabase sobre ellas son intencionales. |
+| Enlace con Mis Cuentas | ✅ Pide sesión, usa solo el mail verificado y lee los pagos con la sesión de la usuaria. |
+| Claves secretas en el sitio publicado | ✅ No hay. Encabezados de seguridad y HSTS activos. |
+| `npm audit` (dependencias de la app) | ✅ 0 fallas. |
+
+Se corrigió:
+1. **`aviso-mensual`** devolvía el texto de los errores del correo a quien la llamara (es pública los días 1 a 3, y ese texto puede traer el mail de una usuaria). Ahora los errores van solo al registro de Supabase.
+2. **`actualizar-monotributo`** solo frenaba las llamadas repetidas después de una revisión exitosa: con ARCA caída, cada llamada pedía la página de nuevo y sumaba una fila de error. Ahora, si falló, espera 10 minutos.
+
+**Falta publicar** esas dos funciones en Supabase (Edge Functions → desplegar), con `verify_jwt` apagado como hasta ahora.
+
+Detalle menor que queda: `payments.session_id` apunta a `sessions(id)` sin el dueño. Una cuenta podría enlazar su pago a una sesión ajena solo si conociera su código (UUID aleatorio) y no vería nada de ella; no vale la pena cambiar el esquema por eso.
 
 ## Qué se probó y resultado
 
