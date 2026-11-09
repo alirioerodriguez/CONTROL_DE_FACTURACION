@@ -182,6 +182,10 @@ begin
     raise exception 'FALLA: A pudo duplicar un pago con la misma idempotency_key';
   exception when unique_violation then null;
   end;
+
+  -- Se sacan las filas de esta prueba: lo que sigue cuenta exactamente una sesión y un pago de A.
+  delete from public.payments where idempotency_key = '00000000-0000-4000-f000-000000000002';
+  delete from public.sessions where idempotency_key = '00000000-0000-4000-f000-000000000001';
 end $$;
 
 -- ===================== Doble factor =====================
