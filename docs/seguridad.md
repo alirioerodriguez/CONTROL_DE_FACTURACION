@@ -10,6 +10,7 @@ Se repasó todo lo que se sumó desde octubre (doble factor, Modo Estudio Contab
 | Prueba | Resultado |
 |---|---|
 | `aislamiento.sql` sobre la base real (incluye doble factor y Estudio Contable) | ✅ «Aislamiento OK», sin restos (las cuentas de prueba se deshacen). |
+| **Con una cuenta real** (sesión de Alirio, por la API publicada) | ✅ 0 filas ajenas en 8 tablas, cambiar pacientes ajenos: 0 afectados, crear uno a nombre de otra cuenta: rechazado (403), leer como contadora a una profesional sin vínculo: rechazado (403), resultados de pruebas sin ser admin: rechazado, darse permisos de admin: sigue en `false`. Sin sesión: no devuelve nada. |
 | Reglas de la base: RLS en las 11 tablas, `mfa_requerido` es restrictiva (se suma a las demás, no las reemplaza) | ✅ |
 | Funciones con permisos elevados (importar, deshacer, eliminar cuenta, estudio_*) | ✅ Todas toman la identidad de la sesión y piden el segundo paso si está activado. Los avisos de Supabase sobre ellas son intencionales. |
 | Enlace con Mis Cuentas | ✅ Pide sesión, usa solo el mail verificado y lee los pagos con la sesión de la usuaria. |
