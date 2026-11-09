@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronRight, ClipboardList, Download, Eye, FileSpreadsheet, LogOut, Moon, Sparkles, Trash2, Upload } from 'lucide-react'
+import { Accessibility, ChevronRight, ClipboardList, Download, Eye, FileSpreadsheet, LogOut, Moon, Sparkles, Trash2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { DescargarExcel } from '../../components/DescargarExcel'
 import { FotoUsuario } from '../../components/FotoUsuario'
@@ -12,14 +12,17 @@ import { verMonto } from '../../lib/discreto'
 import { mensajeError, supabase } from '../../lib/supabase'
 import { cuilValido, dniValido, formatCuil, soloDigitos } from '../../lib/documentos'
 import {
-  cambiarColoresDaltonismo, cambiarLetra, cambiarTema, coloresDaltonismo, letraActual, TAMANOS_LETRA, temaActual, type Tema,
+  cambiarColoresDaltonismo, cambiarLetra, cambiarModoPasillo, cambiarTema, coloresDaltonismo, letraActual, modoPasilloActual,
+  TAMANOS_LETRA, temaActual, type Tema,
 } from '../../lib/tema'
+import { PAISES, terminosPais, type Pais } from '../../lib/pais'
 import { useAuth } from '../auth/AuthProvider'
 import { CamposProfesion } from '../tutorial/Bienvenida'
 import { AumentoAjustes } from './AumentoAjustes'
 import { MonotributoAjustes } from './MonotributoAjustes'
 import { CalendarioAjustes } from './CalendarioAjustes'
 import { OpcionesAjustes } from './OpcionesAjustes'
+import { PlanAjustes } from './PlanAjustes'
 import { OtraApp } from './OtraApp'
 import { DondeLaVeo } from './DondeLaVeo'
 import { DobleFactor } from './DobleFactor'
@@ -43,8 +46,10 @@ export function AjustesPage() {
   const [dni, setDni] = useState('')
   const [cuit, setCuit] = useState('')
   const [mailContadora, setMailContadora] = useState('')
+  const [pais, setPais] = useState<Pais>('AR')
   const [tema, setTema] = useState<Tema>(temaActual())
   const [daltonismo, setDaltonismo] = useState(coloresDaltonismo())
+  const [pasillo, setPasillo] = useState(modoPasilloActual())
   const [profesion, setProfesion] = useState('')
   const [otra, setOtra] = useState('')
   const [termino, setTermino] = useState<Termino>('sesion')
@@ -78,6 +83,11 @@ export function AjustesPage() {
     setDni(soloDigitos(perfil.data.dni))
     setCuit(formatCuil(perfil.data.cuit))
     setMailContadora(perfil.data.contadora_email ?? '')
+    setPais(perfil.data.pais ?? 'AR')
+    if (typeof perfil.data.modo_pasillo === 'boolean') {
+      cambiarModoPasillo(perfil.data.modo_pasillo)
+      setPasillo(perfil.data.modo_pasillo)
+    }
     cargarProfesion()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [perfil.data])
@@ -87,19 +97,20 @@ export function AjustesPage() {
 
   // Vocabulario guardado (la tarjeta de profesión puede tener cambios sin guardar).
   const palGuardado = palabras(perfil.data?.termino, perfil.data?.modo_cobro)
+  const tp = terminosPais(pais)
   const conEstandar = pacientes.filter((p) => p.tipo_tarifa === 'estandar').length
 
   async function guardarCobros() {
     const mail = mailContadora.trim()
-    if (mail && !/^[^s@]+@[^s@]+.[^s@]+$/.test(mail)) {
+    if (mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) {
       toast.error('Revisá el mail de tu contadora: tiene que ser como nombre@ejemplo.com')
       return
     }
-    if (dni && !dniValido(dni)) {
+    if (pais === 'AR' && dni && !dniValido(dni)) {
       toast.error('Revisá tu DNI: tiene que tener 7 u 8 números.')
       return
     }
-    if (cuit && !cuilValido(cuit)) {
+    if (pais === 'AR' && cuit && !cuilValido(cuit)) {
       toast.error('Revisá tu CUIT: son 11 números y el último es el dígito verificador.')
       return
     }
@@ -116,13 +127,14 @@ export function AjustesPage() {
           id: perfil.data!.id,
           cambios: {
             nombre: nombre.trim() || null,
+            pais,
             tarifa_estandar: tarifa,
             moneda_default: moneda,
             plantilla_whatsapp: plantilla.trim() || PLANTILLA_WHATSAPP_DEFECTO,
             datos_pago: datosPago.trim() || null,
             matricula: matricula.trim() || null,
             dni: dni || null,
-            cuit: cuit ? formatCuil(cuit) : null,
+            cuit: cuit ? (pais === 'AR' ? formatCuil(cuit) : cuit.trim()) : null,
             contadora_email: mail || null,
           },
         },
@@ -159,6 +171,24 @@ export function AjustesPage() {
     cambiarColoresDaltonismo(nuevo)
     setDaltonismo(nuevo)
     toast.success(nuevo ? 'Listo: colores para daltonismo (azul y naranja)' : 'Listo: volvieron los colores de siempre')
+  }
+
+  async function alternarPasillo() {
+    const nuevo = !pasillo
+    cambiarModoPasillo(nuevo)
+    setPasillo(nuevo)
+    try {
+      if (perfil.data) {
+        await guardar.mutateAsync([{ tipo: 'actualizar', tabla: 'profiles', id: perfil.data.id, cambios: { modo_pasillo: nuevo } }])
+      }
+      toast.success(
+        nuevo
+          ? 'Modo pasillo activado: letra de 18 px, botones grandes y 3 acciones por paciente'
+          : 'Modo pasillo desactivado',
+      )
+    } catch (e) {
+      toast.error(`Se activó en este dispositivo, pero no se pudo guardar en tu cuenta: ${mensajeError(e)}`)
+    }
   }
 
   function alternarTema() {
@@ -264,6 +294,10 @@ export function AjustesPage() {
           </span>
         </label>
         <div className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
+          País
+          <Segmentado opciones={PAISES} valor={pais} onCambio={setPais} className="max-w-[22rem]" />
+        </div>
+        <div className="flex flex-col gap-2 text-[0.9375rem] font-semibold">
           Moneda
           <Segmentado
             opciones={[
@@ -287,29 +321,31 @@ export function AjustesPage() {
         />
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Campo
-            etiqueta="Tu CUIT"
+            etiqueta={`Tu ${tp.docFiscal}`}
             opcional
             id="cuit"
             inputMode="numeric"
             autoComplete="off"
-            maxLength={13}
+            maxLength={16}
             value={cuit}
-            onChange={(e) => setCuit(formatCuil(e.target.value))}
-            placeholder="XX-XXXXXXXX-X"
+            onChange={(e) => setCuit(pais === 'AR' ? formatCuil(e.target.value) : e.target.value)}
+            placeholder={pais === 'AR' ? 'XX-XXXXXXXX-X' : tp.docFiscal}
           />
           <Campo
-            etiqueta="Tu DNI"
+            etiqueta={`Tu ${tp.docPersonal}`}
             opcional
             id="dni"
             inputMode="numeric"
             autoComplete="off"
-            maxLength={10}
+            maxLength={12}
             value={dni}
-            onChange={(e) => setDni(soloDigitos(e.target.value).slice(0, 8))}
+            onChange={(e) => setDni(soloDigitos(e.target.value).slice(0, pais === 'AR' ? 8 : 11))}
             placeholder="Solo números"
           />
         </div>
-        <span className="-mt-2 text-sm font-normal text-ink2">Tu CUIT y DNI van en el reporte para tu contadora y en los recibos.</span>
+        <span className="-mt-2 text-sm font-normal text-ink2">
+          Tu {tp.docFiscal} y {tp.docPersonal} van en el reporte para tu contadora y en los recibos ({tp.organismo} · {tp.regimen}).
+        </span>
         <Campo
           etiqueta="Datos para el pago"
           opcional
@@ -317,7 +353,7 @@ export function AjustesPage() {
           value={datosPago}
           maxLength={300}
           onChange={(e) => setDatosPago(e.target.value)}
-          placeholder="Alias, CBU o link de Mercado Pago"
+          placeholder={tp.datosPagoEjemplo}
         />
         <Campo
           etiqueta="Mail de tu contadora"
@@ -354,7 +390,7 @@ export function AjustesPage() {
 
       <DobleFactor />
 
-      {perfil.data && <MonotributoAjustes perfil={perfil.data} />}
+      {perfil.data && tp.usaTopesMonotributo && <MonotributoAjustes perfil={perfil.data} />}
 
       <h2 className="m-0 mt-5 px-1 text-sm font-bold tracking-wide text-ink2 uppercase">Funciones y conexiones</h2>
       {perfil.data && <OpcionesAjustes perfil={perfil.data} />}
@@ -432,6 +468,30 @@ export function AjustesPage() {
             <span className="size-[1.625rem] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,.25)]" />
           </span>
         </button>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={pasillo}
+          onClick={() => void alternarPasillo()}
+          className="flex min-h-16 w-full items-center justify-between gap-3 border-t border-line bg-transparent px-0 py-3 text-left text-base font-semibold"
+        >
+          <span className="flex min-w-0 items-center gap-3">
+            <Accessibility {...IC} className="shrink-0" />
+            <span>
+              Modo pasillo
+              <span className="block text-sm font-normal text-ink2">
+                Letra de 18 px, botones de 56 px y solo 3 acciones por paciente: «Vino hoy», «Pagó» y «Resumen».
+              </span>
+            </span>
+          </span>
+          <span
+            className={`flex h-8 w-[3.25rem] shrink-0 rounded-full p-[0.1875rem] transition-colors ${
+              pasillo ? 'justify-end bg-acc' : 'justify-start bg-line'
+            }`}
+          >
+            <span className="size-[1.625rem] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,.25)]" />
+          </span>
+        </button>
       </Tarjeta>
 
       <h2 className="m-0 mt-5 px-1 text-sm font-bold tracking-wide text-ink2 uppercase">Tus datos y ayuda</h2>
@@ -487,6 +547,7 @@ export function AjustesPage() {
       </Tarjeta>
 
       <h2 className="m-0 mt-5 px-1 text-sm font-bold tracking-wide text-ink2 uppercase">Cuenta</h2>
+      {perfil.data && <PlanAjustes pacientes={pacientes} perfil={perfil.data} />}
       <Tarjeta className="px-[1.375rem] py-2">
         <div className="flex min-h-16 flex-wrap items-center justify-between gap-3 text-base">
           <span className="text-ink2">Cuenta</span>

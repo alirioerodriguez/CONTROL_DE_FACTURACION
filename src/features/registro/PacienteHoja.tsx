@@ -9,8 +9,9 @@ import { verMonto } from '../../lib/discreto'
 import {
   cuilCoincideConDni, cuilValido, dniValido, formatCuil, formatDni, pacienteConMismoDocumento, soloDigitos, sugerirCuil,
 } from '../../lib/documentos'
+import { puedeGuardarPacienteActivo } from '../../lib/planFreemium'
 import { mensajeError } from '../../lib/supabase'
-import { usePalabras } from '../../components/usePalabras'
+import { usePais, usePalabras } from '../../components/usePalabras'
 import { opcionesHoras } from './opciones'
 
 const DIAS: Opcion<number>[] = [
@@ -40,6 +41,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
   const guardar = useGuardar()
   const navegar = useNavigate()
   const pal = usePalabras()
+  const tp = usePais()
   const tarifaEstandar = perfil?.tarifa_estandar ?? 0
   const monedaEstandar = perfil?.moneda_default ?? 'ARS'
 
@@ -82,8 +84,16 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
     const tarifa = parseMontoAR(tarifaTxt)
     if (tipo === 'personalizada' && !(tarifa != null && tarifa > 0)) return setError(`Ingresá la tarifa ${pal.porUnidad}.`)
     if (tipo === 'abono' && !(tarifa != null && tarifa > 0)) return setError('Ingresá el monto del abono mensual.')
-    if (dni && !dniValido(dni)) return setError('El DNI tiene que tener 7 u 8 números.')
-    if (cuil && !cuilValido(cuil)) return setError('El CUIL/CUIT no es válido: revisá los 11 números (el último es el dígito verificador).')
+    if (tp.pais === 'AR' && dni && !dniValido(dni)) return setError('El DNI tiene que tener 7 u 8 números.')
+    if (tp.pais === 'AR' && cuil && !cuilValido(cuil)) return setError('El CUIL/CUIT no es válido: revisá los 11 números (el último es el dígito verificador).')
+    const controlPlan = puedeGuardarPacienteActivo({
+      plan: perfil?.plan,
+      proHasta: perfil?.pro_hasta,
+      pacientes,
+      pacienteActual: paciente,
+      activoNuevo: activo,
+    })
+    if (!controlPlan.ok) return setError(controlPlan.mensaje)
     setError('')
     const fila = {
       nombre: limpio,
@@ -187,30 +197,30 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
       />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Campo
-          etiqueta="DNI"
+          etiqueta={tp.docPersonal}
           opcional
           inputMode="numeric"
           autoComplete="off"
-          maxLength={10}
+          maxLength={12}
           value={dni}
           onChange={(e) => {
-            setDni(soloDigitos(e.target.value).slice(0, 8))
+            setDni(soloDigitos(e.target.value).slice(0, tp.pais === 'AR' ? 8 : 11))
             setError('')
           }}
           placeholder="Solo números"
         />
         <Campo
-          etiqueta="CUIL / CUIT"
+          etiqueta={tp.docPaciente}
           opcional
           inputMode="numeric"
           autoComplete="off"
-          maxLength={13}
+          maxLength={15}
           value={cuil}
           onChange={(e) => {
-            setCuil(formatCuil(e.target.value))
+            setCuil(tp.pais === 'AR' ? formatCuil(e.target.value) : e.target.value)
             setError('')
           }}
-          placeholder="XX-XXXXXXXX-X"
+          placeholder={tp.pais === 'AR' ? 'XX-XXXXXXXX-X' : tp.docPaciente}
         />
       </div>
       {dniValido(dni) && !cuil && (
@@ -247,12 +257,12 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
             </option>
           ))}
         </select>
-        <span className="text-sm font-normal text-ink2">La pide ARCA para la factura. Si no sabés, dejá «Consumidor final».</span>
+        <span className="text-sm font-normal text-ink2">La pide {tp.organismo} para el comprobante ({tp.comprobante}). Si no sabés, dejá «Consumidor final».</span>
       </label>
       {perfil?.usa_obras_sociales && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1.4fr_1fr]">
           <Campo
-            etiqueta="Obra social o prepaga"
+            etiqueta={tp.cobertura}
             opcional
             value={obraSocial}
             maxLength={80}

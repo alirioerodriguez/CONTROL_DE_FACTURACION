@@ -6,7 +6,8 @@ import { SelectorMes, useMesSeleccionado } from '../../components/SelectorMes'
 import {
   Avatar, Boton, Chip, EstadoError, Esqueleto, IC, MontoGrande, Segmentado, Tarjeta, type Tono,
 } from '../../components/ui'
-import { nombreCompleto, useDatos, type Paciente } from '../../lib/datos'
+import { useEnLinea } from '../../components/SinConexion'
+import { nombreCompleto, useBorradores, useDatos, type Paciente } from '../../lib/datos'
 import { capitalizar, completarPlantilla, etiquetaDia, fechaLarga, formatCompacto, formatMonto, hoyAR, mesCorto, nombreMes, numeroWhatsApp, periodoDe, plural, type Moneda } from '../../lib/formato'
 import { cambiarMontosOcultos, montosOcultos, useMontosOcultos, verMonto } from '../../lib/discreto'
 import { resumenMes, type SesionImpaga } from '../../lib/inicio'
@@ -21,7 +22,9 @@ const CHIP: Record<SesionImpaga['estado'], { tono: Tono; texto: string }> = {
 }
 
 export function InicioPage() {
-  const { perfil, pacientes, sesiones, pagos, cargando, error, reintentar } = useDatos()
+  const { perfil, pacientes, sesiones, pagos, cargando, error, datosHora, reintentar } = useDatos()
+  const borradores = useBorradores(perfil?.id)
+  const enLinea = useEnLinea()
   const { abrir } = useRegistro()
   const navegar = useNavigate()
   const [periodo, setPeriodo] = useMesSeleccionado()
@@ -65,7 +68,10 @@ export function InicioPage() {
     <section className="flex flex-col gap-7">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="mb-1.5 text-[0.9375rem] text-ink2">{fechaLarga(hoyAR())}</div>
+          <div className="mb-1.5 text-[0.9375rem] text-ink2">
+            {fechaLarga(hoyAR())}
+            {!enLinea && datosHora ? ` · Datos de las ${datosHora}` : ''}
+          </div>
           <h1 className="m-0 font-serif text-[clamp(2.375rem,5cqi,3.25rem)] leading-none font-normal">
             Hola{primerNombre ? `, ${primerNombre}` : ''}
           </h1>
@@ -129,6 +135,27 @@ export function InicioPage() {
           <div className="text-sm text-ink2">de {r.pacientesActivos} en total</div>
         </div>
       </div>
+
+      {borradores.length > 0 && (
+        <Tarjeta className="flex flex-col gap-2 p-4">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-base font-semibold">Borradores sin señal</span>
+            <Chip tono="parcial">Pendiente de enviar</Chip>
+          </div>
+          <div className="text-sm text-ink2">Se mandan solos apenas vuelva internet, sin duplicarse.</div>
+          {borradores.map((b) => {
+            const pac = porId.get(b.pacienteId)
+            return (
+              <div key={b.clave} className="flex items-center justify-between gap-3 border-t border-line pt-2 text-[0.9375rem]">
+                <span className="truncate font-semibold">
+                  {b.tipo === 'pago' ? 'Pago' : pal.Sesion} · {pac ? nombreCompleto(pac) : 'Paciente'} ({etiquetaDia(b.fecha)})
+                </span>
+                <span className="font-semibold whitespace-nowrap tabular">{verMonto(b.monto ?? 0, b.moneda)}</span>
+              </div>
+            )
+          })}
+        </Tarjeta>
+      )}
 
       <div data-tour="monotributo">{perfil && <TarjetaMonotributo perfil={perfil} pagos={pagos} />}</div>
 

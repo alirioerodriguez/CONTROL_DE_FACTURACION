@@ -1,11 +1,9 @@
-// Cola de borradores para cuando no hay señal (consultorios en planta baja). Pieza lista para el modo sin
-// conexión que hoy no existe (la app avisa y no deja cargar): todavía no está conectada a ninguna pantalla.
-//
-// Cada borrador lleva un `clave` (UUID creado en el teléfono). Si la conexión va y viene o se toca «Sincronizar»
-// dos veces, el servidor tiene que rechazar la segunda vez por clave repetida: así un pago nunca se duplica.
-// Para eso falta en supabase/schema.sql una columna `idempotency_key uuid` con índice único por usuario en
-// sessions y payments (y correr supabase/tests/aislamiento.sql después).
-import type { Moneda } from './formato'
+// Cola de borradores y caché de última lectura para cuando no hay señal (consultorios en planta baja).
+// Cada borrador lleva un `clave` (UUID creado en el teléfono) que viaja como `id` e `idempotency_key` a
+// sessions y payments: si la conexión va y viene o se sincroniza dos veces, la base rechaza el duplicado.
+import { ZONA_AR, type Moneda } from './formato'
+import type { EstadoGuardado } from './estados'
+import type { Comprobante, Medio, Pagador } from './datos'
 
 export type TipoBorrador = 'sesion' | 'pago'
 
@@ -17,6 +15,18 @@ export interface Borrador {
   fecha: string
   moneda: Moneda
   monto?: number
+  // Datos opcionales de sesión
+  hora?: string | null
+  horas?: number
+  tarifa_hora?: number
+  estado?: EstadoGuardado
+  // Datos opcionales de pago
+  periodo?: string
+  medio?: Medio
+  pagador?: Pagador
+  nro_factura?: string | null
+  comprobante?: Comprobante
+  session_id?: string | null
   creado: string
   intentos: number
   ultimoError?: string
@@ -25,7 +35,18 @@ export interface Borrador {
 export type ResultadoEnvio = 'creado' | 'repetido'
 
 const CLAVE_COLA = 'honorapp_cola_v1'
+const CLAVE_CACHE = 'honorapp_cache_datos_v1'
 type Almacen = Pick<Storage, 'getItem' | 'setItem'>
+
+const oyentes = new Set<() => void>()
+function notificar() {
+  oyentes.forEach((fn) => fn())
+}
+
+export function suscribirCola(fn: () => void): () => void {
+  oyentes.add(fn)
+  return () => oyentes.delete(fn)
+}
 
 export function nuevaClave(): string {
   return crypto.randomUUID()
@@ -42,10 +63,16 @@ function leerTodo(st: Almacen): Borrador[] {
 
 function guardarDeUsuario(st: Almacen, userId: string, cola: Borrador[]) {
   const otros = leerTodo(st).filter((b) => b.userId !== userId)
-  st.setItem(CLAVE_COLA, JSON.stringify([...otros, ...cola]))
+  try {
+    st.setItem(CLAVE_COLA, JSON.stringify([...otros, ...cola]))
+  } catch {
+    // Sin espacio en el navegador.
+  }
+  notificar()
 }
 
 export function leerCola(userId: string, st: Almacen): Borrador[] {
+  if (!userId) return []
   return leerTodo(st).filter((b) => b.userId === userId)
 }
 
@@ -78,4 +105,59 @@ export async function sincronizar(userId: string, enviar: (b: Borrador) => Promi
   }
   guardarDeUsuario(st, userId, quedan)
   return { enviados, repetidos, pendientes: quedan.length }
+}
+
+// ---------------------------------------------------------------------
+// Caché local de última lectura («Datos de las 18:40») para consultar sin señal
+// ---------------------------------------------------------------------
+
+export interface SnapshotDatos<T> {
+  guardadoEn: string
+  datos: T
+}
+
+export function guardarCacheDatos<T>(userId: string, datos: T, st: Almacen, ahora = new Date()): void {
+  if (!userId) return
+  try {
+    const actual = JSON.parse(st.getItem(CLAVE_CACHE) ?? '{}') as Record<string, SnapshotDatos<T>>
+    actual[userId] = { guardadoEn: ahora.toISOString(), datos }
+    st.setItem(CLAVE_CACHE, JSON.stringify(actual))
+  } catch {
+    // Modo privado o almacenamiento lleno: se ignora.
+  }
+}
+
+export function leerCacheDatos<T>(userId: string, st: Almacen): SnapshotDatos<T> | null {
+  if (!userId) return null
+  try {
+    const actual = JSON.parse(st.getItem(CLAVE_CACHE) ?? '{}') as Record<string, SnapshotDatos<T>>
+    const snap = actual[userId]
+    return snap && typeof snap.guardadoEn === 'string' && snap.datos ? snap : null
+  } catch {
+    return null
+  }
+}
+
+/** Al cerrar sesión: la copia de pacientes, sesiones y pagos no queda en el dispositivo (puede ser una compu compartida). */
+export function borrarCacheDatos(st: Pick<Storage, 'removeItem'>): void {
+  try {
+    st.removeItem(CLAVE_CACHE)
+  } catch {
+    // Sin almacenamiento: no hay nada que borrar.
+  }
+}
+
+/** Hora '18:40' en huso horario de Argentina. */
+export function formatHoraAR(iso: string): string {
+  return new Intl.DateTimeFormat('es-AR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: ZONA_AR,
+  }).format(new Date(iso))
+}
+
+/** 'Datos de las 18:40' */
+export function etiquetaCache(iso: string): string {
+  return `Datos de las ${formatHoraAR(iso)}`
 }
