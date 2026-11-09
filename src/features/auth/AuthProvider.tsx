@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
+import { borrarCacheDatos } from '../../lib/colaOffline'
 import { supabase } from '../../lib/supabase'
 
 interface AuthState {
@@ -36,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = supabase.auth.onAuthStateChange((evento, nueva) => {
       setSession(nueva)
       if (evento === 'PASSWORD_RECOVERY') setRecuperando(true)
+      if (evento === 'SIGNED_OUT') borrarCacheDatos(localStorage)
       // Fuera del callback: dentro de onAuthStateChange no se deben esperar otras llamadas de auth.
       if (nueva) setTimeout(() => { revisarSegundoPaso() }, 0)
       else setFaltaSegundoPaso(false)

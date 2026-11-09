@@ -107,6 +107,16 @@ html[data-colores='daltonismo'][data-theme='dark'] {
     -webkit-text-size-adjust: 100%;
   }
 
+  /* Modo pasillo: sube la letra base a 18 px si estaba en tamaño normal, y asegura botones de 56 px de alto. */
+  html[data-pasillo='1']:not([data-letra='2']):not([data-letra='3']):not([data-letra='4']):not([data-letra='5']) {
+    font-size: 18px;
+  }
+
+  html[data-pasillo='1'] .boton-ui,
+  html[data-pasillo='1'] .accion-pasillo {
+    min-height: 56px;
+  }
+
   button,
   input,
   select,

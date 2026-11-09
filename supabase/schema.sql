@@ -47,6 +47,11 @@ alter table public.profiles add constraint profiles_termino_check check (termino
 do $$ begin
   alter table public.profiles add constraint profiles_modo_cobro_check check (modo_cobro in ('hora','sesion'));
 exception when duplicate_object then null; end $$;
+-- País de la profesional ('AR' Argentina, 'UY' Uruguay, 'CL' Chile) para desacoplar las etiquetas fiscales.
+alter table public.profiles add column if not exists pais text not null default 'AR';
+do $$ begin
+  alter table public.profiles add constraint profiles_pais_check check (pais in ('AR','UY','CL'));
+exception when duplicate_object then null; end $$;
 -- Matrícula profesional (opcional): aparece en el recibo para el paciente.
 alter table public.profiles add column if not exists matricula text;
 do $$ begin
@@ -163,6 +168,10 @@ do $$ begin
   alter table public.sessions add constraint sessions_estado_check check (estado in ('normal','ausente','cancelada'));
 exception when duplicate_object then null; end $$;
 
+alter table public.sessions add column if not exists idempotency_key uuid;
+create unique index if not exists sessions_user_idempotency_idx
+  on public.sessions (user_id, idempotency_key) where idempotency_key is not null;
+
 create index if not exists sessions_user_fecha_idx on public.sessions (user_id, fecha);
 create index if not exists sessions_patient_idx on public.sessions (patient_id, fecha);
 create index if not exists sessions_patient_user_idx on public.sessions (patient_id, user_id);
@@ -191,6 +200,10 @@ create table if not exists public.payments (
   constraint payments_patient_fk foreign key (patient_id, user_id)
     references public.patients (id, user_id) on delete cascade
 );
+
+alter table public.payments add column if not exists idempotency_key uuid;
+create unique index if not exists payments_user_idempotency_idx
+  on public.payments (user_id, idempotency_key) where idempotency_key is not null;
 
 create index if not exists payments_user_fecha_idx on public.payments (user_id, fecha);
 create index if not exists payments_user_periodo_idx on public.payments (user_id, periodo);
@@ -492,8 +505,18 @@ grant execute on function public.eliminar_mi_cuenta() to authenticated;
 -- las cuentas con profiles.es_admin ven todas con resultados_pruebas().
 -- ---------------------------------------------------------------------------
 alter table public.profiles add column if not exists es_admin boolean not null default false;
+-- Plan de suscripción ('gratis' por defecto para no cortar a nadie; solo lo cambia el webhook con service_role o por SQL).
+alter table public.profiles add column if not exists plan text not null default 'gratis';
+alter table public.profiles add column if not exists pro_hasta timestamptz;
+alter table public.profiles add column if not exists mp_preapproval_id text;
+do $$ begin
+  alter table public.profiles add constraint profiles_plan_check check (plan in ('gratis','pro'));
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter table public.profiles add constraint profiles_mp_preapproval_id_largo check (char_length(mp_preapproval_id) <= 120);
+exception when duplicate_object then null; end $$;
 
--- Nadie se da permisos de admin desde la app: solo se cambia por SQL (sin sesión de usuaria).
+-- Nadie se da permisos de admin ni se cambia el plan sola desde el navegador: solo se cambian por SQL o service_role.
 create or replace function public.proteger_es_admin()
 returns trigger
 language plpgsql
@@ -503,8 +526,14 @@ begin
   if auth.uid() is not null then
     if tg_op = 'INSERT' then
       new.es_admin := false;
+      new.plan := 'gratis';
+      new.pro_hasta := null;
+      new.mp_preapproval_id := null;
     else
       new.es_admin := old.es_admin;
+      new.plan := old.plan;
+      new.pro_hasta := old.pro_hasta;
+      new.mp_preapproval_id := old.mp_preapproval_id;
     end if;
   end if;
   return new;
@@ -764,9 +793,10 @@ select cron.schedule(
 );
 
 -- ---------------------------------------------------------------------------
--- Obras sociales y prepagas (opcional, se prende en Ajustes): datos del paciente y quién pagó cada pago.
+-- Obras sociales y prepagas, y Modo pasillo para mayores de 60 (opcionales, se prenden en Ajustes).
 -- ---------------------------------------------------------------------------
 alter table public.profiles add column if not exists usa_obras_sociales boolean not null default false;
+alter table public.profiles add column if not exists modo_pasillo boolean not null default false;
 alter table public.patients add column if not exists obra_social text
   check (obra_social is null or char_length(obra_social) <= 80);
 alter table public.patients add column if not exists nro_afiliado text
@@ -999,7 +1029,7 @@ begin
                'condicion_iva', p.condicion_iva, 'monotributo_categoria', p.monotributo_categoria,
                'actividad', p.actividad, 'domicilio_fiscal', p.domicilio_fiscal, 'punto_venta', p.punto_venta,
                'matricula', p.matricula, 'profesion', p.profesion, 'termino', p.termino, 'modo_cobro', p.modo_cobro,
-               'tipo_cambio_usd', p.tipo_cambio_usd, 'moneda_default', p.moneda_default)
+               'pais', p.pais, 'tipo_cambio_usd', p.tipo_cambio_usd, 'moneda_default', p.moneda_default)
         from public.profiles p where p.id = p_profesional),
     'pacientes', coalesce((
       select jsonb_agg(jsonb_build_object(

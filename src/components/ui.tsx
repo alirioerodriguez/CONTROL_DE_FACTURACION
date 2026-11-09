@@ -50,7 +50,7 @@ export function Boton({
       type="button"
       {...props}
       disabled={props.disabled || cargando}
-      className={`inline-flex max-w-full items-center justify-center gap-2 rounded-full px-5 py-1.5 text-center text-base leading-tight font-semibold presionable disabled:opacity-45 ${altura} ${VARIANTES[variante]} ${className}`}
+      className={`boton-ui inline-flex max-w-full items-center justify-center gap-2 rounded-full px-5 py-1.5 text-center text-base leading-tight font-semibold presionable disabled:opacity-45 ${altura} ${VARIANTES[variante]} ${className}`}
     >
       {cargando ? <Spinner /> : Icono && <Icono {...IC} className="shrink-0" />}
       {children}

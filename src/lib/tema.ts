@@ -45,6 +45,20 @@ export function cambiarColoresDaltonismo(prendido: boolean) {
   guardarPreferencia('colores', prendido ? 'daltonismo' : 'normal')
 }
 
+/** Modo pasillo para mayores de 60: letra base mínima de 18 px, botones de 56 px y 3 acciones por paciente. */
+export function modoPasilloActual(): boolean {
+  if (typeof document !== 'undefined' && document.documentElement.dataset.pasillo === '1') return true
+  return preferencia<string>('modo_pasillo', '0') === '1'
+}
+
+export function cambiarModoPasillo(prendido: boolean) {
+  if (typeof document !== 'undefined') {
+    if (prendido) document.documentElement.dataset.pasillo = '1'
+    else delete document.documentElement.dataset.pasillo
+  }
+  guardarPreferencia('modo_pasillo', prendido ? '1' : '0')
+}
+
 /** Lee y guarda una preferencia chica del navegador (por ej. el último medio de pago). */
 export function preferencia<T extends string>(clave: string, porDefecto: T): T {
   try {
