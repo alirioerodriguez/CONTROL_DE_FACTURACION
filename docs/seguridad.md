@@ -20,7 +20,7 @@ Se corrigió:
 1. **`aviso-mensual`** devolvía el texto de los errores del correo a quien la llamara (es pública los días 1 a 3, y ese texto puede traer el mail de una usuaria). Ahora los errores van solo al registro de Supabase.
 2. **`actualizar-monotributo`** solo frenaba las llamadas repetidas después de una revisión exitosa: con ARCA caída, cada llamada pedía la página de nuevo y sumaba una fila de error. Ahora, si falló, espera 10 minutos.
 
-**Falta publicar** esas dos funciones en Supabase (Edge Functions → desplegar), con `verify_jwt` apagado como hasta ahora.
+Las dos funciones se publicaron en Supabase el 09/11/2026 (`verify_jwt` apagado, como antes) y se probaron llamándolas.
 
 Detalle menor que queda: `payments.session_id` apunta a `sessions(id)` sin el dueño. Una cuenta podría enlazar su pago a una sesión ajena solo si conociera su código (UUID aleatorio) y no vería nada de ella; no vale la pena cambiar el esquema por eso.
 
