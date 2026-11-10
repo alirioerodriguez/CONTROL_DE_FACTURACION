@@ -124,10 +124,19 @@ begin
     if sqlerrm like 'FALLA:%' then raise; end if;
   end;
 
-  -- B no puede darse permisos de admin.
-  update public.profiles set es_admin = true where id = '00000000-0000-4000-a000-00000000000b';
+  -- B no puede darse permisos de admin ni pasarse sola a Pro desde el navegador.
+  update public.profiles
+     set es_admin = true,
+         plan = 'pro',
+         pro_hasta = now() + interval '1 year',
+         mp_preapproval_id = ' falso '
+   where id = '00000000-0000-4000-a000-00000000000b';
   if (select es_admin from public.profiles where id = '00000000-0000-4000-a000-00000000000b') then
     raise exception 'B se dio permisos de admin';
+  end if;
+  if (select plan from public.profiles where id = '00000000-0000-4000-a000-00000000000b') <> 'gratis'
+     or (select pro_hasta from public.profiles where id = '00000000-0000-4000-a000-00000000000b') is not null then
+    raise exception 'B pudo cambiarse el plan sola desde el navegador';
   end if;
 end $$;
 
@@ -154,6 +163,29 @@ begin
 
   -- A sí puede deshacer su propia importación.
   perform public.deshacer_importacion('00000000-0000-4000-c000-00000000000a');
+
+  -- idempotency_key: evita duplicados para la misma usuaria en sessions y payments.
+  insert into public.sessions (patient_id, fecha, tarifa_hora, moneda, idempotency_key)
+  values ('00000000-0000-4000-b000-00000000000a', '2026-10-10', 1000, 'ARS', '00000000-0000-4000-f000-000000000001');
+  begin
+    insert into public.sessions (patient_id, fecha, tarifa_hora, moneda, idempotency_key)
+    values ('00000000-0000-4000-b000-00000000000a', '2026-10-10', 1000, 'ARS', '00000000-0000-4000-f000-000000000001');
+    raise exception 'FALLA: A pudo duplicar una sesión con la misma idempotency_key';
+  exception when unique_violation then null;
+  end;
+
+  insert into public.payments (patient_id, fecha, periodo, monto, moneda, idempotency_key)
+  values ('00000000-0000-4000-b000-00000000000a', '2026-10-10', '2026-10-01', 1000, 'ARS', '00000000-0000-4000-f000-000000000002');
+  begin
+    insert into public.payments (patient_id, fecha, periodo, monto, moneda, idempotency_key)
+    values ('00000000-0000-4000-b000-00000000000a', '2026-10-10', '2026-10-01', 1000, 'ARS', '00000000-0000-4000-f000-000000000002');
+    raise exception 'FALLA: A pudo duplicar un pago con la misma idempotency_key';
+  exception when unique_violation then null;
+  end;
+
+  -- Se sacan las filas de esta prueba: lo que sigue cuenta exactamente una sesión y un pago de A.
+  delete from public.payments where idempotency_key = '00000000-0000-4000-f000-000000000002';
+  delete from public.sessions where idempotency_key = '00000000-0000-4000-f000-000000000001';
 end $$;
 
 -- ===================== Doble factor =====================

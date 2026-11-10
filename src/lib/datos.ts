@@ -1,12 +1,17 @@
 // Acceso a Supabase con TanStack Query. Cada usuaria trae todos sus
 // pacientes, sesiones y pagos (son pocos datos) y la app calcula el resto.
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useSyncExternalStore } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { aplicarAbono } from './abono'
+import {
+  formatHoraAR, guardarCacheDatos, leerCacheDatos, leerCola, suscribirCola,
+  type Borrador, type ResultadoEnvio,
+} from './colaOffline'
 import { CATEGORIAS, VIGENCIA_MONOTRIBUTO, type CategoriaPerfil, type CategoriaTope } from './monotributo'
 import type { EstadoGuardado } from './estados'
 import type { Moneda } from './formato'
+import type { Pais } from './pais'
 import type { ModoCobro, Termino } from './terminos'
 import { supabase } from './supabase'
 
@@ -43,6 +48,13 @@ export interface Perfil {
   aviso_mensual: boolean
   /** Trabaja con obras sociales o prepagas (función opcional). */
   usa_obras_sociales: boolean
+  /** Modo pasillo para mayores de 60: letra base de 18 px, botones de 56 px y 3 acciones por paciente. */
+  modo_pasillo?: boolean
+  /** País de la cuenta ('AR' por defecto). */
+  pais?: Pais
+  /** Plan de suscripción ('gratis' por defecto; solo se cambia desde el servidor). */
+  plan?: 'gratis' | 'pro'
+  pro_hasta?: string | null
   /** Código del link privado del calendario (null = apagado). */
   calendario_token: string | null
   /** Ve los resultados de las pruebas con usuarias. Solo se cambia por SQL. */
@@ -226,25 +238,138 @@ export function useTopesMonotributo(): { categorias: readonly CategoriaTope[]; v
   return { categorias: CATEGORIAS, vigencia: VIGENCIA_MONOTRIBUTO }
 }
 
+const CLAVE_ULTIMO_USUARIO = 'honorapp_ultimo_uid'
+
+interface DatosCache {
+  perfil: Perfil
+  pacientes: Paciente[]
+  sesiones: Sesion[]
+  pagos: Pago[]
+}
+
 export function useDatos() {
   const perfil = usePerfil()
   const pacientes = usePacientes()
   const sesiones = useSesiones()
   const pagos = usePagos()
   const consultas = [perfil, pacientes, sesiones, pagos]
+
+  const userId = useMemo(() => {
+    if (perfil.data?.id) return perfil.data.id
+    try {
+      return localStorage.getItem(CLAVE_ULTIMO_USUARIO) ?? ''
+    } catch {
+      return ''
+    }
+  }, [perfil.data?.id])
+
+  useEffect(() => {
+    if (!perfil.data || !pacientes.data || !sesiones.data || !pagos.data) return
+    try {
+      localStorage.setItem(CLAVE_ULTIMO_USUARIO, perfil.data.id)
+      guardarCacheDatos<DatosCache>(
+        perfil.data.id,
+        { perfil: perfil.data, pacientes: pacientes.data, sesiones: sesiones.data, pagos: pagos.data },
+        localStorage,
+      )
+    } catch {
+      // Ignorar si no hay almacenamiento.
+    }
+  }, [perfil.data, pacientes.data, sesiones.data, pagos.data])
+
+  const cache = useMemo(() => {
+    if (typeof localStorage === 'undefined' || !userId) return null
+    return leerCacheDatos<DatosCache>(userId, localStorage)
+    // Las consultas van en la lista a propósito: cada vez que llegan datos nuevos se relee la copia guardada.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, perfil.data, pacientes.data, sesiones.data, pagos.data])
+
+  const hayError = consultas.find((c) => c.error)?.error ?? null
+  const usandoCache = Boolean(hayError && cache)
+
+  const perfilFinal = perfil.data ?? (usandoCache ? cache!.datos.perfil : undefined)
+  const pacientesFinal = useMemo(
+    () => pacientes.data ?? (usandoCache ? cache!.datos.pacientes : []),
+    [pacientes.data, usandoCache, cache],
+  )
+  const sesionesCrudas = useMemo(
+    () => sesiones.data ?? (usandoCache ? cache!.datos.sesiones : []),
+    [sesiones.data, usandoCache, cache],
+  )
+  const pagosFinal = useMemo(
+    () => pagos.data ?? (usandoCache ? cache!.datos.pagos : []),
+    [pagos.data, usandoCache, cache],
+  )
+
   // Con abono mensual, el monto de cada sesión es su parte del abono (ver abono.ts).
-  const conAbono = useMemo(() => aplicarAbono(sesiones.data ?? [], pacientes.data ?? []), [sesiones.data, pacientes.data])
+  const conAbono = useMemo(() => aplicarAbono(sesionesCrudas, pacientesFinal), [sesionesCrudas, pacientesFinal])
+  const datosHora = cache ? formatHoraAR(cache.guardadoEn) : null
+
   return {
-    perfil: perfil.data,
-    pacientes: pacientes.data ?? [],
+    perfil: perfilFinal,
+    pacientes: pacientesFinal,
     sesiones: conAbono,
     /** Tal como están guardadas (para el Excel de backup). */
-    sesionesGuardadas: sesiones.data ?? [],
-    pagos: pagos.data ?? [],
-    cargando: consultas.some((c) => c.isPending),
-    error: consultas.find((c) => c.error)?.error ?? null,
+    sesionesGuardadas: sesionesCrudas,
+    pagos: pagosFinal,
+    cargando: consultas.some((c) => c.isPending) && !usandoCache,
+    error: usandoCache ? null : hayError,
+    /** Hora de la última lectura ('18:40'), para mostrar cuando se consulta sin señal. */
+    datosHora,
     reintentar: () => consultas.forEach((c) => c.refetch()),
   }
+}
+
+/** Borradores pendientes de enviar de la usuaria actual. */
+export function useBorradores(userId: string | undefined): Borrador[] {
+  const version = useSyncExternalStore(
+    suscribirCola,
+    () => (typeof localStorage === 'undefined' || !userId ? '[]' : JSON.stringify(leerCola(userId, localStorage))),
+    () => '[]',
+  )
+  return useMemo(() => {
+    try {
+      return JSON.parse(version) as Borrador[]
+    } catch {
+      return []
+    }
+  }, [version])
+}
+
+/** Envía un borrador a Supabase con su clave de idempotencia. Si ya existía, devuelve 'repetido'. */
+export async function enviarBorradorASupabase(b: Borrador): Promise<ResultadoEnvio> {
+  const tabla = b.tipo === 'sesion' ? 'sessions' : 'payments'
+  const fila =
+    b.tipo === 'sesion'
+      ? {
+          id: b.clave,
+          idempotency_key: b.clave,
+          patient_id: b.pacienteId,
+          fecha: b.fecha,
+          hora: b.hora ?? null,
+          horas: b.horas ?? 1,
+          tarifa_hora: b.tarifa_hora ?? b.monto ?? 0,
+          moneda: b.moneda,
+          estado: b.estado ?? 'normal',
+        }
+      : {
+          id: b.clave,
+          idempotency_key: b.clave,
+          patient_id: b.pacienteId,
+          fecha: b.fecha,
+          periodo: b.periodo ?? `${b.fecha.slice(0, 7)}-01`,
+          monto: b.monto ?? 0,
+          moneda: b.moneda,
+          medio: b.medio ?? 'transferencia',
+          pagador: b.pagador ?? 'paciente',
+          nro_factura: b.nro_factura ?? null,
+          comprobante: b.comprobante ?? (b.nro_factura ? 'factura_c' : 'sin_comprobante'),
+          session_id: b.session_id ?? null,
+        }
+  const { error } = await supabase.from(tabla).insert(fila as Record<string, unknown>)
+  if (!error) return 'creado'
+  if (error.code === '23505' || /duplicate key/i.test(error.message)) return 'repetido'
+  throw error
 }
 
 // ---------------------------------------------------------------------

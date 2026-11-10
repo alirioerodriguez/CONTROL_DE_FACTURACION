@@ -12,14 +12,17 @@ const json = (cuerpo: unknown, status = 200) =>
 Deno.serve(async () => {
   const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
-  // Si alguien la llama muchas veces seguidas, no se le pide a ARCA más de una vez por hora.
-  const { data: ultima } = await db
+  // Si alguien la llama muchas veces seguidas, no se le pide a ARCA más de una vez por hora; y si falló,
+  // se espera 10 minutos para reintentar (si no, con ARCA caída cada llamada sumaría una fila de error).
+  const { data: ultimas } = await db
     .from('monotributo_revisiones')
-    .select('fecha')
-    .eq('ok', true)
+    .select('fecha, ok')
     .gte('fecha', new Date(Date.now() - 60 * 60 * 1000).toISOString())
-    .limit(1)
-  if (ultima?.length) return json({ ok: true, omitido: 'Ya se revisó en la última hora.' })
+  if (ultimas?.some((r) => r.ok)) return json({ ok: true, omitido: 'Ya se revisó en la última hora.' })
+  const hace10 = Date.now() - 10 * 60 * 1000
+  if (ultimas?.some((r) => new Date(r.fecha).getTime() > hace10)) {
+    return json({ ok: false, omitido: 'Falló hace menos de 10 minutos; se reintenta después.' })
+  }
 
   try {
     const res = await fetch(URL_ARCA, { headers: { 'User-Agent': 'honorapp (control del tope del monotributo)' } })

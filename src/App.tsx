@@ -4,6 +4,7 @@ import { Layout } from './components/Layout'
 import { Spinner } from './components/ui'
 import { AjustesPage } from './features/ajustes/AjustesPage'
 import { RecordatoriosPage } from './features/recordatorios/RecordatoriosPage'
+import { AgendaPage } from './features/agenda/AgendaPage'
 import { FacturarPage } from './features/reportes/FacturarPage'
 import { useAuth } from './features/auth/AuthProvider'
 import { LoginPage } from './features/auth/LoginPage'
@@ -91,6 +92,7 @@ export default function App() {
           <Route path="facturar" element={<FacturarPage />} />
           <Route path="importar" element={<ImportarPage />} />
           <Route path="recordatorios" element={<RecordatoriosPage />} />
+          <Route path="agenda" element={<AgendaPage />} />
           <Route path="ajustes" element={<AjustesPage />} />
           <Route path="pruebas" element={<PruebasPage />} />
           <Route path="pruebas/resultados" element={<ResultadosPage />} />

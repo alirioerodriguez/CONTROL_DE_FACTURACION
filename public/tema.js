@@ -12,4 +12,6 @@ try {
   }
   // Colores para daltonismo (Ajustes).
   if (localStorage.getItem('colores') === 'daltonismo') document.documentElement.dataset.colores = 'daltonismo'
+  // Modo pasillo (letra mínima de 18 px y botones de 56 px).
+  if (localStorage.getItem('modo_pasillo') === '1') document.documentElement.dataset.pasillo = '1'
 } catch (e) {}

@@ -136,7 +136,8 @@ const DIAS_CORTOS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
 const DIAS_LARGOS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
 const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
 
-function diaSemana(fechaIso: string): number {
+/** 0 = domingo … 6 = sábado. */
+export function diaSemana(fechaIso: string): number {
   const [a, m, d] = fechaIso.split('-').map(Number)
   return new Date(Date.UTC(a, m - 1, d)).getUTCDay()
 }

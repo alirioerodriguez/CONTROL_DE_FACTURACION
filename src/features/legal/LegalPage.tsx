@@ -48,6 +48,10 @@ export function PrivacidadPage() {
         </li>
         <li>No guardamos historia clínica ni notas de sesión, y te pedimos que no las cargues.</li>
         <li>
+          Si nos mandás una sugerencia (Ajustes → Queremos escucharte): lo que escribas y, si lo dejás, tu mail para
+          responderte. No se manda nada de tus pacientes, sesiones ni pagos.
+        </li>
+        <li>
           En tu navegador guardamos tu sesión iniciada y tus preferencias (por ejemplo, el modo oscuro). No usamos
           cookies de publicidad ni de seguimiento.
         </li>

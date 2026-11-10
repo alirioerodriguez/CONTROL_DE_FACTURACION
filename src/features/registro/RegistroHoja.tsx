@@ -7,8 +7,9 @@ import {
   Alerta, Avatar, Boton, Campo, CampoMonto, Confirmar, Hoja, IC, Pastilla, Segmentado, type Opcion,
 } from '../../components/ui'
 import {
-  ETIQUETA_MEDIO, nombreCompleto, useDatos, useGuardar, type Medio, type Paciente, type Pagador, type Pago, type Perfil,
+  ETIQUETA_MEDIO, nombreCompleto, useDatos, useGuardar, type Comprobante, type Medio, type Paciente, type Pagador, type Pago, type Perfil,
 } from '../../lib/datos'
+import { encolar } from '../../lib/colaOffline'
 import { capitalizar, etiquetaDia, formatPeriodo, hoyAR, montoParaInput, normalizar, parseMontoAR, periodoDe, redondear2, sumarDias, sumarMeses, type Moneda } from '../../lib/formato'
 import { verMonto } from '../../lib/discreto'
 import { coincideDocumento } from '../../lib/documentos'
@@ -189,17 +190,67 @@ export function RegistroHoja({
         if (edSesion) {
           await guardar.mutateAsync([{ tipo: 'actualizar', tabla: 'sessions', id: edSesion.id, cambios: fila }])
           toast.success(`${pal.Sesion} actualizada`)
+        } else if (!navigator.onLine && perfil?.id) {
+          if (conPago) guardarPreferencia('ultimoMedio', medio)
+          encolar(
+            {
+              clave: ids.sesion,
+              userId: perfil.id,
+              tipo: 'sesion',
+              pacienteId: pid,
+              fecha,
+              hora: hora || null,
+              horas,
+              tarifa_hora: fila.tarifa_hora,
+              monto,
+              moneda,
+              estado,
+            },
+            localStorage,
+          )
+          if (conPago) {
+            encolar(
+              {
+                clave: ids.pago,
+                userId: perfil.id,
+                tipo: 'pago',
+                pacienteId: pid,
+                fecha,
+                periodo: periodoDe(fecha),
+                monto,
+                moneda,
+                medio,
+                pagador: 'paciente',
+                comprobante: 'sin_comprobante',
+                session_id: ids.sesion,
+              },
+              localStorage,
+            )
+          }
+          toast.success(`Sin señal: quedó como «Pendiente de enviar» · ${nombre} · ${verMonto(monto, moneda)}`)
         } else {
           if (conPago) guardarPreferencia('ultimoMedio', medio)
-          // Sesión y pago en un solo envío; con ids fijos, reintentar no los duplica.
+          // Sesión y pago en un solo envío; con ids e idempotency_key fijos, reintentar no los duplica.
           await guardar.mutateAsync([
-            { tipo: 'insertar', tabla: 'sessions', filas: [{ ...fila, id: ids.sesion }] },
+            { tipo: 'insertar', tabla: 'sessions', filas: [{ ...fila, id: ids.sesion, idempotency_key: ids.sesion }] },
             ...(conPago
               ? [
                   {
                     tipo: 'insertar' as const,
                     tabla: 'payments' as const,
-                    filas: [{ id: ids.pago, patient_id: pid, fecha, periodo: periodoDe(fecha), monto, moneda, medio, session_id: ids.sesion }],
+                    filas: [
+                      {
+                        id: ids.pago,
+                        idempotency_key: ids.pago,
+                        patient_id: pid,
+                        fecha,
+                        periodo: periodoDe(fecha),
+                        monto,
+                        moneda,
+                        medio,
+                        session_id: ids.sesion,
+                      },
+                    ],
                   },
                 ]
               : []),
@@ -223,8 +274,27 @@ export function RegistroHoja({
         if (edPago) {
           await guardar.mutateAsync([{ tipo: 'actualizar', tabla: 'payments', id: edPago.id, cambios: fila }])
           toast.success('Pago actualizado')
+        } else if (!navigator.onLine && perfil?.id) {
+          encolar(
+            {
+              clave: ids.pago,
+              userId: perfil.id,
+              tipo: 'pago',
+              pacienteId: pid,
+              fecha,
+              periodo,
+              monto,
+              moneda,
+              medio,
+              pagador: fila.pagador,
+              nro_factura: fila.nro_factura,
+              comprobante: fila.comprobante as Comprobante,
+            },
+            localStorage,
+          )
+          toast.success(`Sin señal: pago guardado como «Pendiente de enviar» · ${nombre} · ${verMonto(monto, moneda)}`)
         } else {
-          await guardar.mutateAsync([{ tipo: 'insertar', tabla: 'payments', filas: [{ ...fila, id: ids.pago }] }])
+          await guardar.mutateAsync([{ tipo: 'insertar', tabla: 'payments', filas: [{ ...fila, id: ids.pago, idempotency_key: ids.pago }] }])
           toast.success(`Pago registrado · ${nombre} · ${verMonto(monto, moneda)}`)
         }
       }

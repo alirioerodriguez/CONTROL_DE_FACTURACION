@@ -9,7 +9,7 @@ Registro abierto: cualquier colega puede crearse una cuenta y ve solo sus datos.
 - TanStack Query (refetchOnWindowFocus activo), react-router, sonner (toasts).
 - Supabase: auth con mail y contraseña, Postgres, RLS en todas las tablas (`user_id = auth.uid()`). En el front solo la anon key.
 - Excel: exceljs. CSV: papaparse. PDF: jspdf + jspdf-autotable. Gráficos: recharts. Tests: vitest. **No usar el paquete `xlsx` de npm.**
-- PWA instalable (vite-plugin-pwa), sin modo offline: sin conexión se avisa y no se permite cargar.
+- PWA instalable (vite-plugin-pwa), con cola sin señal y caché local: sin conexión permite consultar quién debe con lo último que se vio («Datos de las HH:MM») y guardar pagos y sesiones en borrador («Pendiente de enviar»), que se envían solos al volver la señal sin duplicarse (`idempotency_key`).
 - Deploy en Vercel desde `main` del repo `alirioerodriguez/CONTROL_DE_FACTURACION`.
 
 ## Modelo de cobro
