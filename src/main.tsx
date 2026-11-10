@@ -8,6 +8,7 @@ import { registerSW } from 'virtual:pwa-register'
 import './index.css'
 import App from './App.tsx'
 import { SinConexion } from './components/SinConexion'
+import { SincronizarCola } from './components/SincronizarCola'
 import { AuthProvider } from './features/auth/AuthProvider'
 import { manejarIngresoApp } from './lib/puenteApp'
 
@@ -36,6 +37,7 @@ if (!manejarIngresoApp()) createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <AuthProvider>
           <SinConexion />
+          <SincronizarCola />
           <App />
           <Toaster
             position="bottom-center"
