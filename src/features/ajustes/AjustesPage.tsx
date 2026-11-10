@@ -23,6 +23,7 @@ import { MonotributoAjustes } from './MonotributoAjustes'
 import { CalendarioAjustes } from './CalendarioAjustes'
 import { OpcionesAjustes } from './OpcionesAjustes'
 import { PlanAjustes } from './PlanAjustes'
+import { Escucharte } from './Escucharte'
 import { OtraApp } from './OtraApp'
 import { DondeLaVeo } from './DondeLaVeo'
 import { DobleFactor } from './DobleFactor'
@@ -507,6 +508,8 @@ export function AjustesPage() {
           <DescargarExcel vacia etiqueta="Planilla vacía" />
         </div>
       </Tarjeta>
+
+      <Escucharte />
 
       <Tarjeta className="px-[1.375rem] py-2">
         <button type="button" onClick={iniciarTutorial} className={fila}>
