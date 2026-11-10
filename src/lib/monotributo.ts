@@ -130,3 +130,18 @@ export function controlTope(
     estado,
   }
 }
+
+/**
+ * Aviso interno: las escalas de ARCA cambian cada semestre (febrero y agosto). Si la tabla guardada tiene más de
+ * 6 meses de vigencia y ya pasó el mes del cambio, hay que cargar la nueva: un tope viejo daría una falsa tranquilidad.
+ * Devuelve el texto del aviso, o null si la tabla está al día.
+ */
+export function avisoTopesVencidos(vigencia: string, hoy: string): string | null {
+  const [va, vm] = vigencia.split('-').map(Number)
+  const proxima = vm >= 8 || vm < 2 ? { a: vm >= 8 ? va + 1 : va, m: 2 } : { a: va, m: 8 }
+  // ARCA publica la escala nueva dentro del mes en que rige: se avisa recién cuando ese mes ya terminó.
+  const limite = `${proxima.m === 12 ? proxima.a + 1 : proxima.a}-${String((proxima.m % 12) + 1).padStart(2, '0')}-01`
+  if (hoy < limite) return null
+  const mes = proxima.m === 2 ? 'febrero' : 'agosto'
+  return `Los topes del monotributo son de ${vigencia.split('-').reverse().join('/')}. Ya debería haber una escala nueva (${mes} de ${proxima.a}): revisá la tabla de ARCA y actualizala, porque si no el control puede mostrar de más tranquilidad.`
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Pago } from './datos'
-import { categoriaPara, CATEGORIAS, controlTope, proximaRecategorizacion, ventana12Meses } from './monotributo'
+import { avisoTopesVencidos, categoriaPara, CATEGORIAS, controlTope, proximaRecategorizacion, ventana12Meses } from './monotributo'
 
 function pago(fecha: string, monto: number, moneda: 'ARS' | 'USD' = 'ARS'): Pago {
   return {
@@ -107,5 +107,19 @@ describe('controlTope', () => {
   it('suma en centavos sin errores de redondeo', () => {
     const pagos = Array.from({ length: 10 }, (_, i) => pago(`2026-0${(i % 9) + 1}-10`, 0.1))
     expect(controlTope(pagos, 'A', null, hoy).ars).toBe(1)
+  })
+})
+
+describe('avisoTopesVencidos', () => {
+  it('con la escala de agosto, no avisa hasta que termina febrero', () => {
+    expect(avisoTopesVencidos('2026-08-01', '2026-11-10')).toBeNull()
+    expect(avisoTopesVencidos('2026-08-01', '2027-02-28')).toBeNull()
+  })
+  it('avisa desde marzo de 2027', () => {
+    expect(avisoTopesVencidos('2026-08-01', '2027-03-01')).toContain('febrero de 2027')
+  })
+  it('con la escala de febrero, avisa desde septiembre', () => {
+    expect(avisoTopesVencidos('2027-02-01', '2027-08-31')).toBeNull()
+    expect(avisoTopesVencidos('2027-02-01', '2027-09-01')).toContain('agosto de 2027')
   })
 })
