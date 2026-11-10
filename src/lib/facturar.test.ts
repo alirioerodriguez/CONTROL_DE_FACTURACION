@@ -4,6 +4,8 @@ import {
   armarFacturas,
   datosFactura,
   documentoReceptor,
+  faltaDocumento,
+  hayQueIdentificar,
   facturaDePago,
   montoParaArca,
   numeroSiguiente,
@@ -178,5 +180,30 @@ describe('lo que no se factura', () => {
 
   it('lo ya facturado no aparece en ninguna de las dos listas', () => {
     expect(pagosQueNoSeFacturan(pagos.map((p) => ({ ...p, no_facturar: true })), pacientes, '2026-09-01').map((x) => x.pago.id)).not.toContain('2')
+  })
+})
+
+describe('RG 5700: cuándo identificar a la paciente', () => {
+  it('por debajo de $ 10.000.000 no se pide, salvo que pida factura con CUIT', () => {
+    expect(hayQueIdentificar(9_999_999.99, 'ARS')).toBe(false)
+    expect(hayQueIdentificar(25_000, 'ARS', true)).toBe(true)
+  })
+  it('desde $ 10.000.000 en pesos se pide; los dólares no se comparan', () => {
+    expect(hayQueIdentificar(10_000_000, 'ARS')).toBe(true)
+    expect(hayQueIdentificar(50_000_000, 'USD')).toBe(false)
+  })
+})
+
+describe('faltaDocumento', () => {
+  const sinDoc = pac('z', 'Sin', {})
+  const f = (paciente: Paciente, monto: number) => facturaDePago({ pago: pago('x', paciente.id, '2026-11-01', monto), paciente })
+  it('marca la factura grande sin documento y lo dice en los datos para ARCA', () => {
+    const grande = f(sinDoc, 10_000_000)
+    expect(faltaDocumento(grande)).toBe(true)
+    expect(datosFactura(grande, pal).find((d) => d.etiqueta === 'Documento')?.valor).toContain('FALTA')
+  })
+  it('no marca la chica, ni la que ya tiene documento', () => {
+    expect(faltaDocumento(f(sinDoc, 30_000))).toBe(false)
+    expect(faltaDocumento(f(pacientes[0], 10_000_000))).toBe(false)
   })
 })
