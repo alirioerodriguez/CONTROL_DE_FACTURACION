@@ -98,6 +98,30 @@ describe('Factura C', () => {
     expect(cuerpo).toContain('<MonId>PES</MonId><MonCotiz>1</MonCotiz><CondicionIVAReceptorId>5</CondicionIVAReceptorId>')
   })
 
+  it('RG 5616: todo pedido de CAE lleva la condición frente al IVA del receptor (ARCA rechaza sin ella desde el 01/12/2026)', () => {
+    const casos = [
+      { moneda: 'ARS' as const, doc: { tipo: DOC.SIN, numero: '0' } },
+      { moneda: 'ARS' as const, doc: { tipo: DOC.DNI, numero: '30123456' } },
+      { moneda: 'USD' as const, cotizacion: 1400, doc: { tipo: DOC.CUIT, numero: '30712345671' } },
+    ]
+    for (const c of casos) {
+      for (const cond of [null, undefined, '', 'Consumidor final', 'Monotributista', 'Responsable inscripto', 'Exento', 'algo raro']) {
+        const { cuerpo } = pedidoFacturaC(auth, {
+          puntoVenta: 3, numero: 1, fecha: '2026-12-01', desde: '2026-11-01', hasta: '2026-11-30', vencePago: '2026-12-01',
+          total: 1000, ...c, condicionIva: condicionIvaReceptor(cond),
+        })
+        const m = /<CondicionIVAReceptorId>(\d+)<\/CondicionIVAReceptorId>/.exec(cuerpo)
+        expect(m, `sin condición para ${JSON.stringify(cond)}`).not.toBeNull()
+        expect(Number(m![1])).toBeGreaterThan(0)
+      }
+    }
+  })
+
+  it('una condición desconocida cae en consumidor final (5), nunca en vacío', () => {
+    expect(condicionIvaReceptor('algo raro')).toBe(5)
+    expect(condicionIvaReceptor('')).toBe(5)
+  })
+
   it('en dólares manda la cotización y que se cobra en la misma moneda', () => {
     const { cuerpo } = pedidoFacturaC(auth, {
       puntoVenta: 3, numero: 1, fecha: '2026-11-01', desde: '2026-10-01', hasta: '2026-10-31', vencePago: '2026-11-01',
