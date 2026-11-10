@@ -47,3 +47,20 @@ export function linkRecordatorio(r: PorRecordar, perfil: Perfil | undefined): st
   const numero = numeroWhatsApp(r.paciente.telefono)
   return numero ? `https://wa.me/${numero}?text=${encodeURIComponent(mensajeRecordatorio(r, perfil))}` : null
 }
+
+/**
+ * Agenda de cobros de hoy: los pacientes que tienen una cita hoy (no cancelada) y deben algo. Sirve para recordarles
+ * el pago con un link wa.me (la profesional toca cada uno; no se manda nada solo). Ordenados por hora de la cita.
+ */
+export function agendaDeCobrosHoy(pacientes: Paciente[], sesiones: Sesion[], pagos: Pago[], hoy: string = hoyAR()): PorRecordar[] {
+  const horaDe = new Map<string, string>()
+  for (const s of sesiones) {
+    if (s.fecha !== hoy || s.estado === 'cancelada') continue
+    const h = s.hora ?? '99:99'
+    const previa = horaDe.get(s.patient_id)
+    if (previa === undefined || h < previa) horaDe.set(s.patient_id, h)
+  }
+  return porRecordar(pacientes, sesiones, pagos, hoy)
+    .filter((r) => horaDe.has(r.paciente.id))
+    .sort((a, b) => horaDe.get(a.paciente.id)!.localeCompare(horaDe.get(b.paciente.id)!) || a.paciente.nombre.localeCompare(b.paciente.nombre))
+}

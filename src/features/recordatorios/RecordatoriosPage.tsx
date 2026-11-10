@@ -6,11 +6,11 @@ import { toast } from 'sonner'
 import { Avatar, Boton, Chip, EstadoError, EstadoVacio, Esqueleto, IC, Segmentado, Tarjeta, Titulo } from '../../components/ui'
 import { nombreCompleto, useDatos } from '../../lib/datos'
 import { capitalizar, formatFecha, hoyAR, nombreMes, periodoDe, ZONA_AR } from '../../lib/formato'
-import { linkRecordatorio, porRecordar, textoMeses, type PorRecordar } from '../../lib/recordatorios'
+import { agendaDeCobrosHoy, linkRecordatorio, porRecordar, textoMeses, type PorRecordar } from '../../lib/recordatorios'
 import { textoDeuda } from '../../lib/resumen'
 import { mensajeError, supabase } from '../../lib/supabase'
 
-type Vista = 'enviar' | 'enviados'
+type Vista = 'hoy' | 'enviar' | 'enviados'
 
 /** Fecha 'AAAA-MM-DD' en Argentina de un timestamp. */
 const diaAR = (ts: string) => new Date(ts).toLocaleDateString('en-CA', { timeZone: ZONA_AR })
@@ -42,6 +42,7 @@ export function RecordatoriosPage() {
   })
 
   const lista = useMemo(() => porRecordar(pacientes, sesiones, pagos), [pacientes, sesiones, pagos])
+  const deHoy = useMemo(() => agendaDeCobrosHoy(pacientes, sesiones, pagos), [pacientes, sesiones, pagos])
 
   if (perfil && !perfil.ver_recordatorios) return <Navigate to="/ajustes" replace />
   if (cargando || enviados.isLoading) return <Esqueleto que="los recordatorios" />
@@ -59,7 +60,7 @@ export function RecordatoriosPage() {
   const mapa = enviados.data ?? new Map<string, string>()
   const porEnviar = lista.filter((r) => !mapa.has(r.paciente.id))
   const yaEnviados = lista.filter((r) => mapa.has(r.paciente.id))
-  const visibles = vista === 'enviar' ? porEnviar : yaEnviados
+  const visibles = vista === 'hoy' ? deHoy : vista === 'enviar' ? porEnviar : yaEnviados
 
   async function cambiar(r: PorRecordar, enviado: boolean, silencioso = false) {
     try {
@@ -84,6 +85,7 @@ export function RecordatoriosPage() {
         <>
           <Segmentado
             opciones={[
+              { v: 'hoy' as Vista, l: `Cobros de hoy (${deHoy.length})` },
               { v: 'enviar' as Vista, l: `Por enviar (${porEnviar.length})` },
               { v: 'enviados' as Vista, l: `Enviados (${yaEnviados.length})` },
             ]}
@@ -94,7 +96,7 @@ export function RecordatoriosPage() {
 
           {visibles.length === 0 ? (
             <Tarjeta className="px-6 py-10 text-center text-[1.0625rem] text-ink2">
-              {vista === 'enviar' ? `Ya les escribiste a todos en ${nombreMes(periodo)}.` : 'Todavía no mandaste recordatorios este mes.'}
+              {vista === 'hoy' ? 'Hoy no tenés citas con pagos pendientes.' : vista === 'enviar' ? `Ya les escribiste a todos en ${nombreMes(periodo)}.` : 'Todavía no mandaste recordatorios este mes.'}
             </Tarjeta>
           ) : (
             <Tarjeta className="p-2">
