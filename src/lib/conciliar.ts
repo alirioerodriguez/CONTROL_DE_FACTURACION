@@ -108,6 +108,8 @@ function leerRemitente(texto: string): string | null {
   return (
     // «Ordenante: GARCIA MARIA ELENA», «Origen: …», «Enviado por …»
     nombreDespues(texto, /\b(?:ordenante|remitente|emisor|titular(?:\s+(?:de\s+la\s+)?cuenta)?(?:\s+origen)?|origen|enviado\s+por|transferido\s+por|de\s+parte\s+de|cuenta\s+origen|nombre\s+del\s+ordenante)\b\s*[:-]?/i) ??
+    // «De Marta Soria» en un renglón propio (comprobantes de billetera)
+    nombreDespues(texto, /(?:^|\n)[ \t]*de(?=[ \t])/i) ??
     // «Te transfirió Juan Pérez $ 25.000»
     // (`\b` de JavaScript no toma la «ó» como letra, así que se usa una mirada hacia adelante)
     nombreDespues(texto, /\bte\s+(?:transfiri[oó]|envi[oó]|pag[oó]|deposit[oó])(?=\s)/i) ??
