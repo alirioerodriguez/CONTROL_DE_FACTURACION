@@ -3,6 +3,10 @@ import forge from 'node-forge'
 import {
   armarTRA,
   condicionIvaReceptor,
+  CONDICIONES_IVA_RECEPTOR,
+  condicionValida,
+  leerCondicionesIvaReceptor,
+  pedidoCondicionesIvaReceptor,
   documento,
   DOC,
   erroresArca,
@@ -171,5 +175,44 @@ describe('Factura C', () => {
     const datos = JSON.parse(Buffer.from(link.split('?p=')[1], 'base64').toString())
     expect(datos).toMatchObject({ ver: 1, cuit: 27301234564, ptoVta: 3, tipoCmp: 11, nroCmp: 124, importe: 48000, moneda: 'PES', tipoCodAut: 'E', codAut: 76451234567890 })
     expect(numeroFactura(3, 124)).toBe('C 00003-00000124')
+  })
+})
+
+describe('tabla de condiciones del receptor (RG 5616)', () => {
+  it('todo lo que la app puede mandar está en la tabla (1, 4, 5 y 6)', () => {
+    for (const c of ['Consumidor final', 'Monotributista', 'Responsable inscripto', 'Exento', null, '', 'algo raro']) {
+      expect(CONDICIONES_IVA_RECEPTOR[condicionIvaReceptor(c)], String(c)).toBeTruthy()
+    }
+  })
+
+  it('los códigos 2, 3, 11, 12 y 14 no existen (según la guía consultada)', () => {
+    for (const id of [2, 3, 11, 12, 14]) expect(CONDICIONES_IVA_RECEPTOR[id]).toBeUndefined()
+    expect(Object.keys(CONDICIONES_IVA_RECEPTOR).map(Number)).toEqual([1, 4, 5, 6, 7, 8, 9, 10, 13, 15, 16])
+  })
+
+  it('arma el pedido de la tabla a ARCA, con o sin clase de comprobante', () => {
+    const a = { token: 'T', sign: 'S', cuit: '27301234564' }
+    expect(pedidoCondicionesIvaReceptor(a).soapAction).toBe('http://ar.gov.afip.dif.FEV1/FEParamGetCondicionIvaReceptor')
+    expect(pedidoCondicionesIvaReceptor(a).cuerpo).not.toContain('<ClaseCmp>')
+    expect(pedidoCondicionesIvaReceptor(a, 'C').cuerpo).toContain('<ClaseCmp>C</ClaseCmp>')
+  })
+
+  it('lee la respuesta, junta las clases por condición y rechaza lo vacío o con error', () => {
+    const xml = `<soap:Envelope><soap:Body><FEParamGetCondicionIvaReceptorResponse><FEParamGetCondicionIvaReceptorResult><ResultGet>
+      <CondicionIvaReceptor><Id>1</Id><Desc>IVA Responsable Inscripto</Desc><Cmp_Clase>A</Cmp_Clase></CondicionIvaReceptor>
+      <CondicionIvaReceptor><Id>1</Id><Desc>IVA Responsable Inscripto</Desc><Cmp_Clase>C</Cmp_Clase></CondicionIvaReceptor>
+      <CondicionIvaReceptor><Id>5</Id><Desc>Consumidor Final</Desc><Cmp_Clase>B</Cmp_Clase></CondicionIvaReceptor>
+      <CondicionIvaReceptor><Id>5</Id><Desc>Consumidor Final</Desc><Cmp_Clase>C</Cmp_Clase></CondicionIvaReceptor>
+    </ResultGet></FEParamGetCondicionIvaReceptorResult></FEParamGetCondicionIvaReceptorResponse></soap:Body></soap:Envelope>`
+    const tabla = leerCondicionesIvaReceptor(xml)
+    expect(tabla).toEqual([
+      { id: 1, descripcion: 'IVA Responsable Inscripto', clases: ['A', 'C'] },
+      { id: 5, descripcion: 'Consumidor Final', clases: ['B', 'C'] },
+    ])
+    expect(condicionValida(5, tabla, 'C')).toBe(true)
+    expect(condicionValida(5, tabla, 'A')).toBe(false) // un consumidor final no recibe una A
+    expect(condicionValida(6, tabla)).toBe(false) // no vino en la tabla
+    expect(() => leerCondicionesIvaReceptor('<x/>')).toThrow('no devolvió condiciones')
+    expect(() => leerCondicionesIvaReceptor('<Errors><Err><Code>600</Code><Msg>Token vencido</Msg></Err></Errors>')).toThrow('Token vencido')
   })
 })
