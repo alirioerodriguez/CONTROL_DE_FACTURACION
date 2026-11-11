@@ -206,6 +206,61 @@ export function leerCotizacion(xml: string): number {
 /** Tipos de documento del receptor (tabla de ARCA). */
 export const DOC = { CUIT: 80, CUIL: 86, DNI: 96, SIN: 99 } as const
 
+/**
+ * Tabla de condiciones frente al IVA del receptor (campo CondicionIVAReceptorId, obligatorio desde el 01/12/2026, RG 5616).
+ * Copiada de una guía de terceros del 10/11/2026 que dice haberla comprobado con facturas reales (spomsolutions.com): NO se pudo
+ * cotejar con la tabla oficial de ARCA, que solo se lee con el método FEParamGetCondicionIvaReceptor (hace falta acceso). Los códigos
+ * 2, 3, 11, 12 y 14 no están. Antes de emitir en producción, correr `pedidoCondicionesIvaReceptor` en homologación y comparar.
+ */
+export const CONDICIONES_IVA_RECEPTOR: Record<number, string> = {
+  1: 'IVA Responsable Inscripto',
+  4: 'IVA Sujeto Exento',
+  5: 'Consumidor Final',
+  6: 'Responsable Monotributo',
+  7: 'Sujeto No Categorizado',
+  8: 'Proveedor del Exterior',
+  9: 'Cliente del Exterior',
+  10: 'IVA Liberado – Ley N° 19.640',
+  13: 'Monotributista Social',
+  15: 'IVA No Alcanzado',
+  16: 'Monotributo Trabajador Independiente Promovido',
+}
+
+/** Pide a ARCA la tabla vigente de condiciones del receptor (opcionalmente solo las válidas para una clase de comprobante: 'A', 'B', 'C'…). */
+export const pedidoCondicionesIvaReceptor = (a: Auth, claseCmp?: string) =>
+  pedidoWsfe('FEParamGetCondicionIvaReceptor', `${auth(a)}${claseCmp ? `<ClaseCmp>${escapar(claseCmp)}</ClaseCmp>` : ''}`)
+
+export interface CondicionIvaArca {
+  id: number
+  descripcion: string
+  /** Clases de comprobante para las que vale (A, B, C…), si ARCA las informa. */
+  clases: string[]
+}
+
+/** Respuesta de FEParamGetCondicionIvaReceptor → lista (una fila por condición, juntando las clases). Estructura sin confirmar: probar en homologación. */
+export function leerCondicionesIvaReceptor(xml: string): CondicionIvaArca[] {
+  fallaSoap(xml)
+  const { errores } = erroresArca(xml)
+  if (errores.length) throw new Error(mensajeErrores(errores))
+  const porId = new Map<number, CondicionIvaArca>()
+  for (const fila of etiquetas(xml, 'CondicionIvaReceptor')) {
+    const id = Number(etiqueta(fila, 'Id'))
+    if (!Number.isInteger(id)) continue
+    const previa = porId.get(id) ?? { id, descripcion: desescapar(etiqueta(fila, 'Desc') ?? ''), clases: [] }
+    const clase = etiqueta(fila, 'Cmp_Clase')
+    if (clase && !previa.clases.includes(clase)) previa.clases.push(clase)
+    porId.set(id, previa)
+  }
+  if (!porId.size) throw new Error('ARCA no devolvió condiciones del receptor')
+  return [...porId.values()].sort((a, b) => a.id - b.id)
+}
+
+/** ¿El código que vamos a mandar está en la tabla de ARCA (y, si la informó, vale para esa clase)? */
+export function condicionValida(id: number, tabla: CondicionIvaArca[], clase?: string): boolean {
+  const c = tabla.find((x) => x.id === id)
+  return !!c && (!clase || !c.clases.length || c.clases.includes(clase))
+}
+
 /** Condición frente al IVA del receptor → código de ARCA (obligatorio desde la RG 5616). */
 export function condicionIvaReceptor(condicion: string | null | undefined): number {
   const c = (condicion ?? '').toLowerCase()
