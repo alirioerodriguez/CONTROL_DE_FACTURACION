@@ -15,13 +15,14 @@ export interface MesParaFacturar {
 }
 
 /** Pagos sin Factura C desde un mes (por fecha de pago), agrupados por mes de pago, el más nuevo primero. */
-export function pagosParaFacturar(pagos: Pago[], pacientes: Paciente[], desde: string): MesParaFacturar[] {
+/** `sinUsd`: la profesional eligió no facturar los cobros en dólares. */
+export function pagosParaFacturar(pagos: Pago[], pacientes: Paciente[], desde: string, sinUsd = false): MesParaFacturar[] {
   const porId = new Map(pacientes.map((p) => [p.id, p]))
   const meses = new Map<string, MesParaFacturar>()
   for (const pago of pagos) {
-    if (pago.comprobante === 'factura_c' || pago.fecha < desde) continue
+    if (pago.comprobante === 'factura_c' || pago.fecha < desde || pago.no_facturar || (sinUsd && pago.moneda === 'USD')) continue
     const paciente = porId.get(pago.patient_id)
-    if (!paciente) continue
+    if (!paciente || paciente.no_facturar) continue
     const periodo = `${pago.fecha.slice(0, 7)}-01`
     const mes = meses.get(periodo) ?? { periodo, items: [], total: { ARS: 0, USD: 0 } }
     mes.items.push({ pago, paciente })
@@ -46,6 +47,26 @@ export function documentoReceptor(p: Paciente): { tipo: 'CUIT' | 'DNI'; numero: 
   const dni = p.dni?.replace(/\D/g, '')
   return dni ? { tipo: 'DNI', numero: dni } : null
 }
+
+/** RG 5700/2025: a un consumidor final se lo identifica (DNI, CUIL o CUIT) recién desde este importe en pesos. */
+export const UMBRAL_IDENTIFICAR = 10_000_000
+
+/**
+ * ¿Hay que pedirle el documento a la paciente para esta factura? Sí si el importe en pesos llega al umbral o si ella
+ * pidió la factura con CUIT (por ejemplo para deducirla en Ganancias). Por debajo, no se le pide nada.
+ * Los dólares no se comparan con el umbral (está en pesos y no se convierte acá); la obra social se identifica siempre por su CUIT.
+ */
+export function hayQueIdentificar(monto: number, moneda: Moneda, pideConCuit = false): boolean {
+  return pideConCuit || (moneda === 'ARS' && monto >= UMBRAL_IDENTIFICAR)
+}
+
+/** Una factura a paciente que debe llevar documento y todavía no lo tiene cargado. */
+export function faltaDocumento(f: Factura): boolean {
+  return f.pagador !== 'obra_social' && hayQueIdentificar(f.monto, f.moneda) && !documentoReceptor(f.paciente)
+}
+
+const SIN_DOC = 'Sin cargar (con consumidor final se puede omitir si el monto es bajo)'
+const SIN_DOC_OBLIGATORIO = 'FALTA: desde $ 10.000.000 ARCA exige DNI, CUIL o CUIT del receptor. Cargalo en la ficha de la paciente'
 
 // ---------------------------------------------------------------------
 // Facturas a hacer: una por pago, o una por paciente por mes
@@ -135,7 +156,7 @@ export function datosFactura(f: Factura, pal: Vocabulario): { etiqueta: string; 
     datos.push(
       { etiqueta: 'Condición frente al IVA', valor: f.paciente.condicion_iva || 'Consumidor final' },
       { etiqueta: 'Receptor', valor: nombreCompleto(f.paciente) },
-      { etiqueta: doc ? doc.tipo : 'Documento', valor: doc ? doc.numero : 'Sin cargar (con consumidor final se puede omitir si el monto es bajo)' },
+      { etiqueta: doc ? doc.tipo : 'Documento', valor: doc ? doc.numero : faltaDocumento(f) ? SIN_DOC_OBLIGATORIO : SIN_DOC },
       ...(f.paciente.domicilio ? [{ etiqueta: 'Domicilio', valor: f.paciente.domicilio }] : []),
     )
   }
@@ -204,7 +225,7 @@ export function pantallasArca(f: Factura, pal: Vocabulario, hoy: string): Pantal
     const iva = f.paciente.condicion_iva || 'Consumidor final'
     receptor = [
       iva === 'Consumidor final' ? fijo('Condición frente al IVA', iva) : cambia('Condición frente al IVA', iva, null),
-      cambia('Tipo de documento', doc ? doc.tipo : 'Sin documento (con consumidor final se puede omitir si el monto es bajo)', null),
+      cambia('Tipo de documento', doc ? doc.tipo : faltaDocumento(f) ? SIN_DOC_OBLIGATORIO : 'Sin documento (con consumidor final se puede omitir si el monto es bajo)', null),
       ...(doc ? [cambia('Número', doc.numero)] : []),
       cambia('Apellido y nombre', nombreCompleto(f.paciente)),
       ...(f.paciente.domicilio ? [cambia('Domicilio', f.paciente.domicilio)] : []),
@@ -247,4 +268,14 @@ export function numeroSiguiente(numero: string): string {
   if (!m) return ''
   const siguiente = String(Number(m[2]) + 1).padStart(m[2].length, '0')
   return `${m[1]}${siguiente}`
+}
+
+/** Pagos que la profesional eligió no facturar (por pago o por paciente), desde un mes. Para poder deshacerlo. */
+export function pagosQueNoSeFacturan(pagos: Pago[], pacientes: Paciente[], desde: string, sinUsd = false): ParaFacturar[] {
+  const porId = new Map(pacientes.map((p) => [p.id, p]))
+  return pagos
+    .filter((p) => p.comprobante !== 'factura_c' && p.fecha >= desde)
+    .map((pago) => ({ pago, paciente: porId.get(pago.patient_id)! }))
+    .filter((x) => x.paciente && (x.pago.no_facturar || x.paciente.no_facturar || (sinUsd && x.pago.moneda === 'USD')))
+    .sort((a, b) => b.pago.fecha.localeCompare(a.pago.fecha))
 }

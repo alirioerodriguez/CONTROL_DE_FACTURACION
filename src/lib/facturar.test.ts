@@ -4,10 +4,13 @@ import {
   armarFacturas,
   datosFactura,
   documentoReceptor,
+  faltaDocumento,
+  hayQueIdentificar,
   facturaDePago,
   montoParaArca,
   numeroSiguiente,
   pagosParaFacturar,
+  pagosQueNoSeFacturan,
   pantallasArca,
   textoFactura,
 } from './facturar'
@@ -152,5 +155,55 @@ describe('modo ARCA', () => {
     expect(numeroSiguiente('C 00002-00000123')).toBe('C 00002-00000124')
     expect(numeroSiguiente('C 0002-00000999')).toBe('C 0002-00001000')
     expect(numeroSiguiente('sin número')).toBe('')
+  })
+})
+
+describe('lo que no se factura', () => {
+  const ids = (l: ReturnType<typeof pagosParaFacturar>) => l.flatMap((m) => m.items.map((i) => i.pago.id)).sort()
+
+  it('un pago marcado «No facturar» sale de la lista y queda en «No se facturan»', () => {
+    const conMarca = pagos.map((p) => (p.id === '3' ? { ...p, no_facturar: true } : p))
+    expect(ids(pagosParaFacturar(conMarca, pacientes, '2026-09-01'))).toEqual(['1', '4'])
+    expect(pagosQueNoSeFacturan(conMarca, pacientes, '2026-09-01').map((x) => x.pago.id)).toEqual(['3'])
+  })
+
+  it('un paciente con «No facturarle» no aparece', () => {
+    const sinB = pacientes.map((p) => (p.id === 'b' ? { ...p, no_facturar: true } : p))
+    expect(ids(pagosParaFacturar(pagos, sinB, '2026-09-01'))).toEqual(['1'])
+    expect(pagosQueNoSeFacturan(pagos, sinB, '2026-09-01').map((x) => x.pago.id)).toEqual(['4', '3'])
+  })
+
+  it('con «No facturar los cobros en dólares», los USD no aparecen', () => {
+    expect(ids(pagosParaFacturar(pagos, pacientes, '2026-09-01', true))).toEqual(['1', '3'])
+    expect(pagosQueNoSeFacturan(pagos, pacientes, '2026-09-01', true).map((x) => x.pago.id)).toEqual(['4'])
+  })
+
+  it('lo ya facturado no aparece en ninguna de las dos listas', () => {
+    expect(pagosQueNoSeFacturan(pagos.map((p) => ({ ...p, no_facturar: true })), pacientes, '2026-09-01').map((x) => x.pago.id)).not.toContain('2')
+  })
+})
+
+describe('RG 5700: cuándo identificar a la paciente', () => {
+  it('por debajo de $ 10.000.000 no se pide, salvo que pida factura con CUIT', () => {
+    expect(hayQueIdentificar(9_999_999.99, 'ARS')).toBe(false)
+    expect(hayQueIdentificar(25_000, 'ARS', true)).toBe(true)
+  })
+  it('desde $ 10.000.000 en pesos se pide; los dólares no se comparan', () => {
+    expect(hayQueIdentificar(10_000_000, 'ARS')).toBe(true)
+    expect(hayQueIdentificar(50_000_000, 'USD')).toBe(false)
+  })
+})
+
+describe('faltaDocumento', () => {
+  const sinDoc = pac('z', 'Sin', {})
+  const f = (paciente: Paciente, monto: number) => facturaDePago({ pago: pago('x', paciente.id, '2026-11-01', monto), paciente })
+  it('marca la factura grande sin documento y lo dice en los datos para ARCA', () => {
+    const grande = f(sinDoc, 10_000_000)
+    expect(faltaDocumento(grande)).toBe(true)
+    expect(datosFactura(grande, pal).find((d) => d.etiqueta === 'Documento')?.valor).toContain('FALTA')
+  })
+  it('no marca la chica, ni la que ya tiene documento', () => {
+    expect(faltaDocumento(f(sinDoc, 30_000))).toBe(false)
+    expect(faltaDocumento(f(pacientes[0], 10_000_000))).toBe(false)
   })
 })

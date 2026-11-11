@@ -4,7 +4,7 @@ import { Boton, Chip, Tarjeta, type Tono } from '../../components/ui'
 import { useGuardar, useTopesMonotributo, type Pago, type Perfil } from '../../lib/datos'
 import { formatPeriodo, hoyAR } from '../../lib/formato'
 import { verMonto } from '../../lib/discreto'
-import { controlTope, proximaRecategorizacion, type EstadoTope } from '../../lib/monotributo'
+import { avisoTopesVencidos, controlTope, proximaRecategorizacion, type EstadoTope } from '../../lib/monotributo'
 import { mensajeError } from '../../lib/supabase'
 
 const ESTADO: Record<EstadoTope, { tono: Tono; texto: string }> = {
@@ -23,18 +23,22 @@ function M({ children }: { children: string }) {
 export function TarjetaMonotributo({ perfil, pagos }: { perfil: Perfil; pagos: Pago[] }) {
   const navegar = useNavigate()
   const guardar = useGuardar()
-  const { categorias } = useTopesMonotributo()
+  const { categorias, vigencia } = useTopesMonotributo()
   const hoy = hoyAR()
   const cat = perfil.monotributo_categoria
   if (cat === 'no') return null
 
   const c = controlTope(pagos, cat, perfil.tipo_cambio_usd, hoy, categorias)
   const recat = proximaRecategorizacion(hoy)
+  const aviso = avisoTopesVencidos(vigencia, hoy)
   const nota = (
+    <>
+    {aviso && <p className="m-0 text-xs leading-snug text-warn">{aviso}</p>}
     <p className="m-0 text-xs leading-snug text-ink2">
       Orientativo: se calcula con lo cobrado, y ARCA mira lo facturado y también el alquiler, la luz y los metros del
       consultorio. Confirmalo con tu contadora.
     </p>
+    </>
   )
 
   // Todavía no eligió categoría: invitación corta, solo si ya hay cobros para comparar.

@@ -11,25 +11,25 @@ import { SinConexion } from './components/SinConexion'
 import { AuthProvider } from './features/auth/AuthProvider'
 import { manejarIngresoApp } from './lib/puenteApp'
 
-// Cuando hay una versión nueva publicada, la app se actualiza sola.
+// Cuando hay una versiÃ³n nueva publicada, la app se actualiza sola.
 registerSW({ immediate: true })
 
-// refetchOnWindowFocus: al volver a la app se recargan los datos, así lo
-// que se cargó en el celular aparece en la PC y viceversa.
+// refetchOnWindowFocus: al volver a la app se recargan los datos, asÃ­ lo
+// que se cargÃ³ en el celular aparece en la PC y viceversa.
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { refetchOnWindowFocus: true, staleTime: 30_000, retry: 1 },
   },
 })
 
-// Avisos con el estilo del diseño: pastilla oscura con ícono a la izquierda.
+// Avisos con el estilo del diseÃ±o: pastilla oscura con Ã­cono a la izquierda.
 const icono = (ok: boolean) => (
   <span className={`grid size-[1.625rem] place-items-center rounded-full ${ok ? 'anim-saltito ' : ''}${ok ? 'bg-acc text-on-acc' : 'bg-bad text-surface'}`}>
     {ok ? <Check size={15} strokeWidth={2.4} /> : <CircleAlert size={15} strokeWidth={2.2} />}
   </span>
 )
 
-// Si esta carga es parte del ingreso con Google desde la app del celular, no se muestra la página
+// Si esta carga es parte del ingreso con Google desde la app del celular, no se muestra la pÃ¡gina
 if (!manejarIngresoApp()) createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>

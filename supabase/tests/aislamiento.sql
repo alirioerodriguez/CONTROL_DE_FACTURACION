@@ -297,6 +297,37 @@ begin
   end;
 end $$;
 
+-- ===================== Factura electrónica =====================
+-- Solo la función crea facturas (con su CAE); cada una ve las suyas; el ticket de ARCA no lo ve nadie.
+reset role;
+insert into public.facturas_arca (user_id, punto_venta, numero, fecha, desde, hasta, total, moneda, doc_tipo, doc_numero, condicion_iva, receptor, descripcion, cae, cae_vence)
+values ('00000000-0000-4000-a000-00000000000a', 3, 1, '2026-11-01', '2026-10-01', '2026-10-31', 1000, 'ARS', 99, '0', 5, 'Paciente de A', 'Honorarios', '76451234567890', '2026-11-11');
+insert into public.arca_tickets (servicio, token, sign, vence) values ('wsfe:prod', 't', 's', now() + interval '1 hour');
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "00000000-0000-4000-a000-00000000000b", "role": "authenticated", "aal": "aal1"}';
+do $$
+begin
+  if (select count(*) from public.facturas_arca) <> 0 then raise exception 'B ve facturas de A'; end if;
+  begin
+    perform 1 from public.arca_tickets;
+    raise exception 'FALLA: se puede leer el ticket de ARCA';
+  exception when others then
+    if sqlerrm like 'FALLA:%' then raise; end if;
+  end;
+  begin
+    insert into public.facturas_arca (user_id, punto_venta, numero, fecha, desde, hasta, total, moneda, doc_tipo, doc_numero, condicion_iva, receptor, descripcion, cae, cae_vence)
+    values ('00000000-0000-4000-a000-00000000000b', 1, 1, '2026-11-01', '2026-10-01', '2026-10-31', 1, 'ARS', 99, '0', 5, 'x', 'x', 'inventado', '2026-11-11');
+    raise exception 'FALLA: se pudo inventar una factura con CAE';
+  exception when others then
+    if sqlerrm like 'FALLA:%' then raise; end if;
+  end;
+end $$;
+set local request.jwt.claims = '{"sub": "00000000-0000-4000-a000-00000000000a", "role": "authenticated", "aal": "aal2"}';
+do $$
+begin
+  if (select count(*) from public.facturas_arca) <> 1 then raise exception 'A no ve su factura'; end if;
+end $$;
+
 rollback;
 
 select 'Aislamiento OK' as resultado;

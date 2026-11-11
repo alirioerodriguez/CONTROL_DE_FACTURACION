@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Paciente, Pago, Perfil, Sesion } from './datos'
-import { linkRecordatorio, mensajeRecordatorio, porRecordar, textoMeses } from './recordatorios'
+import { agendaDeCobrosHoy, linkRecordatorio, mensajeRecordatorio, porRecordar, textoMeses } from './recordatorios'
 
 const pac = (id: string, nombre: string, telefono: string | null = null) => ({ id, nombre, telefono }) as Paciente
 const ses = (id: string, patient_id: string, fecha: string, monto: number, moneda: 'ARS' | 'USD' = 'ARS') =>
@@ -46,5 +46,26 @@ describe('mensaje', () => {
     )
     expect(linkRecordatorio(lucia, perfil)).toMatch(/^https:\/\/wa\.me\/5491154238812\?text=/)
     expect(linkRecordatorio(ana, perfil)).toBeNull()
+  })
+})
+
+describe('agendaDeCobrosHoy', () => {
+  const hoy = '2026-10-17'
+  const conHora = (id: string, patient_id: string, fecha: string, hora: string | null, estado: 'normal' | 'cancelada' = 'normal') =>
+    ({ ...ses(id, patient_id, fecha, 40000), hora, estado }) as Sesion
+  it('solo quienes tienen cita hoy y deben, por hora', () => {
+    const s = [
+      conHora('1', 'a', '2026-10-05', null),
+      conHora('2', 'a', hoy, '18:00'),
+      conHora('3', 'b', '2026-10-06', null),
+      conHora('4', 'b', hoy, '09:30'),
+      conHora('5', 'c', hoy, '10:00'),
+    ]
+    const r = agendaDeCobrosHoy(pacientes, s, [pago('c', '2026-10-01', 40000)], hoy)
+    expect(r.map((x) => x.paciente.id)).toEqual(['b', 'a'])
+  })
+  it('ignora la cita cancelada de hoy y la de otro día', () => {
+    const s = [conHora('1', 'a', '2026-10-05', null), conHora('2', 'a', hoy, '18:00', 'cancelada'), conHora('3', 'b', '2026-10-16', '10:00')]
+    expect(agendaDeCobrosHoy(pacientes, s, [], hoy)).toEqual([])
   })
 })

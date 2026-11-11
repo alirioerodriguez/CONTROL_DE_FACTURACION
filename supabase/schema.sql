@@ -1050,6 +1050,91 @@ $$;
 revoke execute on function public.estudio_datos(uuid) from public, anon;
 grant execute on function public.estudio_datos(uuid) to authenticated;
 
+-- ---------------------------------------------------------------------------
+-- Factura electrónica con ARCA (función arca-factura). La profesional delega «Facturación Electrónica» al
+-- CUIT de honorapp en ARCA y carga su punto de venta de web services; honorapp pide el CAE por ella.
+-- Nunca se guarda la clave fiscal. Ver docs/investigacion/arca.md.
+-- ---------------------------------------------------------------------------
+alter table public.profiles add column if not exists arca_punto_venta integer;
+alter table public.profiles add column if not exists arca_conectado_at timestamptz;
+-- true: cada pago nuevo del paciente se factura solo apenas se registra.
+alter table public.profiles add column if not exists arca_auto boolean not null default false;
+do $$ begin
+  alter table public.profiles add constraint profiles_arca_pv_check check (arca_punto_venta between 1 and 99998);
+exception when duplicate_object then null; end $$;
+
+-- Cada Factura C emitida por honorapp (para rehacer el PDF y mandarlo cuando haga falta).
+create table if not exists public.facturas_arca (
+  id             uuid primary key default gen_random_uuid(),
+  user_id        uuid not null references auth.users (id) on delete cascade,
+  patient_id     uuid,
+  punto_venta    integer not null,
+  numero         integer not null,
+  fecha          date not null,
+  desde          date not null,
+  hasta          date not null,
+  total          numeric(14,2) not null check (total > 0),
+  moneda         text not null check (moneda in ('ARS','USD')),
+  cotizacion     numeric(14,6),
+  doc_tipo       integer not null,
+  doc_numero     text not null,
+  condicion_iva  integer not null,
+  receptor       text not null,
+  descripcion    text not null,
+  cae            text not null,
+  cae_vence      date not null,
+  entorno        text not null default 'prod' check (entorno in ('homo','prod')),
+  created_at     timestamptz not null default now(),
+  constraint facturas_arca_numero_unico unique (user_id, punto_venta, numero, entorno)
+);
+create index if not exists facturas_arca_user_idx on public.facturas_arca (user_id, fecha desc);
+alter table public.facturas_arca enable row level security;
+-- La profesional las ve; solo la función (con la clave de servicio) las crea: un CAE no se inventa ni se edita.
+drop policy if exists "facturas propias" on public.facturas_arca;
+create policy "facturas propias" on public.facturas_arca for select to authenticated using (user_id = (select auth.uid()));
+revoke insert, update, delete on public.facturas_arca from anon, authenticated;
+
+alter table public.payments add column if not exists cae text;
+-- Lo que la profesional decide NO facturar: un paciente entero o un pago suelto. No aparece en «Para facturar»,
+-- no se factura solo y la función se niega a facturarlo.
+alter table public.patients add column if not exists no_facturar boolean not null default false;
+alter table public.payments add column if not exists no_facturar boolean not null default false;
+-- true: ningún cobro en dólares se factura (ni aparece en «Para facturar»).
+alter table public.profiles add column if not exists no_facturar_usd boolean not null default false;
+alter table public.payments add column if not exists factura_id uuid references public.facturas_arca (id) on delete set null;
+
+-- Ticket de acceso de honorapp a ARCA (dura 12 horas). Solo lo usa la función; nadie más lo ve.
+create table if not exists public.arca_tickets (
+  servicio text primary key,
+  token    text not null,
+  sign     text not null,
+  vence    timestamptz not null
+);
+alter table public.arca_tickets enable row level security;
+revoke all on public.arca_tickets from anon, authenticated;
+
+-- Mail del día 1 a la contadora con las facturas del mes anterior (función facturas-contadora).
+alter table public.profiles add column if not exists arca_mail_contadora boolean not null default false;
+create table if not exists public.facturas_contadora_enviadas (
+  user_id  uuid not null references auth.users (id) on delete cascade,
+  periodo  date not null,
+  enviado  timestamptz not null default now(),
+  primary key (user_id, periodo)
+);
+alter table public.facturas_contadora_enviadas enable row level security;
+-- Sin políticas: solo la función (service_role) la usa.
+select cron.unschedule('facturas-contadora')
+where exists (select 1 from cron.job where jobname = 'facturas-contadora');
+select cron.schedule(
+  'facturas-contadora',
+  '30 12 1 * *',
+  $$select net.http_post(
+      url := 'https://uxcpfnupwetwtpqhoqvd.supabase.co/functions/v1/facturas-contadora',
+      headers := '{"Content-Type": "application/json"}'::jsonb,
+      body := '{}'::jsonb
+    )$$
+);
+
 -- Perfiles para usuarias que ya existían antes de correr este script.
 insert into public.profiles (id, email)
 select id, email from auth.users
@@ -1062,7 +1147,7 @@ on conflict (id) do nothing;
 do $$
 declare t text;
 begin
-  foreach t in array array['profiles','patients','sessions','payments','importaciones','pruebas','recordatorios','estudio_vinculos'] loop
+  foreach t in array array['profiles','patients','sessions','payments','importaciones','pruebas','recordatorios','estudio_vinculos','facturas_arca'] loop
     execute format('drop policy if exists mfa_requerido on public.%I', t);
     execute format('create policy mfa_requerido on public.%I as restrictive for all to authenticated using (public.mfa_ok()) with check (public.mfa_ok())', t);
   end loop;

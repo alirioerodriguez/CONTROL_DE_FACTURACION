@@ -3,7 +3,7 @@ import { toast } from 'sonner'
 import { Boton, CampoMonto, Tarjeta } from '../../components/ui'
 import { useGuardar, usePagos, useTopesMonotributo, type Perfil } from '../../lib/datos'
 import { formatCompacto, formatFecha, formatMonto, hoyAR, montoParaInput, parseMontoAR } from '../../lib/formato'
-import { controlTope, datosCategoria, type CategoriaPerfil } from '../../lib/monotributo'
+import { avisoTopesVencidos, controlTope, datosCategoria, type CategoriaPerfil } from '../../lib/monotributo'
 import { mensajeError } from '../../lib/supabase'
 
 /** Tarjeta de Ajustes: elegir la categoría del monotributo y el dólar para sumar los cobros en USD. */
@@ -16,6 +16,7 @@ export function MonotributoAjustes({ perfil }: { perfil: Perfil }) {
   const guardar = useGuardar()
   const { data: pagos = [] } = usePagos()
   const { categorias, vigencia } = useTopesMonotributo()
+  const aviso = avisoTopesVencidos(vigencia, hoyAR())
   const [tcTxt, setTcTxt] = useState('')
 
   useEffect(() => {
@@ -122,6 +123,11 @@ export function MonotributoAjustes({ perfil }: { perfil: Perfil }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3.5">
         <span className="text-sm text-ink2">Valores de ARCA vigentes desde el {formatFecha(vigencia)}. Se actualizan solos.</span>
+        {aviso && (
+          <p role="alert" className="m-0 w-full rounded-xl bg-warn-soft px-3 py-2 text-sm text-warn">
+            {aviso}
+          </p>
+        )}
         {elegida !== 'no' && (
           <Boton variante="texto" alto="h-10" className="px-3 text-sm" onClick={() => void elegir('no')}>
             No uso monotributo

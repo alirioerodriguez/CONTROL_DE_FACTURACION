@@ -59,6 +59,16 @@ export interface Perfil {
   calendario_token: string | null
   /** Ve los resultados de las pruebas con usuarias. Solo se cambia por SQL. */
   es_admin?: boolean
+  /** Factura electrónica: punto de venta de web services de ARCA (null = no conectado). */
+  arca_punto_venta?: number | null
+  /** Cuándo se comprobó que honorapp puede facturar por ella (función arca-factura). */
+  arca_conectado_at?: string | null
+  /** Factura sola cada pago nuevo (Ajustes → Facturar con ARCA). */
+  arca_auto?: boolean
+  /** El día 1 le manda a la contadora las facturas del mes anterior. */
+  arca_mail_contadora?: boolean
+  /** No facturar los cobros en dólares. */
+  no_facturar_usd?: boolean
 }
 
 export interface Paciente {
@@ -81,6 +91,8 @@ export interface Paciente {
   abono_mensual: number | null
   /** Obra social o prepaga (solo si la profesional prendió la función). */
   obra_social: string | null
+  /** La profesional eligió no facturarle a este paciente. */
+  no_facturar?: boolean
   nro_afiliado: string | null
   moneda: Moneda
   fecha_alta: string
@@ -118,6 +130,11 @@ export interface Pago {
   observaciones: string | null
   /** Quién pagó: el paciente o su obra social / prepaga. */
   pagador: Pagador
+  /** CAE de ARCA si la factura la hizo honorapp. */
+  cae?: string | null
+  factura_id?: string | null
+  /** La profesional eligió no facturar este pago. */
+  no_facturar?: boolean
 }
 
 export type Pagador = 'paciente' | 'obra_social'
@@ -409,6 +426,16 @@ export function useGuardar() {
     onSettled: (_d, _e, ops) => {
       const claves = new Set(ops.flatMap((op) => INVALIDA[op.tabla].map((k) => k.join('/'))))
       claves.forEach((k) => qc.invalidateQueries({ queryKey: k.split('/') }))
+    },
+    // Facturación automática: si está activada, los pagos nuevos se facturan solos en ARCA.
+    onSuccess: (resultados, ops) => {
+      const perfil = qc.getQueryData<Perfil>(CLAVES.perfil)
+      if (!perfil?.arca_auto || !perfil.arca_punto_venta || !perfil.arca_conectado_at) return
+      const excluidos = new Set((qc.getQueryData<Paciente[]>(CLAVES.pacientes) ?? []).filter((p) => p.no_facturar).map((p) => p.id))
+      const nuevos = ops.flatMap((op, i) =>
+        op.tipo === 'insertar' && op.tabla === 'payments' ? ((resultados[i] ?? []) as Pago[]).filter((p) => p.pagador !== 'obra_social' && p.comprobante !== 'factura_c' && !p.no_facturar && !excluidos.has(p.patient_id) && !(perfil.no_facturar_usd && p.moneda === 'USD')) : [],
+      )
+      if (nuevos.length) import('./facturaAuto').then((m) => m.facturarSolos(nuevos, () => qc.invalidateQueries()))
     },
   })
 }

@@ -49,8 +49,8 @@ export function ContadoraPage() {
   )
 
   const sinFactura = useMemo(
-    () => pagosParaFacturar(pagos, pacientes, sumarMeses(actual, -2)).reduce((n, m) => n + m.items.length, 0),
-    [pagos, pacientes, actual],
+    () => pagosParaFacturar(pagos, pacientes, sumarMeses(actual, -2), !!perfil?.no_facturar_usd).reduce((n, m) => n + m.items.length, 0),
+    [pagos, pacientes, actual, perfil?.no_facturar_usd],
   )
 
   if (cargando) return <Esqueleto que="el reporte para contadora" tarjetas />

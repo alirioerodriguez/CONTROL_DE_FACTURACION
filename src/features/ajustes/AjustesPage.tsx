@@ -21,6 +21,7 @@ import { CamposProfesion } from '../tutorial/Bienvenida'
 import { AumentoAjustes } from './AumentoAjustes'
 import { MonotributoAjustes } from './MonotributoAjustes'
 import { CalendarioAjustes } from './CalendarioAjustes'
+import { ArcaAjustes } from './ArcaAjustes'
 import { OpcionesAjustes } from './OpcionesAjustes'
 import { PlanAjustes } from './PlanAjustes'
 import { Escucharte } from './Escucharte'
@@ -391,6 +392,7 @@ export function AjustesPage() {
 
       <DobleFactor />
 
+      {perfil.data && <ArcaAjustes perfil={perfil.data} />}
       {perfil.data && tp.usaTopesMonotributo && <MonotributoAjustes perfil={perfil.data} />}
 
       <h2 className="m-0 mt-5 px-1 text-sm font-bold tracking-wide text-ink2 uppercase">Funciones y conexiones</h2>
