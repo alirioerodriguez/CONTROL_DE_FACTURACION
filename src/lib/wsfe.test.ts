@@ -213,6 +213,6 @@ describe('tabla de condiciones del receptor (RG 5616)', () => {
     expect(condicionValida(5, tabla, 'A')).toBe(false) // un consumidor final no recibe una A
     expect(condicionValida(6, tabla)).toBe(false) // no vino en la tabla
     expect(() => leerCondicionesIvaReceptor('<x/>')).toThrow('no devolvió condiciones')
-    expect(() => leerCondicionesIvaReceptor('<Errors><Err><Code>600</Code><Msg>Token vencido</Msg></Err></Errors>')).toThrow('Token vencido')
+    expect(() => leerCondicionesIvaReceptor('<Errors><Err><Code>10242</Code><Msg>Condición inexistente</Msg></Err></Errors>')).toThrow('Condición inexistente')
   })
 })
