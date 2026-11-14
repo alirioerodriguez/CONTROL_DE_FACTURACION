@@ -23,7 +23,10 @@ Deno.serve(async () => {
     .select('id, nombre, cuit, contadora_email')
     .eq('arca_mail_contadora', true)
     .not('contadora_email', 'is', null)
-  if (error) return json({ ok: false, mensaje: error.message }, 500)
+  if (error) {
+    console.error('facturas-contadora: perfiles', error.message)
+    return json({ ok: false, mensaje: 'No se pudieron leer los perfiles.' }, 500)
+  }
   const { data: ya } = await db.from('facturas_contadora_enviadas').select('user_id').eq('periodo', mes.desde)
   const enviados = new Set((ya ?? []).map((f) => f.user_id))
 
@@ -58,8 +61,10 @@ Deno.serve(async () => {
       mandados++
     } catch (e) {
       await db.from('facturas_contadora_enviadas').delete().eq('user_id', p.id).eq('periodo', mes.desde)
-      errores.push(e instanceof Error ? e.message : String(e))
+      // El detalle queda en los registros de la función, no en la respuesta (es pública).
+      console.error('facturas-contadora: envío', e instanceof Error ? e.message : String(e))
+      errores.push(p.id)
     }
   }
-  return json({ ok: errores.length === 0, mandados, errores: errores.slice(0, 3) }, errores.length ? 500 : 200)
+  return json({ ok: errores.length === 0, mandados, fallidos: errores.length }, errores.length ? 500 : 200)
 })
