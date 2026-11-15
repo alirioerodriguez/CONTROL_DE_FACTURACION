@@ -1,4 +1,5 @@
-import { supabase } from './supabase'
+import { toast } from 'sonner'
+import { mensajeError, supabase } from './supabase'
 
 // Puente con la app del celular (carpeta mobile/). Google no deja iniciar sesión dentro de la vista web de
 // una app, así que la app abre esta misma página en la ventana segura del sistema con ?ingresoApp=google:
@@ -21,6 +22,40 @@ export function pedirGoogleALaApp() {
   )
 }
 
+/** true si estamos dentro de la app de iPhone (ahí se ofrece «Continuar con Apple»). */
+export const enLaAppIPhone = () => enLaApp() && /iPhone|iPad|iPod/.test(navigator.userAgent)
+
+/** Dentro de la app de iPhone: le pide a la app el ingreso con Apple (ventana del sistema, ver mobile/apple.ts). */
+export function pedirAppleALaApp() {
+  ;(window as unknown as { ReactNativeWebView: { postMessage: (m: string) => void } }).ReactNativeWebView.postMessage(
+    JSON.stringify({ type: 'apple' }),
+  )
+}
+
+/** ¿Está activo el proveedor Apple en Supabase (Authentication → Providers → Apple)? */
+export async function appleDisponible(): Promise<boolean> {
+  try {
+    const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
+    if (!url || !key) return false
+    const r = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: key } })
+    const j = (await r.json()) as { external?: Record<string, boolean> }
+    return !!j.external?.apple
+  } catch {
+    return false
+  }
+}
+
+// La app le pasa el token de Apple a la página, que entra con él. Apple da el nombre solo la primera vez.
+async function entrarConApple(token: string, nonce: string, nombre: string) {
+  const { data, error } = await supabase.auth.signInWithIdToken({ provider: 'apple', token, nonce })
+  if (error) return toast.error('No se pudo entrar con Apple: ' + mensajeError(error))
+  if (nombre && data.user && !data.user.user_metadata?.full_name) {
+    await supabase.auth.updateUser({ data: { full_name: nombre } }).catch(() => {})
+  }
+  toast.success('Entraste con Apple')
+}
+
 function volverALaApp(hash: string) {
   window.location.replace(`${ESQUEMA_APP}://auth#${hash}`)
 }
@@ -31,6 +66,8 @@ export function manejarIngresoApp(): boolean {
   // La app carga la sesión con esto después de recibirla
   ;(window as unknown as { __sesionDesdeApp: unknown }).__sesionDesdeApp = (access_token: string, refresh_token: string) =>
     supabase.auth.setSession({ access_token, refresh_token })
+  ;(window as unknown as { __entrarConApple: unknown }).__entrarConApple = entrarConApple
+  ;(window as unknown as { __errorApple: unknown }).__errorApple = (msg: string) => toast.error(msg)
 
   const params = new URLSearchParams(window.location.search)
   const paso = params.get('ingresoApp')

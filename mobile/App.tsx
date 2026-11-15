@@ -9,6 +9,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { WebView, type WebViewProps } from 'react-native-webview';
 import type { ShouldStartLoadRequest, WebViewMessageEvent, WebViewNavigation, WebViewOpenWindowEvent } from 'react-native-webview/lib/WebViewTypes';
 import { APP } from './config';
+import { entrarConApple } from './apple';
 
 // La app muestra la web publicada: cada cambio que se publica llega solo, sin volver a compilar.
 // Lo que agrega: ingreso con Google (Google no lo permite dentro de una vista web), descargas de
@@ -114,6 +115,7 @@ export default function App() {
     let msg: { type?: string; nombre?: string; datos?: string; title?: string; text?: string; url?: string };
     try { msg = JSON.parse(e.nativeEvent.data); } catch { return; }
     if (msg.type === 'google') entrarConGoogle();
+    else if (msg.type === 'apple') entrarConApple(web);
     else if (msg.type === 'archivo' && msg.nombre && msg.datos)
       guardarYCompartir(msg.nombre, msg.datos).catch(() => Alert.alert('No se pudo guardar el archivo', 'Probá de nuevo.'));
     else if (msg.type === 'share')
