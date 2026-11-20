@@ -13,14 +13,15 @@ import { etiquetaDia } from '../../lib/formato'
  * El texto pegado no se guarda en ningún lado; solo se recuerda el nombre de quien pagó, si ella lo confirma.
  */
 export function PegarComprobante({
-  pacientes, sesiones, pagos, onAplicar,
+  pacientes, sesiones, pagos, onAplicar, abiertoAlEmpezar = false,
 }: {
   pacientes: Paciente[]
   sesiones: Sesion[]
   pagos: Pago[]
   onAplicar: (paciente: Paciente, datos: DatosComprobante) => void
+  abiertoAlEmpezar?: boolean
 }) {
-  const [abierto, setAbierto] = useState(false)
+  const [abierto, setAbierto] = useState(abiertoAlEmpezar)
   const [texto, setTexto] = useState('')
   const [leido, setLeido] = useState<{ datos: DatosComprobante; texto: string } | null>(null)
 
