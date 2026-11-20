@@ -10,6 +10,15 @@ Lo que agrega sobre la web:
 - **Excel, PDF y recibos**: las descargas se interceptan y se abren con el menú de compartir del teléfono
   (guardar en Archivos, WhatsApp, mail).
 - WhatsApp y mail se abren en su app; botón atrás de Android; aviso de sin conexión.
+- **Widgets de la pantalla de inicio** (carpeta `widget/`, desde el 20/11/2026): **Cobros** (lo cobrado en el mes, lo
+  esperado y cuánto te deben, con «+ Pago»), **Te deben** (de lo que más debe a lo que menos, con los meses), **Hoy** (la
+  agenda del día y la próxima sesión), **Atajos** (Sesión, Pago y Pegar un comprobante) y **Monotributo** (lo cobrado en 12
+  meses contra el tope). La web arma los textos (`src/lib/widgetsApp.ts` y `src/components/PuenteWidgets.tsx`) respetando
+  «ocultar montos» y «Solo iniciales en los widgets» (Ajustes); la app los valida (`widget/datos.ts`) y los muestra.
+  Tocar un widget abre `honorapp://sesion`, `pago`, `comprobante`, `deben`, `agenda` o `inicio`.
+  Android: `WidgetsAndroid.tsx` (react-native-android-widget). iPhone: `WidgetsIOS.tsx` (expo-widgets, grupo
+  `group.ar.alirio.honorapp`). **Expo Go no muestra widgets**: hace falta un build. En Android la app de Google Play hoy es
+  la TWA, que no admite widgets: para tenerlos hay que publicar esta app en su lugar (como Mis Cuentas).
 
 Identificador: `ar.alirio.honorapp` (el mismo que la app de Android de Google Play).
 

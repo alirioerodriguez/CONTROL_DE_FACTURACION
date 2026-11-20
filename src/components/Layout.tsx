@@ -9,6 +9,7 @@ import { FotoUsuario, useUsuario } from './FotoUsuario'
 import { Hoja, IC } from './ui'
 import { AvisoInstalar } from './Instalar'
 import { usePerfil } from '../lib/datos'
+import { PuenteWidgets } from './PuenteWidgets'
 
 interface Seccion {
   to: string
@@ -181,6 +182,9 @@ export function Layout() {
           Más
         </button>
       </nav>
+
+      {/* Widgets del celular: fuera de la pantalla con key, así no se reinicia al navegar */}
+      <PuenteWidgets />
 
       {mas && (
         <Hoja titulo="Más" onCerrar={() => setMas(false)}>

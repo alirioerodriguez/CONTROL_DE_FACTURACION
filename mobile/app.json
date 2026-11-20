@@ -34,6 +34,121 @@
           "backgroundColor": "#557F69"
         }
       ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Cobros",
+              "label": "honorapp: cobros",
+              "description": "Lo cobrado en el mes y cuánto te deben, con un botón para registrar un pago.",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 0
+            },
+            {
+              "name": "TeDeben",
+              "label": "honorapp: te deben",
+              "description": "Quién te debe, cuánto y de qué meses.",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 0
+            },
+            {
+              "name": "Hoy",
+              "label": "honorapp: hoy",
+              "description": "Tus sesiones de hoy y cuál es la próxima.",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 0
+            },
+            {
+              "name": "Atajos",
+              "label": "honorapp: atajos",
+              "description": "Registrar una sesión, un pago o pegar un comprobante.",
+              "minWidth": "110dp",
+              "minHeight": "40dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 1,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 0
+            },
+            {
+              "name": "Monotributo",
+              "label": "honorapp: monotributo",
+              "description": "Lo cobrado en 12 meses contra el tope de tu categoría.",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 0
+            }
+          ]
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "groupIdentifier": "group.ar.alirio.honorapp",
+          "widgets": [
+            {
+              "name": "Cobros",
+              "displayName": "Cobros",
+              "description": "Lo cobrado en el mes y cuánto te deben.",
+              "supportedFamilies": [
+                "systemSmall",
+                "systemMedium"
+              ]
+            },
+            {
+              "name": "TeDeben",
+              "displayName": "Te deben",
+              "description": "Quién te debe, cuánto y de qué meses.",
+              "supportedFamilies": [
+                "systemMedium",
+                "systemLarge"
+              ]
+            },
+            {
+              "name": "Hoy",
+              "displayName": "Hoy",
+              "description": "Tus sesiones de hoy y cuál es la próxima.",
+              "supportedFamilies": [
+                "systemMedium",
+                "systemLarge"
+              ]
+            },
+            {
+              "name": "Atajos",
+              "displayName": "Atajos",
+              "description": "Registrar una sesión, un pago o pegar un comprobante.",
+              "supportedFamilies": [
+                "systemSmall",
+                "systemMedium"
+              ]
+            },
+            {
+              "name": "Monotributo",
+              "displayName": "Monotributo",
+              "description": "Lo cobrado en 12 meses contra el tope de tu categoría.",
+              "supportedFamilies": [
+                "systemSmall",
+                "systemMedium"
+              ]
+            }
+          ]
+        }
+      ],
       "expo-apple-authentication"
     ]
   }

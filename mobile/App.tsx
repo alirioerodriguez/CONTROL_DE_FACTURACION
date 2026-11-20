@@ -10,16 +10,26 @@ import { WebView, type WebViewProps } from 'react-native-webview';
 import type { ShouldStartLoadRequest, WebViewMessageEvent, WebViewNavigation, WebViewOpenWindowEvent } from 'react-native-webview/lib/WebViewTypes';
 import { APP } from './config';
 import { entrarConApple } from './apple';
+import { limpiar } from './widget/datos';
+import { actualizarWidgets } from './widget/actualizar';
 
 // La app muestra la web publicada: cada cambio que se publica llega solo, sin volver a compilar.
 // Lo que agrega: ingreso con Google (Google no lo permite dentro de una vista web), descargas de
 // Excel/PDF con el menú de compartir del teléfono, enlaces externos (WhatsApp, mail) en su app,
-// botón atrás de Android y aviso de sin conexión.
+// botón atrás de Android, aviso de sin conexión y los widgets de la pantalla de inicio (carpeta widget/).
 
 type WebViewHandle = WebView<{}>;
 const RNWebView = WebView as unknown as ComponentType<WebViewProps & { ref?: Ref<WebViewHandle> }>;
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+// Lo que se toca en un widget abre la app con honorapp://sesion, pago, comprobante, deben, agenda o inicio
+// (ver PuenteWidgets en la web).
+const ACCIONES = ['sesion', 'pago', 'comprobante', 'deben', 'agenda', 'inicio'] as const;
+const accionDe = (url: string | null | undefined) => {
+  const m = url && /^honorapp:\/\/([a-z]+)/.exec(url);
+  return m && (ACCIONES as readonly string[]).includes(m[1]) ? m[1] : null;
+};
 
 const ORIGEN = new URL(APP.sitio).origin;
 const esPropia = (url: string) =>
@@ -62,6 +72,19 @@ export default function App() {
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const enGoogle = useRef(false);
+  const cargada = useRef(false);
+  // Si la app estaba cerrada y se abrió desde un widget, la página arranca con ?accion=…
+  const [inicio, setInicio] = useState<string | null>(null);
+  useEffect(() => {
+    Linking.getInitialURL()
+      .then((u) => { const a = accionDe(u); setInicio(a && a !== 'inicio' ? `${APP.sitio}?accion=${a}` : APP.sitio); })
+      .catch(() => setInicio(APP.sitio));
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      const a = accionDe(url);
+      if (a && cargada.current) web.current?.injectJavaScript(`window.__accionDesdeApp && window.__accionDesdeApp(${JSON.stringify(a)}); true;`);
+    });
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => { setLoading(false); SplashScreen.hideAsync().catch(() => {}); }, 8000);
@@ -112,11 +135,12 @@ export default function App() {
   }, []);
 
   const onMessage = useCallback((e: WebViewMessageEvent) => {
-    let msg: { type?: string; nombre?: string; datos?: string; title?: string; text?: string; url?: string };
+    let msg: { type?: string; nombre?: string; datos?: unknown; title?: string; text?: string; url?: string };
     try { msg = JSON.parse(e.nativeEvent.data); } catch { return; }
     if (msg.type === 'google') entrarConGoogle();
     else if (msg.type === 'apple') entrarConApple(web);
-    else if (msg.type === 'archivo' && msg.nombre && msg.datos)
+    else if (msg.type === 'widget') actualizarWidgets(msg.datos === null ? null : limpiar(msg.datos));
+    else if (msg.type === 'archivo' && msg.nombre && typeof msg.datos === 'string')
       guardarYCompartir(msg.nombre, msg.datos).catch(() => Alert.alert('No se pudo guardar el archivo', 'Probá de nuevo.'));
     else if (msg.type === 'share')
       Share.share({ title: msg.title, message: [msg.text, msg.url].filter(Boolean).join('\n') }).catch(() => {});
@@ -128,9 +152,9 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar style={APP.barraClara ? 'light' : 'dark'} />
       <SafeAreaView style={[styles.root, { backgroundColor: APP.fondo }]} edges={['top', 'left', 'right']}>
-        <RNWebView
+        {inicio && <RNWebView
           ref={web}
-          source={{ uri: APP.sitio }}
+          source={{ uri: inicio }}
           style={[styles.web, { backgroundColor: APP.fondo }]}
           applicationNameForUserAgent={APP.agente}
           originWhitelist={['*']}
@@ -140,7 +164,7 @@ export default function App() {
           setSupportMultipleWindows
           onMessage={onMessage}
           onNavigationStateChange={(s: WebViewNavigation) => setCanGoBack(s.canGoBack)}
-          onLoadEnd={() => { setLoading(false); SplashScreen.hideAsync().catch(() => {}); }}
+          onLoadEnd={() => { cargada.current = true; setLoading(false); SplashScreen.hideAsync().catch(() => {}); }}
           onError={() => { setFailed(true); setLoading(false); SplashScreen.hideAsync().catch(() => {}); }}
           onContentProcessDidTerminate={() => web.current?.reload()}
           onRenderProcessGone={() => web.current?.reload()}
@@ -151,7 +175,7 @@ export default function App() {
           allowsInlineMediaPlayback
           decelerationRate="normal"
           overScrollMode="never"
-        />
+        />}
         {loading && !failed && (
           <View style={[styles.cover, { backgroundColor: APP.fondo }]} pointerEvents="none"><ActivityIndicator color={APP.acento} /></View>
         )}

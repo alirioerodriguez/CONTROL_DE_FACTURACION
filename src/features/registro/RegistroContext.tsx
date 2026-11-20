@@ -4,7 +4,7 @@ import { PacienteHoja } from './PacienteHoja'
 import { RegistroHoja } from './RegistroHoja'
 
 export type Apertura =
-  | { modo: 'sesion' | 'pago'; pacienteId?: string }
+  | { modo: 'sesion' | 'pago'; pacienteId?: string; /** Abre «Pegar un comprobante» (widget de atajos). */ pegar?: boolean }
   | { modo: 'editar-sesion'; sesion: Sesion }
   | { modo: 'editar-pago'; pago: Pago }
   | { modo: 'paciente'; paciente?: Paciente }

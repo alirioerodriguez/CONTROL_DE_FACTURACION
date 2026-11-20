@@ -352,7 +352,7 @@ export function RegistroHoja({
         />
       )}
 
-      {!editando && !esSesion && <PegarComprobante pacientes={pacientes} sesiones={sesiones} pagos={pagos} onAplicar={aplicarComprobante} />}
+      {!editando && !esSesion && <PegarComprobante pacientes={pacientes} sesiones={sesiones} pagos={pagos} onAplicar={aplicarComprobante} abiertoAlEmpezar={'pegar' in apertura && !!apertura.pegar} />}
 
       <div className="flex flex-col gap-2.5">
         <div className="text-[0.9375rem] font-semibold">Paciente</div>
