@@ -150,6 +150,29 @@
         }
       ],
       "expo-apple-authentication"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "build": {
+          "experimental": {
+            "ios": {
+              "appExtensions": [
+                {
+                  "targetName": "ExpoWidgetsTarget",
+                  "bundleIdentifier": "ar.alirio.honorapp.ExpoWidgetsTarget",
+                  "entitlements": {
+                    "com.apple.security.application-groups": [
+                      "group.ar.alirio.honorapp"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "projectId": "d432383a-4755-493a-a5f5-185ad6fff03b"
+      }
+    },
+    "owner": "alirior"
   }
 }
