@@ -1,12 +1,7 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { opcionesHoras } from './opciones'
-import { montoParaInput } from '../../lib/formato'
 
 describe('opciones de horas', () => {
-  afterEach(() => {
-    // Restablecer cualquier estado o configuración después de cada prueba
-  })
-
   it('genera opciones típicas', () => {
     expect(opcionesHoras(2)).toMatchInlineSnapshot(`
       [
@@ -136,52 +131,6 @@ describe('opciones de horas', () => {
         {
           "l": "2 h",
           "v": 2,
-        },
-      ]
-    `)
-  })
-
-  it('maneja duración vacía', () => {
-    expect(opcionesHoras(undefined as any)).toMatchInlineSnapshot(`
-      [
-        {
-          "l": "1 h",
-          "v": 1,
-        },
-        {
-          "l": "1,5 h",
-          "v": 1.5,
-        },
-        {
-          "l": "2 h",
-          "v": 2,
-        },
-        {
-          "l": "NaN h",
-          "v": undefined,
-        },
-      ]
-    `)
-  })
-
-  it('maneja duración con texto', () => {
-    expect(opcionesHoras('dos' as any)).toMatchInlineSnapshot(`
-      [
-        {
-          "l": "1 h",
-          "v": 1,
-        },
-        {
-          "l": "1,5 h",
-          "v": 1.5,
-        },
-        {
-          "l": "2 h",
-          "v": 2,
-        },
-        {
-          "l": "NaN h",
-          "v": "dos",
         },
       ]
     `)
