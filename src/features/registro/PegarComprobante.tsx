@@ -2,25 +2,10 @@ import { useMemo, useState } from 'react'
 import { ClipboardPaste } from 'lucide-react'
 import { Boton } from '../../components/ui'
 import { nombreCompleto, type Paciente, type Pago, type Sesion } from '../../lib/datos'
-import {
-  aprenderPagador, leerComprobante, posibleDuplicado, sugerir, type DatosComprobante, type DeudaPaciente, type PagadorConocido,
-} from '../../lib/conciliar'
+import { leerComprobante, posibleDuplicado, sugerir, type DatosComprobante } from '../../lib/conciliar'
 import { verMonto } from '../../lib/discreto'
-import { saldosDe } from '../../lib/resumen'
-import { guardarPreferencia, preferencia } from '../../lib/tema'
+import { deudasDe, leerConocidos, recordarPagadores } from '../../lib/pagadoresConocidos'
 import { etiquetaDia } from '../../lib/formato'
-
-const CLAVE = 'pagadores_conocidos'
-
-/** Los pagadores que la profesional ya confirmó («siempre paga la mamá»). Quedan solo en este navegador. */
-function leerConocidos(): PagadorConocido[] {
-  try {
-    const v = JSON.parse(preferencia<string>(CLAVE, '[]'))
-    return Array.isArray(v) ? v.filter((k) => k && typeof k.nombre === 'string' && typeof k.patient_id === 'string') : []
-  } catch {
-    return []
-  }
-}
 
 /**
  * «Pegar comprobante»: la profesional pega el texto de una transferencia (homebanking, Mercado Pago, WhatsApp) y la app
@@ -41,12 +26,7 @@ export function PegarComprobante({
 
   const resultado = useMemo(() => {
     if (!leido) return null
-    const deudas: Record<string, DeudaPaciente> = {}
-    for (const p of pacientes) {
-      const s = saldosDe(p.id, sesiones, pagos).find((x) => x.moneda === p.moneda)
-      if (s) deudas[p.id] = { moneda: p.moneda, total: Math.max(0, s.saldo), porMes: s.meses.filter((m) => m.pendiente > 0).map((m) => m.pendiente) }
-    }
-    return sugerir(leido.datos, pacientes, { conocidos: leerConocidos(), deudas })
+    return sugerir(leido.datos, pacientes, { conocidos: leerConocidos(), deudas: deudasDe(pacientes, sesiones, pagos) })
   }, [leido, pacientes, sesiones, pagos])
 
   function leer() {
@@ -55,7 +35,7 @@ export function PegarComprobante({
 
   function elegir(p: Paciente) {
     if (!leido) return
-    guardarPreferencia(CLAVE, JSON.stringify(aprenderPagador(leido.datos, p, leerConocidos())))
+    recordarPagadores([{ datos: leido.datos, paciente: p }])
     onAplicar(p, leido.datos)
     setTexto('')
     setLeido(null)

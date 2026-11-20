@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
-  BellRing, CalendarClock, ChartColumn, ChevronRight, Ellipsis, FileSpreadsheet, House, Plus, ReceiptText, SlidersHorizontal, Upload, Users,
+  ArrowLeftRight, BellRing, CalendarClock, ChartColumn, ChevronRight, Ellipsis, FileSpreadsheet, House, Plus, ReceiptText, SlidersHorizontal, Upload, Users,
   type LucideIcon,
 } from 'lucide-react'
 import { useRegistro } from '../features/registro/RegistroContext'
@@ -27,6 +27,7 @@ const SECCIONES: Seccion[] = [
   { to: '/recordatorios', etiqueta: 'Recordatorios', icono: BellRing, enMovil: false, opcional: 'ver_recordatorios' },
   { to: '/agenda', etiqueta: 'Agenda de hoy', icono: CalendarClock, enMovil: false },
   { to: '/contadora', etiqueta: 'Contadora', icono: FileSpreadsheet, enMovil: false },
+  { to: '/conciliar', etiqueta: 'Conciliar el mes', icono: ArrowLeftRight, enMovil: false },
   { to: '/importar', etiqueta: 'Importar', icono: Upload, enMovil: false },
   { to: '/ajustes', etiqueta: 'Ajustes', icono: SlidersHorizontal, enMovil: true },
 ]
@@ -69,6 +70,7 @@ const EN_MAS: { to: string; etiqueta: string; ayuda: string; icono: LucideIcon; 
   { to: '/facturar', etiqueta: 'Para facturar', ayuda: 'Pagos sin factura y datos para ARCA', icono: ReceiptText },
   { to: '/recordatorios', etiqueta: 'Recordatorios', ayuda: 'Quién te debe y a quién ya le escribiste', icono: BellRing, opcional: 'ver_recordatorios' },
   { to: '/agenda', etiqueta: 'Agenda de hoy', ayuda: 'Reconfirmar mañana, lista de espera y faltas', icono: CalendarClock },
+  { to: '/conciliar', etiqueta: 'Conciliar el mes', ayuda: 'Los movimientos del banco o Mercado Pago, convertidos en pagos', icono: ArrowLeftRight },
   { to: '/importar', etiqueta: 'Importar', ayuda: 'Subir una planilla de Excel o CSV', icono: Upload },
 ]
 

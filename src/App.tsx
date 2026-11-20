@@ -27,6 +27,7 @@ import { EstudioPage } from './features/estudio/EstudioPage'
 import { guardarInvitacion, invitacionPendiente } from './lib/estudio'
 
 const ImportarPage = lazy(() => import('./features/importar/ImportarPage').then((m) => ({ default: m.ImportarPage })))
+const ConciliarPage = lazy(() => import('./features/conciliar/ConciliarPage').then((m) => ({ default: m.ConciliarPage })))
 const MesPage = lazy(() => import('./features/reportes/MesPage').then((m) => ({ default: m.MesPage })))
 const ContadoraPage = lazy(() => import('./features/reportes/ContadoraPage').then((m) => ({ default: m.ContadoraPage })))
 const ResultadosPage = lazy(() => import('./features/pruebas/ResultadosPage').then((m) => ({ default: m.ResultadosPage })))
@@ -91,6 +92,7 @@ export default function App() {
           <Route path="contadora" element={<ContadoraPage />} />
           <Route path="facturar" element={<FacturarPage />} />
           <Route path="importar" element={<ImportarPage />} />
+          <Route path="conciliar" element={<ConciliarPage />} />
           <Route path="recordatorios" element={<RecordatoriosPage />} />
           <Route path="agenda" element={<AgendaPage />} />
           <Route path="ajustes" element={<AjustesPage />} />
