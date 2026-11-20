@@ -25,6 +25,7 @@ Registro abierto: cualquier colega puede crearse una cuenta y ve solo sus datos.
 - Formato argentino en toda la UI vía `src/lib/formato.ts`: `$ 25.000,00`, `US$ 50,00`, fechas dd/mm/aaaa. Fechas de negocio como texto `AAAA-MM-DD`; "hoy" en America/Argentina/Buenos_Aires (`hoyAR`).
 - Toda operación muestra un toast de éxito o error. Nada falla en silencio.
 - Inputs con font-size mínimo de 16px; montos con `inputMode="decimal"`.
+- Lo que se prende o se apaga (sí/no) va con switch, no con casilla: `<input type="checkbox" role="switch" className="interruptor" />` con el texto a la izquierda.
 - Responsive real a 390px y 1440px. Estados vacío, cargando y error en cada pantalla.
 - Diseño: seguir el prototipo de Claude Design (verde salvia, esquinas redondeadas, títulos en serif). Referencia en `docs/diseno/`.
 - Marca: "honorapp", siempre en minúscula. Logo "h con tilde de cobro" (componente `Logo` en `src/components/Layout.tsx`, especificación en `docs/diseno/logo/README.md`).

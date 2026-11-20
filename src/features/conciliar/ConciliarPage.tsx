@@ -322,14 +322,15 @@ export function ConciliarPage() {
                     {motivos.length > 0 && <div className="text-sm text-ink2">{motivos.join(' · ')}</div>}
                     {p.yaCargado && id === p.elegido && <div className="text-sm font-semibold text-bad">Ya hay un pago así cargado: no lo marcamos para no duplicarlo.</div>}
                     {id && id !== NO_ES && (
-                      <label className="flex items-center gap-2.5 text-[0.9375rem]">
+                      <label className="flex cursor-pointer items-center justify-between gap-3 text-[0.9375rem] font-semibold">
+                        Registrar este pago
                         <input
                           type="checkbox"
-                          className="size-5 accent-[var(--acc)]"
+                          role="switch"
+                          className="interruptor"
                           checked={marcadoDe(i)}
                           onChange={(e) => setMarcados({ ...marcados, [i]: e.target.checked })}
                         />
-                        Registrar este pago
                       </label>
                     )}
                   </Tarjeta>
