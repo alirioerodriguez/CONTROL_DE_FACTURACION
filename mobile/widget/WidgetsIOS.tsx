@@ -73,7 +73,7 @@ export function DebenIOS(props: PropsDeben, env: WidgetEnvironment) {
         <Text modifiers={[font({ size: 12 }), foregroundStyle(c.suave)]}>{cantidad ? (props.total || '') : ''}</Text>
       </HStack>
       {props && props.hay ? null : <Text modifiers={[font({ size: 13 }), foregroundStyle(c.suave), lineLimit(2)]}>Abrí honorapp para ver quién te debe.</Text>}
-      {props && props.hay && !lista.length ? <Text modifiers={[font({ size: 13 }), foregroundStyle(c.suave)]}>Nadie te debe. Todo al día.</Text> : null}
+      {props && props.hay && !lista.length ? <Text modifiers={[font({ size: 13 }), foregroundStyle(c.suave), lineLimit(3)]}>{cantidad ? `${cantidad} ${cantidad === 1 ? 'paciente te debe' : 'pacientes te deben'}. Tocá para ver.` : 'Nadie te debe. Todo al día.'}</Text> : null}
       {lista.map((x, i) => (
         <HStack key={i} spacing={10}>
           <Text modifiers={[font({ size: 12, weight: 'bold' }), foregroundStyle(c.fuerte), frame({ width: 30, height: 30 }), background(c.blando), cornerRadius(10)]}>

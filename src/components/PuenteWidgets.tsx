@@ -1,18 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDatos, useTopesMonotributo } from '../lib/datos'
 import { useMontosOcultos } from '../lib/discreto'
 import { formatHoraAR } from '../lib/colaOffline'
 import { hoyAR } from '../lib/formato'
 import { enLaApp } from '../lib/puenteApp'
-import { preferencia } from '../lib/tema'
 import { datosWidgets } from '../lib/widgetsApp'
 import { useRegistro } from '../features/registro/RegistroContext'
-
-/** Preferencia: en los widgets, solo las iniciales de los pacientes (se cambia en Ajustes). */
-export const CLAVE_WIDGET_INICIALES = 'widget_iniciales'
-/** Se dispara al cambiar esa preferencia, para volver a mandar los datos. */
-export const EVENTO_WIDGETS = 'honorapp:widgets'
 
 type Accion = 'sesion' | 'pago' | 'comprobante' | 'deben' | 'agenda' | 'inicio'
 const ACCIONES: Accion[] = ['sesion', 'pago', 'comprobante', 'deben', 'agenda', 'inicio']
@@ -43,22 +37,14 @@ function Puente() {
   const navegar = useNavigate()
   const { abrir } = useRegistro()
   const ultimo = useRef('')
-  const [version, setVersion] = useState(0)
-  useEffect(() => {
-    const f = () => setVersion((v) => v + 1)
-    window.addEventListener(EVENTO_WIDGETS, f)
-    return () => window.removeEventListener(EVENTO_WIDGETS, f)
-  }, [])
 
   const datos = useMemo(() => {
     if (!perfil || cargando) return null
     return datosWidgets(
       { perfil, pacientes, sesiones, pagos, categorias },
-      { hoy: hoyAR(), ahora: formatHoraAR(new Date().toISOString()), oculto, iniciales: preferencia<string>(CLAVE_WIDGET_INICIALES, '0') === '1' },
+      { hoy: hoyAR(), ahora: formatHoraAR(new Date().toISOString()), oculto },
     )
-    // version: se vuelve a calcular cuando cambia «solo iniciales»
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [perfil, pacientes, sesiones, pagos, categorias, oculto, cargando, version])
+  }, [perfil, pacientes, sesiones, pagos, categorias, oculto, cargando])
 
   useEffect(() => {
     if (!datos) return

@@ -129,14 +129,14 @@ function TeDeben({ d, p, alto }: { d: DatosWidget; p: Paleta; alto: number }) {
           </FlexWidget>
         ))
       ) : (
-        <TextWidget text="Nadie te debe. Todo al día." maxLines={2} style={{ fontSize: 13, color: p.suave }} />
+        <TextWidget text={d.deben.cantidad ? `${d.deben.cantidad} ${d.deben.cantidad === 1 ? 'paciente te debe' : 'pacientes te deben'}${d.deben.variosMeses ? ` · ${d.deben.variosMeses} de más de un mes` : ''}. Tocá para ver.` : 'Nadie te debe. Todo al día.'} maxLines={3} style={{ fontSize: 13, color: d.deben.variosMeses ? p.rojo : p.suave }} />
       )}
       {grande && d.deben.cantidad ? (
         <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: 'match_parent' }}>
           <TextWidget text={`${d.deben.cantidad} pacientes${d.deben.variosMeses ? ` · ${d.deben.variosMeses} con más de un mes` : ''}`} maxLines={1} style={{ fontSize: 12, color: p.suave }} />
           <Boton p={p} uri={URL.deben} n="campana" texto="Recordar" />
         </FlexWidget>
-      ) : d.deben.cantidad > filas.length ? (
+      ) : filas.length && d.deben.cantidad > filas.length ? (
         <TextWidget text={`y ${d.deben.cantidad - filas.length} más`} style={{ fontSize: 12, color: p.suave }} />
       ) : vacio()}
     </Marco>

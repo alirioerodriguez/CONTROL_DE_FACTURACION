@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Paciente, Pago, Perfil, Sesion } from './datos'
-import { datosWidgets, nombreCorto } from './widgetsApp'
+import { datosWidgets } from './widgetsApp'
 
 const pac = (id: string, nombre: string, apellido: string | null) => ({ id, nombre, apellido, moneda: 'ARS', activo: true }) as unknown as Paciente
 const ses = (id: string, pid: string, fecha: string, monto: number, hora: string | null = null, estado = 'normal') =>
@@ -22,14 +22,15 @@ const sesiones = [
   ses('h4', 'tomi', '2026-11-20', 25000, '12:00:00', 'cancelada'),
 ]
 const pagos = [pago('p1', 'tomi', '2026-11-06', 25000), pago('p2', 'ana', '2026-11-10', 100, 'USD')]
-const op = { hoy: '2026-11-20', ahora: '14:20', oculto: false, iniciales: false }
+const op = { hoy: '2026-11-20', ahora: '14:20', oculto: false }
 const d = datosWidgets({ perfil: perfil(), pacientes, sesiones, pagos }, op)
 
 describe('widgets del celular', () => {
-  it('nombres cortos: nombre e inicial del apellido, o solo iniciales', () => {
-    expect(nombreCorto(pacientes[0], false)).toBe('Juan P.')
-    expect(nombreCorto(pacientes[0], true)).toBe('J. P.')
-    expect(nombreCorto(pacientes[2], false)).toBe('Tomás')
+  it('ningún nombre de paciente sale hacia los widgets (la pantalla de inicio la ve cualquiera)', () => {
+    const texto = JSON.stringify(d)
+    for (const n of ['Juan', 'Pérez', 'Ana', 'Gómez', 'Tomás']) expect(texto).not.toContain(n)
+    expect(d.deben.lista).toEqual([])
+    expect(d.hoy.turnos.every((t) => t.nombre === 'Sesión')).toBe(true)
   })
 
   it('cobros del mes: pesos y dólares por separado', () => {
@@ -40,11 +41,10 @@ describe('widgets del celular', () => {
     expect(d.cobros.pct).toBeLessThan(100)
   })
 
-  it('quién debe: de lo que más debe a lo que menos, con los meses', () => {
-    expect(d.deben.lista[0]).toMatchObject({ nombre: 'Juan P.', meses: 'oct y nov', variosMeses: true })
-    expect(d.deben.lista[0].monto).toMatch(/135\.000/) // oct, nov y la de hoy (cuenta como en Inicio)
-    expect(d.deben.lista.map((x) => x.nombre)).toContain('Ana G.')
+  it('quién debe: el total, cuántos pacientes y cuántos de más de un mes, sin nombres', () => {
+    expect(d.deben.cantidad).toBe(3) // Juan (oct, nov y hoy), Ana y Tomás (la de hoy cuenta, como en Inicio)
     expect(d.deben.variosMeses).toBe(1)
+    expect(d.deben.total).toMatch(/\$/)
   })
 
   it('hoy: por hora, lo pasado hecho, la próxima marcada y sin las canceladas', () => {
@@ -60,11 +60,8 @@ describe('widgets del celular', () => {
     expect(datosWidgets({ perfil: perfil('no'), pacientes, sesiones, pagos }, op).mono).toBeNull()
   })
 
-  it('«ocultar montos» tapa todas las cifras y «solo iniciales» los nombres', () => {
-    const o = datosWidgets({ perfil: perfil(), pacientes, sesiones, pagos }, { ...op, oculto: true, iniciales: true })
+  it('«ocultar montos» tapa todas las cifras', () => {
+    const o = datosWidgets({ perfil: perfil(), pacientes, sesiones, pagos }, { ...op, oculto: true })
     expect([o.cobros.cobrado, o.cobros.esperado, o.cobros.deben, o.cobros.usd, o.deben.total, o.mono?.cobrado]).toEqual(Array(6).fill('•••••'))
-    expect(o.deben.lista.every((x) => x.monto === '•••••')).toBe(true)
-    expect(o.deben.lista[0].nombre).toBe('J. P.')
-    expect(o.hoy.turnos[1].nombre).toBe('J. P.')
   })
 })

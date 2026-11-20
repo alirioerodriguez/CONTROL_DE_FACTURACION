@@ -1,5 +1,5 @@
 // Lo que muestran los widgets de la pantalla de inicio. La web (src/lib/widgetsApp.ts y PuenteWidgets) manda los
-// textos ya escritos, respetando «ocultar montos» y «solo iniciales»; acá se validan, se guardan y se muestran.
+// textos ya escritos, respetando «ocultar montos» y sin nombres de pacientes; acá se validan, se guardan y se muestran.
 // null = sin sesión: los widgets piden abrir la app.
 import { File, Paths } from 'expo-file-system';
 

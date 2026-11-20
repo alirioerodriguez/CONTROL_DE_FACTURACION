@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Accessibility, ChevronRight, LayoutGrid, ClipboardList, Download, Eye, FileSpreadsheet, LogOut, Moon, Sparkles, Trash2, Upload } from 'lucide-react'
+import { Accessibility, ChevronRight, ClipboardList, Download, Eye, FileSpreadsheet, LogOut, Moon, Sparkles, Trash2, Upload } from 'lucide-react'
 import { toast } from 'sonner'
 import { DescargarExcel } from '../../components/DescargarExcel'
 import { FotoUsuario } from '../../components/FotoUsuario'
@@ -28,9 +28,6 @@ import { Escucharte } from './Escucharte'
 import { OtraApp } from './OtraApp'
 import { DondeLaVeo } from './DondeLaVeo'
 import { DobleFactor } from './DobleFactor'
-import { CLAVE_WIDGET_INICIALES, EVENTO_WIDGETS } from '../../components/PuenteWidgets'
-import { enLaApp } from '../../lib/puenteApp'
-import { guardarPreferencia, preferencia } from '../../lib/tema'
 import { useTutorial } from '../tutorial/Tutorial'
 import { etiquetaProfesion, palabras, PROFESIONES, type ModoCobro, type Termino } from '../../lib/terminos'
 
@@ -55,7 +52,6 @@ export function AjustesPage() {
   const [tema, setTema] = useState<Tema>(temaActual())
   const [daltonismo, setDaltonismo] = useState(coloresDaltonismo())
   const [pasillo, setPasillo] = useState(modoPasilloActual())
-  const [widgetIniciales, setWidgetIniciales] = useState(() => preferencia<string>(CLAVE_WIDGET_INICIALES, '0') === '1')
   const [profesion, setProfesion] = useState('')
   const [otra, setOtra] = useState('')
   const [termino, setTermino] = useState<Termino>('sesion')
@@ -499,38 +495,6 @@ export function AjustesPage() {
             <span className="size-[1.625rem] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,.25)]" />
           </span>
         </button>
-        {enLaApp() && (
-          <button
-            type="button"
-            role="switch"
-            aria-checked={widgetIniciales}
-            onClick={() => {
-              const nuevo = !widgetIniciales
-              setWidgetIniciales(nuevo)
-              guardarPreferencia(CLAVE_WIDGET_INICIALES, nuevo ? '1' : '0')
-              window.dispatchEvent(new Event(EVENTO_WIDGETS))
-              toast.success(nuevo ? 'Los widgets muestran solo iniciales' : 'Los widgets muestran nombre e inicial del apellido')
-            }}
-            className="flex min-h-16 w-full items-center justify-between gap-3 border-t border-line bg-transparent px-0 py-3 text-left text-base font-semibold"
-          >
-            <span className="flex min-w-0 items-center gap-3">
-              <LayoutGrid {...IC} className="shrink-0" />
-              <span>
-                Solo iniciales en los widgets
-                <span className="block text-sm font-normal text-ink2">
-                  En la pantalla de inicio del celular, «J. P.» en lugar de «Juan P.».
-                </span>
-              </span>
-            </span>
-            <span
-              className={`flex h-8 w-[3.25rem] shrink-0 rounded-full p-[0.1875rem] transition-colors ${
-                widgetIniciales ? 'justify-end bg-acc' : 'justify-start bg-line'
-              }`}
-            >
-              <span className="size-[1.625rem] rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,.25)]" />
-            </span>
-          </button>
-        )}
       </Tarjeta>
 
       <h2 className="m-0 mt-5 px-1 text-sm font-bold tracking-wide text-ink2 uppercase">Tus datos y ayuda</h2>
