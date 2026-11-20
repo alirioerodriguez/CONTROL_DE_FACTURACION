@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Logo } from '../../components/Layout'
 
 const CONTACTO = 'honorapp.ar@gmail.com'
-const ACTUALIZADO = '16 de octubre de 2026'
+const ACTUALIZADO = '20 de noviembre de 2026'
 
 function Marco({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
@@ -41,7 +41,7 @@ export function PrivacidadPage() {
 
       <h2>Qué datos guardamos</h2>
       <ul>
-        <li>De tu cuenta: tu mail y tu nombre. Si ingresás con Google, recibimos solo tu nombre, tu mail y tu foto de perfil.</li>
+        <li>De tu cuenta: tu mail y tu nombre. Si ingresás con Google, recibimos solo tu nombre, tu mail y tu foto de perfil. Si ingresás con Apple (en la app de iPhone), recibimos tu nombre, si elegís compartirlo, y tu mail o, si elegís ocultarlo, una dirección de reenvío de Apple.</li>
         <li>
           Lo que cargás vos: datos administrativos de tus pacientes (nombre, teléfono, DNI, CUIL o CUIT, obra social,
           tarifa, días de atención), sesiones, pagos, medios de pago y números de factura.
@@ -95,6 +95,7 @@ export function PrivacidadPage() {
         <li>Supabase: base de datos y cuentas. Los datos se guardan en servidores de San Pablo, Brasil.</li>
         <li>Vercel: aloja la página web (Estados Unidos).</li>
         <li>Google: solo si elegís ingresar con tu cuenta de Google, y para enviar los mails de la cuenta.</li>
+        <li>Apple: solo si elegís ingresar con tu cuenta de Apple, desde la app de iPhone.</li>
       </ul>
       <p>
         Guardar los datos en Brasil implica una transferencia internacional de datos. Supabase se compromete por
@@ -134,7 +135,7 @@ export function TerminosPage() {
     <Marco titulo="Términos y condiciones">
       <p>
         honorapp es una herramienta gratuita para el control administrativo de los cobros de profesionales que atienden
-        pacientes. Al crear una cuenta, con tu mail o con Google, aceptás estos términos y la{' '}
+        pacientes. Al crear una cuenta, con tu mail, con Google o con Apple, aceptás estos términos y la{' '}
         <Link to="/privacidad">política de privacidad</Link>. Para usarla tenés que ser mayor de 18 años.
       </p>
 
