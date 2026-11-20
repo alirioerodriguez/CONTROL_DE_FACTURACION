@@ -114,7 +114,7 @@ export function FacturarTodas({ facturas }: { facturas: Factura[] }) {
           <div className="flex max-h-[45vh] flex-col overflow-y-auto">
             {posibles.map((f) => (
               <label key={f.clave} className="flex cursor-pointer items-center gap-3 border-b border-line py-2 text-[0.9375rem] text-ink last:border-b-0">
-                <input type="checkbox" className="size-5 shrink-0" checked={!afuera.has(f.clave)} onChange={() => cambiar(f.clave)} />
+                <input type="checkbox" role="switch" className="interruptor shrink-0" checked={!afuera.has(f.clave)} onChange={() => cambiar(f.clave)} />
                 <span className="min-w-0 flex-1 truncate">{f.paciente.nombre}{f.paciente.apellido ? ` ${f.paciente.apellido}` : ''}</span>
                 <span className="font-semibold whitespace-nowrap tabular">{formatMonto(f.monto, f.moneda)}</span>
               </label>

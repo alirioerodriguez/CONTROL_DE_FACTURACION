@@ -262,7 +262,7 @@ export function PacienteHoja({ paciente, onCerrar }: { paciente?: Paciente; onCe
         <span className="text-sm font-normal text-ink2">La pide {tp.organismo} para el comprobante ({tp.comprobante}). Si no sabés, dejá «Consumidor final».</span>
       </label>
       <label className="flex cursor-pointer items-start gap-3 text-[0.9375rem] leading-snug">
-        <input type="checkbox" className="mt-1 size-5" checked={noFacturar} onChange={(e) => setNoFacturar(e.target.checked)} />
+        <input type="checkbox" role="switch" className="interruptor mt-0.5 shrink-0" checked={noFacturar} onChange={(e) => setNoFacturar(e.target.checked)} />
         <span>
           <b>No facturarle</b>
           <span className="block text-ink2">Sus pagos no aparecen en «Para facturar» y no se facturan solos. Los cobros se siguen registrando igual.</span>

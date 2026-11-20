@@ -155,7 +155,7 @@ function Paso({ n, titulo, children }: { n: number; titulo: string; children: Re
 function Interruptor({ activo, deshabilitado, titulo, detalle, cambiar }: { activo: boolean; deshabilitado: boolean; titulo: string; detalle: string; cambiar: (v: boolean) => void }) {
   return (
     <label className="flex cursor-pointer items-start gap-3 text-[0.9375rem] leading-snug">
-      <input type="checkbox" className="mt-1 size-5" checked={activo} disabled={deshabilitado} onChange={(e) => cambiar(e.target.checked)} />
+      <input type="checkbox" role="switch" className="interruptor mt-0.5 shrink-0" checked={activo} disabled={deshabilitado} onChange={(e) => cambiar(e.target.checked)} />
       <span>
         <b>{titulo}</b>
         <span className="block text-ink2">{detalle}</span>

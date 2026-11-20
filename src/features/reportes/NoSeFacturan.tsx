@@ -36,7 +36,8 @@ export function NoSeFacturan({ desde }: { desde: string }) {
         <label className="flex cursor-pointer items-start gap-3 text-[0.9375rem] leading-snug">
           <input
             type="checkbox"
-            className="mt-1 size-5"
+            role="switch"
+            className="interruptor mt-0.5 shrink-0"
             checked={sinUsd}
             disabled={guardar.isPending}
             onChange={(e) =>

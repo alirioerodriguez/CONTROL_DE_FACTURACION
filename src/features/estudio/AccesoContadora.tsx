@@ -57,6 +57,8 @@ export function AccesoContadora({ mailContadora }: { mailContadora: string | nul
             <label className="mt-1.5 flex cursor-pointer items-center gap-2 text-[0.9375rem] text-ink2">
               <input
                 type="checkbox"
+                role="switch"
+                className="interruptor shrink-0"
                 checked={v.solo_iniciales}
                 disabled={iniciales.isPending}
                 onChange={(e) =>
