@@ -5,13 +5,14 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as WebBrowser from 'expo-web-browser';
 import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView, type WebViewProps } from 'react-native-webview';
 import type { ShouldStartLoadRequest, WebViewMessageEvent, WebViewNavigation, WebViewOpenWindowEvent } from 'react-native-webview/lib/WebViewTypes';
 import { APP } from './config';
 import { entrarConApple } from './apple';
 import { limpiar } from './widget/datos';
 import { actualizarWidgets } from './widget/actualizar';
+import { Barra, InicioNativo, PacientesNativo, esInicio, esPacientes, pestanaDe, type Inicio, type Pacientes, type Pestana } from './nativo';
 
 // La app muestra la web publicada: cada cambio que se publica llega solo, sin volver a compilar.
 // Lo que agrega: ingreso con Google (Google no lo permite dentro de una vista web), descargas de
@@ -66,8 +67,25 @@ async function guardarYCompartir(nombre: string, datos: string) {
   await Sharing.shareAsync(archivo.uri, { dialogTitle: nombre });
 }
 
+// Le avisa a la web, antes de que cargue, que la app dibuja su propia barra, Inicio y Pacientes (ver PuenteNativo en la web)
+const SHELL = 'window.__shellNativo = true; true;';
+
 export default function App() {
+  return <SafeAreaProvider><Pantalla /></SafeAreaProvider>;
+}
+
+function Pantalla() {
   const web = useRef<WebViewHandle>(null);
+  const insets = useSafeAreaInsets();
+  // Lo que manda la web: Inicio (null = sin sesión), Pacientes, en qué ruta está y si hay una hoja abierta
+  const [ini, setIni] = useState<Inicio | null>(null);
+  const [pacs, setPacs] = useState<Pacientes | null>(null);
+  const [ruta, setRuta] = useState<string | null>(null);
+  const [hoja, setHoja] = useState(false);
+  const [refrescando, setRefrescando] = useState(false);
+  // Pacientes nativo es la portada de «Pacientes»; con «sumar» se ve la pantalla de la web
+  const [pacNativo, setPacNativo] = useState(true);
+  const js = useCallback((codigo: string) => web.current?.injectJavaScript(`${codigo}; true;`), []);
   const [canGoBack, setCanGoBack] = useState(false);
   const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -140,6 +158,14 @@ export default function App() {
     if (msg.type === 'google') entrarConGoogle();
     else if (msg.type === 'apple') entrarConApple(web);
     else if (msg.type === 'widget') actualizarWidgets(msg.datos === null ? null : limpiar(msg.datos));
+    else if (msg.type === 'inicio') setIni(esInicio(msg.datos) ? msg.datos : null);
+    else if (msg.type === 'pacientes') setPacs(esPacientes(msg.datos) ? msg.datos : null);
+    else if (msg.type === 'hoja') setHoja(msg.datos === true);
+    else if (msg.type === 'refrescado') setRefrescando(false);
+    else if (msg.type === 'seccion') {
+      const r = (msg.datos as { ruta?: unknown } | undefined)?.ruta;
+      if (typeof r === 'string') { setRuta(r); if (!r.startsWith('/pacientes')) setPacNativo(true); }
+    }
     else if (msg.type === 'archivo' && msg.nombre && typeof msg.datos === 'string')
       guardarYCompartir(msg.nombre, msg.datos).catch(() => Alert.alert('No se pudo guardar el archivo', 'Probá de nuevo.'));
     else if (msg.type === 'share')
@@ -148,17 +174,35 @@ export default function App() {
 
   const retry = () => { setFailed(false); setLoading(true); web.current?.reload(); };
 
+  // La barra y las pantallas nativas aparecen solo con sesión, sin hojas abiertas y en sus rutas
+  const conBarra = !!ini && ruta !== null && pestanaDe(ruta) !== null;
+  const enInicio = !!ini && !hoja && ruta === '/';
+  const enPacientes = !!ini && !hoja && !!pacs && pacNativo && ruta === '/pacientes';
+  const ir = useCallback((p: Pestana | string) => {
+    if (p === 'mas') return js('window.__abrirMasDesdeApp && window.__abrirMasDesdeApp()');
+    if (p === '/pacientes') setPacNativo(true);
+    js(`window.__irA && window.__irA(${JSON.stringify(p)})`);
+  }, [js]);
+  const accion = useCallback((a: 'sesion' | 'pago') => js(`window.__accionDesdeApp && window.__accionDesdeApp(${JSON.stringify(a)})`), [js]);
+  const abrirPaciente = useCallback((id: string) => js(`window.__abrirPacienteDesdeApp && window.__abrirPacienteDesdeApp(${JSON.stringify(id)})`), [js]);
+  const refrescar = useCallback(() => {
+    setRefrescando(true);
+    js('window.__refrescarDesdeApp && window.__refrescarDesdeApp()');
+    setTimeout(() => setRefrescando(false), 10000); // por si la web no contesta
+  }, [js]);
+
   return (
-    <SafeAreaProvider>
+    <>
       <StatusBar style={APP.barraClara ? 'light' : 'dark'} />
       <SafeAreaView style={[styles.root, { backgroundColor: APP.fondo }]} edges={['top', 'left', 'right']}>
+        <View style={styles.root}>
         {inicio && <RNWebView
           ref={web}
           source={{ uri: inicio }}
           style={[styles.web, { backgroundColor: APP.fondo }]}
           applicationNameForUserAgent={APP.agente}
           originWhitelist={['*']}
-          injectedJavaScriptBeforeContentLoaded={PUENTE}
+          injectedJavaScriptBeforeContentLoaded={SHELL + PUENTE}
           onShouldStartLoadWithRequest={onShouldStart}
           onOpenWindow={onOpenWindow}
           setSupportMultipleWindows
@@ -176,6 +220,17 @@ export default function App() {
           decelerationRate="normal"
           overScrollMode="never"
         />}
+        {enInicio && ini && (
+          <View style={[styles.cover, styles.pantalla]}>
+            <InicioNativo d={ini} sesion={() => accion('sesion')} pago={() => accion('pago')} abrirPaciente={abrirPaciente} ir={ir}
+              ocultar={() => js('window.__ocultarDesdeApp && window.__ocultarDesdeApp()')} refrescar={refrescar} refrescando={refrescando} />
+          </View>
+        )}
+        {enPacientes && pacs && (
+          <View style={[styles.cover, styles.pantalla]}>
+            <PacientesNativo p={pacs} abrir={abrirPaciente} nuevo={() => setPacNativo(false)} refrescar={refrescar} refrescando={refrescando} />
+          </View>
+        )}
         {loading && !failed && (
           <View style={[styles.cover, { backgroundColor: APP.fondo }]} pointerEvents="none"><ActivityIndicator color={APP.acento} /></View>
         )}
@@ -186,14 +241,20 @@ export default function App() {
             <Pressable style={[styles.btn, { backgroundColor: APP.acento }]} onPress={retry}><Text style={styles.btnText}>Reintentar</Text></Pressable>
           </View>
         )}
+        </View>
+        {conBarra && !failed && ruta !== null && (
+          <Barra actual={pestanaDe(ruta)} ir={ir} registrar={() => accion('sesion')} abajo={insets.bottom} />
+        )}
       </SafeAreaView>
-    </SafeAreaProvider>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
   web: { flex: 1 },
+  // Las pantallas nativas ocupan todo el ancho (cover centra y deja margen, que es para los avisos)
+  pantalla: { alignItems: 'stretch', justifyContent: 'flex-start', padding: 0, backgroundColor: APP.fondo },
   cover: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', padding: 24 },
   title: { fontSize: 22, fontWeight: '700', marginBottom: 8 },
   text: { color: '#8a8580', fontSize: 15, textAlign: 'center', marginBottom: 20 },

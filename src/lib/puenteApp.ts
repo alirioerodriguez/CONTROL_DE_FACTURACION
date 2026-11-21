@@ -15,6 +15,9 @@ const VIGENCIA = 10 * 60 * 1000
 /** true si estamos dentro de la app del celular. */
 export const enLaApp = () => typeof window !== 'undefined' && 'ReactNativeWebView' in window
 
+/** true dentro de la app nueva del celular, que avisa antes de cargar la página que dibuja su barra, Inicio y Pacientes. */
+export const shellNativo = () => enLaApp() && !!(window as unknown as { __shellNativo?: boolean }).__shellNativo
+
 /** Dentro de la app: le pide a la app que haga el ingreso con Google. */
 export function pedirGoogleALaApp() {
   ;(window as unknown as { ReactNativeWebView: { postMessage: (m: string) => void } }).ReactNativeWebView.postMessage(

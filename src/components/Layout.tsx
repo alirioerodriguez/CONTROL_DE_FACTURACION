@@ -10,6 +10,8 @@ import { Hoja, IC } from './ui'
 import { AvisoInstalar } from './Instalar'
 import { usePerfil } from '../lib/datos'
 import { PuenteWidgets } from './PuenteWidgets'
+import { PuenteNativo } from './PuenteNativo'
+import { shellNativo } from '../lib/puenteApp'
 
 interface Seccion {
   to: string
@@ -92,13 +94,19 @@ export function Layout() {
   const secciones = SECCIONES.filter((s) => !s.opcional || perfil?.[s.opcional])
   const navegar = useNavigate()
   const [mas, setMas] = useState(false)
+  // Dentro de la app nueva del celular, la barra de abajo y el botón flotante los dibuja la app (ver PuenteNativo)
+  const nativo = shellNativo()
+  useEffect(() => {
+    if (!nativo) return
+    ;(window as unknown as { __abrirMasDesdeApp: unknown }).__abrirMasDesdeApp = () => setMas(true)
+  }, [nativo])
   // Cada pantalla arranca desde arriba.
   // Con llaves: en Chrome nuevo scrollTo devuelve una promesa y React la tomaría como limpieza.
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [pathname])
 
-  const conBotonFlotante = ['/', '/pacientes', '/mes'].includes(pathname) && !abierto
+  const conBotonFlotante = !nativo && ['/', '/pacientes', '/mes'].includes(pathname) && !abierto
 
   return (
     <div className="min-h-dvh bg-fondo text-ink md:flex">
@@ -153,7 +161,7 @@ export function Layout() {
         </div>
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-line bg-surface px-2 pt-2 pb-[max(1.375rem,env(safe-area-inset-bottom))] md:hidden">
+      {!nativo && <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-line bg-surface px-2 pt-2 pb-[max(1.375rem,env(safe-area-inset-bottom))] md:hidden">
         {SECCIONES.filter((s) => s.enMovil).map((s) => {
           const on = activa(pathname, true) === s.to
           return (
@@ -181,10 +189,11 @@ export function Layout() {
           </span>
           Más
         </button>
-      </nav>
+      </nav>}
 
       {/* Widgets del celular: fuera de la pantalla con key, así no se reinicia al navegar */}
       <PuenteWidgets />
+      <PuenteNativo />
 
       {mas && (
         <Hoja titulo="Más" onCerrar={() => setMas(false)}>
